@@ -312,6 +312,9 @@ window.Store = (() => {
       }
       day.type = day.type === "rest" ? "rest" : "workout";
       day.title ||= day.type === "rest" ? "Rest Day" : "Workout";
+      if (day.name === "Saturday" && day.title === "Pull C") {
+        day.title = "Pull B";
+      }
       if (!day.category) {
         const dName = (day.name || "").toLowerCase();
         const dTitle = (day.title || "").toLowerCase();
@@ -349,6 +352,9 @@ window.Store = (() => {
       day.exercises.forEach(ex => {
         ex.id ||= uid("ex");
         ex.name ||= "Exercise";
+        if (ex.name === "Hanging Knee Raise / Reverse Crunch") {
+          ex.name = "Hanging Knee Raise";
+        }
         ex.weight ??= "";
         ex.weightUnit = normalizeWeightUnit(ex.weightUnit || "kg");
         const legacyWeight = parseWeightNumber(ex.weight);

@@ -74,9 +74,22 @@
   align-items: center;
   gap: 14px;
   padding: 12px 16px;
-  border-radius: 12px;
-  /* No margin-bottom here — the parent .exercise-list uses gap: 10px */
-  transition: background 0.15s ease, border-color 0.15s ease;
+  border-radius: 16px;
+  background: linear-gradient(155deg, rgba(20, 26, 40, 0.72) 0%, rgba(11, 14, 23, 0.82) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 3.5px solid rgba(56, 189, 248, 0.35);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18), 0 8px 22px -4px rgba(0, 0, 0, 0.65);
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.exercise-row:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  border-left-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28),
+              0 14px 30px -4px rgba(0, 0, 0, 0.75),
+              0 0 18px rgba(41, 151, 255, 0.15);
 }
 
 .exercise-main {
@@ -91,7 +104,7 @@
   font-size: 15px;
   font-weight: 600;
   line-height: 1.35;
-  color: var(--text, #e6edf3);
+  color: var(--text, #ffffff);
 }
 
 /* --- 4. Previous / Current attribute cards (Weight, Reps, Sets, RIR) ----- */
@@ -103,18 +116,20 @@
 }
 
 .detail-prev-current .pc-card {
-  border: 1px solid var(--line, #2a2f3a);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .detail-prev-current .pc-card.is-current {
-  border-color: rgba(124, 109, 250, 0.45);
-  background: rgba(124, 109, 250, 0.07);
+  border-color: rgba(41, 151, 255, 0.45);
+  background: rgba(41, 151, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(140, 200, 255, 0.25);
 }
 
 .detail-prev-current .pc-card-title {
@@ -2393,6 +2408,157 @@ select#settingsProvider option {
     padding: 9px 12px !important;
     font-size: 12px !important;
   }
+}
+
+/* ============================================================================
+   APPLE IPHONE LIQUID DISPLAY GLASS THEME
+   - Translucent frosted glass (Liquid Retina glass depth)
+   - Top-edge specular light reflection (inset highlights)
+   - Apple squircle corners (18px - 24px)
+   - Coordinated, matching shades across functional panels
+   - Simplifies and unifies the color scheme across all views
+   ========================================================================== */
+
+/* Universal Liquid Display Glass Base */
+.panel {
+  position: relative !important;
+  background: linear-gradient(155deg, rgba(18, 24, 38, 0.78) 0%, rgba(9, 13, 21, 0.9) 100%) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(104%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(104%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22),
+              inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
+              0 16px 40px -6px rgba(0, 0, 0, 0.78),
+              0 4px 12px rgba(0, 0, 0, 0.45) !important;
+  transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease !important;
+}
+
+.panel:hover {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.32),
+              inset 0 0 28px 0 rgba(255, 255, 255, 0.025),
+              0 22px 48px -8px rgba(0, 0, 0, 0.88),
+              0 6px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Shade 1: Hero Panels — Deep Royal Sapphire Liquid Glass */
+.home-hero,
+.session-hero {
+  background: linear-gradient(155deg, rgba(24, 36, 62, 0.84) 0%, rgba(12, 18, 32, 0.94) 100%) !important;
+  border: 1px solid rgba(65, 145, 255, 0.28) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(140, 200, 255, 0.42),
+              inset 0 0 32px 0 rgba(41, 151, 255, 0.05),
+              0 18px 46px -6px rgba(0, 0, 0, 0.82),
+              0 0 32px -4px rgba(41, 151, 255, 0.14) !important;
+}
+
+/* Shade 2: Analytics & Chart Cards — Midnight Cobalt Liquid Glass */
+.home-chart-card {
+  background: linear-gradient(155deg, rgba(19, 27, 46, 0.8) 0%, rgba(10, 14, 25, 0.9) 100%) !important;
+  border: 1px solid rgba(80, 160, 255, 0.18) !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(160, 210, 255, 0.26),
+              0 16px 38px -6px rgba(0, 0, 0, 0.78) !important;
+}
+
+/* Shade 3: Side Tools & Right Rail — Elevated Obsidian Indigo Liquid Glass */
+.workout-side-panel {
+  background: linear-gradient(175deg, rgba(22, 28, 48, 0.84) 0%, rgba(11, 15, 27, 0.94) 100%) !important;
+  backdrop-filter: blur(34px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.24),
+              0 22px 50px -6px rgba(0, 0, 0, 0.88) !important;
+}
+
+.rail-card,
+.playlist-card {
+  background: linear-gradient(155deg, rgba(25, 32, 52, 0.76) 0%, rgba(13, 17, 28, 0.86) 100%) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.2), 0 12px 30px rgba(0, 0, 0, 0.68) !important;
+}
+
+/* Shade 4: Cardio Strip & Quick Action Panels — Subtle Cyan-Tinted Midnight Glass */
+.cardio-strip,
+.home-install {
+  background: linear-gradient(155deg, rgba(16, 32, 46, 0.8) 0%, rgba(9, 18, 27, 0.9) 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.24) !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(125, 225, 255, 0.32),
+              0 16px 38px -6px rgba(0, 0, 0, 0.78) !important;
+}
+
+/* Shade 5: Recovery & Body Physique Panels — Twilight Slate Liquid Glass */
+.home-recovery-card,
+#desiredBodyPanel {
+  background: linear-gradient(155deg, rgba(25, 24, 46, 0.8) 0%, rgba(13, 14, 27, 0.9) 100%) !important;
+  border: 1px solid rgba(165, 140, 255, 0.22) !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(200, 180, 255, 0.3),
+              0 16px 38px -6px rgba(0, 0, 0, 0.78) !important;
+}
+
+/* Shade 6: Build Project & Days Management Cards */
+.manage-day-card {
+  background: linear-gradient(155deg, rgba(22, 28, 44, 0.76) 0%, rgba(11, 15, 25, 0.86) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18),
+              0 12px 26px -4px rgba(0, 0, 0, 0.65) !important;
+}
+.manage-day-card.is-rest {
+  background: linear-gradient(155deg, rgba(16, 20, 30, 0.68) 0%, rgba(9, 12, 18, 0.8) 100%) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.14) !important;
+}
+
+/* Shade 7: Modal Cards — Apple High-Density Frosted Crystal Glass */
+.modal-card,
+.settings-modal-card {
+  background: linear-gradient(155deg, rgba(22, 28, 46, 0.92) 0%, rgba(10, 14, 24, 0.96) 100%) !important;
+  backdrop-filter: blur(42px) saturate(210%) brightness(106%) !important;
+  -webkit-backdrop-filter: blur(42px) saturate(210%) brightness(106%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 24px !important;
+  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.34),
+              0 30px 76px -12px rgba(0, 0, 0, 0.96) !important;
+}
+
+/* Harmonized Inner Chips & Stat Elements (Eliminate Chaotic Clash) */
+.model-stat,
+.signal,
+.kv-row,
+.trend-row,
+.record-row,
+.w-stat-pill {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+.home-model-badge {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--text-dim) !important;
+  backdrop-filter: blur(12px) !important;
+}
+.home-model-badge.model-ensemble {
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  color: #38bdf8 !important;
+}
+.home-model-badge.model-holt {
+  background: rgba(41, 151, 255, 0.12) !important;
+  border-color: rgba(41, 151, 255, 0.35) !important;
+  color: #2997ff !important;
+}
+.home-model-badge.model-mean,
+.home-model-badge.model-none {
+  background: rgba(255, 159, 10, 0.12) !important;
+  border-color: rgba(255, 159, 10, 0.35) !important;
+  color: #ff9f0a !important;
 }
 
 

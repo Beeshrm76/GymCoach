@@ -1739,7 +1739,7 @@ window.SEED_PROJECT = {
       "name": "Saturday",
       "type": "workout",
       "category": "pull",
-      "title": "Pull C",
+      "title": "Pull B",
       "subtitle": "Back Width + Arms",
       "focus": "Emphasize lat width while adding direct biceps and triceps work",
       "muscles": "Lats • Back • Biceps • Triceps • Core",
@@ -2099,7 +2099,7 @@ window.SEED_PROJECT = {
         },
         {
           "id": "ex-hkr",
-          "name": "Hanging Knee Raise / Reverse Crunch",
+          "name": "Hanging Knee Raise",
           "weight": "Bodyweight",
           "reps": "12–15",
           "sets": 3,
