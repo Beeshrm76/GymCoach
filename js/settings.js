@@ -951,7 +951,7 @@ window.Settings = (() => {
       const a = e.target.closest("[data-action]");
       if (!a) return;
       switch (a.dataset.action) {
-        case "open-settings": open(); break;
+        case "open-settings": UI.toggleDrawer(false); open(); break;
         case "save-settings": saveFromForm(); break;
         case "test-connection": testConnection(); break;
         case "reset-logo": resetLogo(); break;

@@ -184,6 +184,7 @@
     document.querySelectorAll("[data-view-btn]").forEach(b =>
       b.classList.toggle("active", b.dataset.viewBtn === id));
     window.scrollTo({ top: 0, behavior: "smooth" });
+    UI.toggleDrawer(false);
   }
 
   const showHome = () => {
@@ -191,19 +192,32 @@
     showView("homeView");
     renderProgress();
     window.Home?.render?.();
+    UI.toggleDrawer(false);
   };
   const showToday = () => {
+    history.replaceState(null, "", "#today");
     const scheduled = Store.dayForWeekday
       ? Store.dayForWeekday(Store.active(), new Date().getDay())
       : Store.active().days.find(d => Number.isInteger(d.weekday) && d.weekday === new Date().getDay());
     if (scheduled) currentDayId = scheduled.id;
     showView("todayView");
     renderToday();
+    UI.toggleDrawer(false);
   };
-  const showManage = () => { showView("manageView"); window.Manage?.render(); };
+  const showManage = () => {
+    history.replaceState(null, "", "#build");
+    showView("manageView");
+    window.Manage?.render();
+    UI.toggleDrawer(false);
+  };
   // Kept as an alias so any older link, bookmark or data-action still lands
   const showProgress = showHome;
-  const showAI = () => { showView("aiView"); window.ReportCoach?.render(); };
+  const showAI = () => {
+    history.replaceState(null, "", "#ai");
+    showView("aiView");
+    window.ReportCoach?.render();
+    UI.toggleDrawer(false);
+  };
 
   // sidebar
 

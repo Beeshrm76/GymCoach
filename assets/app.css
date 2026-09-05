@@ -219,8 +219,11 @@ p { margin: 0 0 8px; }
 .topbar {
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; gap: 12px;
-  min-height: var(--topbar-h);
-  padding: 8px 16px;
+  min-height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  padding-right: calc(16px + env(safe-area-inset-right, 0px));
+  padding-bottom: 8px;
+  padding-left: calc(16px + env(safe-area-inset-left, 0px));
   background: rgba(8, 8, 10, 0.78);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -1387,6 +1390,16 @@ input::placeholder, textarea::placeholder { color: #888888; }
    min-heights for the media frame, exercise thumbs, etc.
    ==================================================================== */
 @media (max-width: 900px) {
+  /* Push topbar and drawer down below iPhone notch, Dynamic Island, and status bar */
+  .topbar {
+    padding-top: max(16px, calc(10px + env(safe-area-inset-top, 0px))) !important;
+    padding-left: max(14px, calc(12px + env(safe-area-inset-left, 0px))) !important;
+    padding-right: max(14px, calc(12px + env(safe-area-inset-right, 0px))) !important;
+  }
+  .sidebar-head {
+    padding-top: max(16px, calc(12px + env(safe-area-inset-top, 0px))) !important;
+  }
+
   /* Sidebar drawer: ensure it works properly on tablets & phones */
   .drawer-btn { display: inline-grid !important; }
 

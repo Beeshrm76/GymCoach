@@ -64,7 +64,7 @@
         <div class="nav-section">
           <div class="nav-label">
             <span>Days</span>
-            <button class="small-btn" data-action="manage-project" title="Build days and exercises">Build</button>
+            <button class="small-btn" data-view-btn="manageView" data-action="manage-project" title="Build days and exercises">Build</button>
           </div>
           <div id="dayNav" class="nav-list"></div>
           <button class="nav-add" data-action="create-day">+ Add a day</button>
@@ -76,6 +76,10 @@
             <button class="nav-btn" data-view-btn="homeView" data-action="show-home">
               <span class="nav-icon">◔</span><span class="nav-text"><b>Home</b><small>Charts, forecast &amp;
                   measurements</small></span>
+            </button>
+            <button class="nav-btn" data-view-btn="manageView" data-action="manage-project">
+              <span class="nav-icon">🛠</span><span class="nav-text"><b>Build</b><small>Edit days, exercises &amp;
+                  split</small></span>
             </button>
             <button class="nav-btn" data-view-btn="aiView" data-action="show-ai">
               <span class="nav-icon">✦</span><span class="nav-text"><b>AI Coach</b><small>Export the full
@@ -114,6 +118,7 @@
         <nav class="view-tabs" aria-label="Views">
           <button class="tab" data-view-btn="homeView" data-action="show-home">Home</button>
           <button class="tab" data-view-btn="todayView" data-action="show-today">Today</button>
+          <button class="tab" data-view-btn="manageView" data-action="manage-project">Build</button>
           <button class="tab" data-view-btn="aiView" data-action="show-ai">AI Coach</button>
         </nav>
       </header>
