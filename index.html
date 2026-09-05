@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description"
+    content="GymCoach — build your own workout projects, log every set with custom columns, and export the whole record to an AI coach.">
+  <title>GymCoach — Workout Projects</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/icon-192.png">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GymCoach">
+  <meta name="application-name" content="GymCoach">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.png">
+  <link rel="apple-touch-startup-image" href="assets/icons/icon-512.png">
+
+  <link rel="stylesheet" href="assets/app.css">
+  <link rel="stylesheet" href="assets/custom.css?v=17.2">
+</head>
+
+<body>
+
+  <div class="drawer-scrim" aria-hidden="true"></div>
+
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar" aria-label="Projects and days">
+      <div class="sidebar-head">
+        <button class="brand brand-home-button" data-action="go-home" title="GymCoach · Home"
+          aria-label="GymCoach · Home">
+          <span class="brand-mark">
+            <img class="brand-logo-img" alt="" hidden>
+            <span class="brand-dot">GC</span>
+          </span>
+          <span class="brand-text">
+            <b>GymCoach</b>
+            <small>Home</small>
+          </span>
+        </button>
+        <button class="icon-btn panel-toggle" data-action="toggle-sidebar-collapse" title="Minimize panel"
+          aria-label="Minimize or expand the side panel">«</button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <div class="nav-section">
+          <div class="nav-label">
+            <span>Workouts</span>
+            <button class="small-btn" data-action="open-projects"
+              title="Switch, create, copy or delete a project">Manage</button>
+          </div>
+          <div id="projectNav" class="nav-list"></div>
+          <button class="nav-add" data-action="open-projects">+ New workout</button>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label">
+            <span>Days</span>
+            <button class="small-btn" data-action="manage-project" title="Build days and exercises">Build</button>
+          </div>
+          <div id="dayNav" class="nav-list"></div>
+          <button class="nav-add" data-action="create-day">+ Add a day</button>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label"><span>App</span></div>
+          <div class="nav-list">
+            <button class="nav-btn" data-view-btn="homeView" data-action="show-home">
+              <span class="nav-icon">◔</span><span class="nav-text"><b>Home</b><small>Charts, forecast &amp;
+                  measurements</small></span>
+            </button>
+            <button class="nav-btn" data-view-btn="aiView" data-action="show-ai">
+              <span class="nav-icon">✦</span><span class="nav-text"><b>AI Coach</b><small>Export the full
+                  record</small></span>
+            </button>
+            <button class="nav-btn" data-action="open-settings">
+              <span class="nav-icon">⚙</span><span class="nav-text"><b>Settings</b><small>Logo, API key,
+                  storage</small></span>
+            </button>
+            <button class="nav-btn" id="installButton" hidden>
+              <span class="nav-icon">↓</span><span class="nav-text"><b>Install app</b><small>Use it
+                  offline</small></span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="app-content">
+
+      <header class="topbar">
+        <div class="topbar-title">
+          <b id="sessionProject">GymCoach</b>
+          <small><span id="sessionDay">—</span> · <span id="dateLabel"></span> · <span
+              id="currentDateTime"></span></small>
+        </div>
+        <div class="top-intensity" id="topIntensity" aria-label="Overall workout intensity">
+          <span class="top-intensity-label">Overall intensity</span>
+          <div class="top-intensity-scale">
+            <div class="top-intensity-bar" aria-hidden="true"><span class="top-intensity-indicator"></span></div>
+          </div>
+        </div>
+        <nav class="view-tabs" aria-label="Views">
+          <button class="tab" data-view-btn="homeView" data-action="show-home">Home</button>
+          <button class="tab" data-view-btn="todayView" data-action="show-today">Today</button>
+          <button class="tab" data-view-btn="aiView" data-action="show-ai">AI Coach</button>
+        </nav>
+      </header>
+
+      <main class="views">
+
+        <!-- HOME
+             The landing view. It owns everything the old Progress view showed
+             (completion, project intensity, weekly check, recent sets) plus the
+             ML performance chart, coach signals, records, the CSV/ZIP pipeline
+             and install help.
+
+             It deliberately does NOT repeat Today, Build or AI Coach content -
+             no exercise list, no set tables, no prompt preview. The links below
+             navigate to those views instead of mirroring them. -->
+        <section id="homeView" class="view home-view" hidden aria-label="Home">
+
+          <!-- ---------------------------------------------------- hero -->
+          <div class="panel home-hero">
+            <div class="home-hero-head">
+              <div>
+                <p class="home-greeting" id="homeGreeting">Welcome</p>
+                <h1 id="homeHeadline">GymCoach</h1>
+                <p class="muted" id="homeSub">—</p>
+              </div>
+              <div class="home-hero-actions">
+                <button class="btn primary" data-action="show-today">Open today's workout</button>
+                <button class="btn" data-action="manage-project">Build the plan</button>
+                <button class="btn" data-action="show-ai">AI coach</button>
+              </div>
+            </div>
+            <div class="hero-stats" id="homeHeroStats"></div>
+          </div>
+
+          <!-- ML performance -->
+          <div class="panel home-chart-card">
+            <div class="panel-head">
+              <div>
+                <h2>Performance forecast</h2>
+                <p class="muted small">Fitted on this device from your own logged sets — ridge regression on
+                  autoregressive features blended with a Holt linear-trend smoother. No data leaves the phone.</p>
+              </div>
+              <div class="panel-head-actions home-chart-controls">
+                <span class="home-model-badge" id="homeModelBadge">—</span>
+                <label class="inline-select">Metric
+                  <select id="homeMetric" aria-label="Chart metric"></select>
+                </label>
+                <label class="inline-select">Forecast
+                  <select id="homeHorizon" aria-label="Forecast horizon">
+                    <option value="1">1 session</option>
+                    <option value="2">2 sessions</option>
+                    <option value="3">3 sessions</option>
+                    <option value="5">5 sessions</option>
+                    <option value="8">8 sessions</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="home-chart" id="homeChart"></div>
+            <div class="home-chart-legend" id="homeChartLegend"></div>
+            <div class="model-stats" id="homeModelStats"></div>
+            <p class="muted small model-note" id="homeChartNote">—</p>
+          </div>
+
+          <!-- wearable recovery -->
+          <div class="panel home-recovery-card" id="homeRecoveryCard" style="display:none">
+            <div class="panel-head">
+              <div>
+                <h2>Wearable Recovery</h2>
+                <p class="muted small">Smartwatch &amp; wearable data — last night's sleep, activity and today's
+                  readiness.</p>
+              </div>
+            </div>
+            <div class="home-recovery-body" id="homeRecoveryBody"></div>
+          </div>
+
+          <!-- signals + consistency -->
+          <div class="home-two-col">
+            <div class="panel">
+              <h2>Coach signals</h2>
+              <p class="muted small">Written from the fitted models, not from templates.</p>
+              <div class="signal-list" id="homeInsights"></div>
+            </div>
+            <div class="panel">
+              <h2>Consistency</h2>
+              <p class="muted small">Streaks count a single rest day between sessions as unbroken.</p>
+              <div class="kv-list" id="homeConsistency"></div>
+            </div>
+          </div>
+
+          <!-- trends + personal records -->
+          <div class="home-two-col">
+            <div class="panel">
+              <h2>Exercise trends</h2>
+              <p class="muted small">Slope of your top standardised set per session, per exercise.</p>
+              <div class="trend-list" id="homeTrends"></div>
+            </div>
+            <div class="panel">
+              <h2>Best standardised loads</h2>
+              <p class="muted small">Effective kg after unit conversion and pulley division.</p>
+              <div class="record-list" id="homeRecords"></div>
+            </div>
+          </div>
+
+          <div class="progress-grid">
+            <div class="panel">
+              <h2>Completion</h2>
+              <div class="big-number" id="weekPercent">0%</div>
+              <p class="muted" id="progressSub">—</p>
+              <div class="bar-chart" id="barChart"></div>
+            </div>
+
+            <div class="panel">
+              <h2>Workout Intensity</h2>
+              <div id="projectIntensityProgress"></div>
+            </div>
+
+            <div class="panel">
+              <h2>Weekly check</h2>
+              <div class="previous-current-grid">
+                <section class="previous-current-card previous">
+                  <div class="pc-head"><b>Previous</b><small id="previousProfileDate">-</small></div>
+                  <div class="pc-values" id="previousProfileValues">
+                    <span>Weight —</span><span>Waist —</span><span>Chest —</span><span>Arm —</span>
+                  </div>
+                </section>
+                <section class="previous-current-card current">
+                  <div class="pc-head"><b>Current</b><small id="profileStamp">Not recorded yet</small></div>
+                  <div class="form-grid compact">
+                    <label>Weight (kg)<input id="pWeight" inputmode="decimal" placeholder="—"></label>
+                    <label>Waist (cm)<input id="pWaist" inputmode="decimal" placeholder="—"></label>
+                    <label>Chest (cm)<input id="pChest" inputmode="decimal" placeholder="—"></label>
+                    <label>Arm (cm)<input id="pArm" inputmode="decimal" placeholder="—"></label>
+                  </div>
+                  <button class="btn primary full" data-action="save-profile">Save current</button>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Recent sets</h2>
+            <div id="historyList" class="history-list"></div>
+          </div>
+          <!-- ================== end of the moved Progress block ======= -->
+
+          <!-- desired body pictures -->
+          <div class="panel" id="desiredBodyPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Desired body</h2>
+                <p class="muted small">Target physique inspiration. Upload reference photos for each section to
+                  visualize your goals.</p>
+              </div>
+              <div class="panel-head-actions desired-head-actions">
+                <div class="desired-dropdown-wrap" id="desiredDropdownWrap">
+                  <button class="btn primary small-btn desired-add-btn" id="desiredAddBtn" type="button"
+                    aria-expanded="false" aria-haspopup="true" title="Add picture to desired body section">
+                    + Add picture ▾
+                  </button>
+                  <div class="desired-dropdown-menu" id="desiredDropdownMenu" hidden>
+                    <div class="desired-menu-header">Select section to add picture:</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="desiredFileInput" accept="image/*" hidden>
+            <div class="body-shots" id="homeBodyShots">
+              <figure class="body-slot" data-body-slot="whole">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Whole body<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="chest">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Chest<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="arms">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Arms<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="abs">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Abs<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="back">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Back<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="legs">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Legs<small>Reserved</small></figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <!-- data pipeline -->
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Data pipeline</h2>
+                <p class="muted small">Every recorded field — weight, unit, pulley system, effective kg, sets, reps,
+                  RIR, set completion, total rest after balancing, workout clock time, body weight and every note —
+                  written to CSV. Blank means never recorded, so numeric columns stay numeric.</p>
+              </div>
+              <div class="panel-head-actions">
+                <label class="check-inline"><input type="checkbox" id="homeExportAll"> All projects</label>
+              </div>
+            </div>
+
+            <div class="kv-list" id="homePipelineStats"></div>
+
+            <div class="pipeline-actions">
+              <button class="btn primary" data-action="export-zip-bundle">Download ZIP bundle</button>
+              <button class="btn" data-action="export-master-csv">Master sets CSV</button>
+              <button class="btn" data-action="export-long-csv">Tidy long CSV</button>
+              <button class="btn" data-action="save-csv-snapshot">Save snapshot on device</button>
+            </div>
+            <p class="muted small">The ZIP holds one CSV per table plus a README describing every column. The tidy file
+              is one row per recorded value, so custom set columns survive intact.</p>
+          </div>
+
+          <!-- install card -->
+          <div class="panel home-install">
+            <div class="panel-head">
+              <div>
+                <h2>Install on your phone</h2>
+                <p class="muted small" id="homeInstallState">—</p>
+              </div>
+              <div class="panel-head-actions">
+                <button class="btn primary" data-action="install-app">Install</button>
+                <button class="btn" data-action="show-install-help">How to install</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TODAY -->
+        <section id="todayView" class="view">
+          <div class="workout-layout">
+
+            <div class="workout-main">
+              <div class="panel session-hero">
+                <div class="hero-head">
+                  <div>
+                    <h1 id="pageTitle">Workout</h1>
+                    <p id="pageSubtitle"></p>
+                  </div>
+                  <div class="hero-actions" id="heroActions">
+                    <button class="btn" data-action="add-exercise">+ Exercise</button>
+                    <button class="btn" data-action="open-cardio">+ Cardio</button>
+                    <button class="btn" data-action="reset-day" title="Clear this day's logged sets">Clear log</button>
+                  </div>
+                </div>
+
+                <div class="hero-stats">
+                  <div class="stat"><b id="exerciseCount">0</b><small>Exercises</small></div>
+                  <div class="stat"><b id="completion">0%</b><small>Complete</small></div>
+                  <div class="stat wide"><b id="focus">—</b><small>Focus</small></div>
+                  <div class="stat wide"><b id="muscles">—</b><small>Muscles</small></div>
+                </div>
+
+                <div class="progress-track" role="progressbar" aria-label="Day completion">
+                  <div class="progress-fill" id="progressBar" style="width:0%"></div>
+                </div>
+                <div class="progress-caption"><span id="dayProgressLabel">—</span></div>
+
+                <div class="work-time-row" id="workTimeRow">
+                  <div class="work-time-group">
+                    <small class="wt-label">Workout start</small>
+                    <div class="wt-inputs">
+                      <input id="workStartTime" type="text" inputmode="numeric" placeholder="e.g. 6:30"
+                        aria-label="Workout start time">
+                      <select id="workStartAmPm" aria-label="Workout start AM or PM">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="work-time-group">
+                    <small class="wt-label">Workout end</small>
+                    <div class="wt-inputs">
+                      <input id="workEndTime" type="text" inputmode="numeric" placeholder="e.g. 7:15"
+                        aria-label="Workout end time">
+                      <select id="workEndAmPm" aria-label="Workout end AM or PM">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="exerciseList" class="exercise-list"></div>
+
+              <div class="cardio-strip panel">
+                <div class="cardio-strip-head">
+                  <div>
+                    <h3>Cardio</h3>
+                    <p class="muted small">Optional conditioning records. Nothing here is required.</p>
+                  </div>
+                  <button class="btn" data-action="open-cardio">Open cardio</button>
+                </div>
+                <div id="cardioSummary" class="cardio-summary">Not counted</div>
+              </div>
+            </div>
+
+            <!-- Right rail: collapsible and independently scrollable -->
+            <aside class="workout-side-panel" aria-label="Session tools">
+              <div class="rail-head">
+                <span id="dayFocusShort" class="rail-title">—</span>
+                <button class="icon-btn panel-toggle" data-action="toggle-rail" title="Minimize this panel"
+                  aria-label="Minimize or expand the session panel">›</button>
+              </div>
+
+              <div class="rail-scroll">
+                <!-- Workout Music Player Card -->
+                <div class="panel rail-card playlist-card" id="workoutPlaylistCard">
+                  <div class="playlist-card-head">
+                    <div class="wpb-head-title-wrap">
+                      <span class="wpb-day-badge" id="wpbDayBadge" title="Click to cycle weekday playlist">Today</span>
+                      <small class="muted" id="wpbPlaylistStatus">Workout Music</small>
+                    </div>
+                    <button class="icon-btn wpb-settings-link" id="wpbSettingsBtn" type="button"
+                      title="Manage Playlist, YouTube Extractor & Uploads in Settings">⚙️ Music</button>
+                  </div>
+                  <!-- Embedded In-Page Music Player Block -->
+                  <div class="workout-player-bar spotify-widget in-page-player" id="workoutPlayerBar">
+                    <div class="spotify-widget-inner">
+                      <div class="sp-top-row">
+                        <div class="wpb-disc" id="wpbDisc">
+                          <span class="wpb-disc-hole"></span>
+                        </div>
+                        <div class="wpb-text-wrap">
+                          <b class="wpb-song-title" id="wpbSongTitle">No track selected</b>
+                          <small class="wpb-song-meta" id="wpbSongMeta">Workout Audio</small>
+                        </div>
+                        <div class="wpb-buttons">
+                          <button class="icon-btn wpb-ctrl-btn" id="wpbPrevBtn" type="button"
+                            title="Previous track">⏮</button>
+                          <button class="icon-btn wpb-play-btn" id="wpbPlayBtn" type="button" title="Play">▶</button>
+                          <button class="icon-btn wpb-ctrl-btn" id="wpbNextBtn" type="button"
+                            title="Next track">⏭</button>
+                        </div>
+                      </div>
+                      <div class="sp-bottom-row">
+                        <span class="wpb-time" id="wpbCurrentTime">0:00</span>
+                        <input class="wpb-seek-slider" id="wpbSeekSlider" type="range" min="0" max="100" value="0"
+                          step="0.1" aria-label="Seek track">
+                        <span class="wpb-time" id="wpbDuration">0:00</span>
+                        <div class="sp-mini-actions">
+                          <button class="icon-btn wpb-loop-btn active-accent" id="wpbLoopBtn" type="button"
+                            title="Repeat mode">🔁</button>
+                          <button class="icon-btn wpb-mute-btn" id="wpbMuteBtn" type="button"
+                            title="Mute / Unmute">🔊</button>
+                          <input class="wpb-vol-slider" id="wpbVolumeSlider" type="range" min="0" max="1" value="0.9"
+                            step="0.05" aria-label="Volume">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel rail-card">
+                  <h3>This project</h3>
+                  <p class="rail-note">Days, exercises, set columns and rest days are all yours to define — nothing is
+                    fixed.</p>
+                  <button class="btn full primary" data-action="save-and-update">Save &amp; update details</button>
+                  <button class="btn full" data-action="show-ai">Export to AI coach</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- BUILD -->
+        <section id="manageView" class="view" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Project</h2>
+                <p class="muted" id="projectSummary">—</p>
+              </div>
+              <div class="panel-head-actions">
+                <button class="btn" data-action="open-projects">Projects…</button>
+                <button class="btn primary" data-action="save-project">Save project</button>
+              </div>
+            </div>
+            <div class="form-grid">
+              <label>Project name<input id="projectName" placeholder="e.g. 6-Day PPL x2"></label>
+              <label>Goal<input id="projectGoal" placeholder="e.g. Hypertrophy, lean bulk"></label>
+              <label class="span-2">Description<input id="projectDescription"
+                  placeholder="What this block is for"></label>
+              <label class="span-2">Notes for your coach<textarea id="projectNotes" rows="3"
+                  placeholder="Injuries, equipment limits, schedule constraints…"></textarea></label>
+            </div>
+          </div>
+
+          <div class="panel-head standalone">
+            <div>
+              <h2>Days</h2>
+              <p class="muted">Add as many days as you like and flip any of them between Workout and Rest.</p>
+            </div>
+            <div class="panel-head-actions">
+              <button class="btn primary" data-action="create-day">+ Add day</button>
+              <button class="btn" data-action="export-backup">Export backup</button>
+              <label class="btn file-btn">Import backup<input id="importBackupInput" type="file"
+                  accept="application/json,.json" hidden></label>
+            </div>
+          </div>
+
+          <div id="manageDays" class="manage-days"></div>
+        </section>
+
+        <!-- AI COACH -->
+        <section id="aiView" class="view" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Feed everything to your AI coach</h2>
+                <p class="muted">Every day, exercise, custom column, set row, note, timestamp and measurement — captured
+                  in one payload.</p>
+              </div>
+              <div class="panel-head-actions">
+                <label class="check-inline"><input type="checkbox" id="aiAllProjects"> All projects</label>
+                <button class="btn" data-action="open-settings">Settings</button>
+              </div>
+            </div>
+
+            <p class="muted" id="aiStats">—</p>
+
+            <div class="ai-buttons">
+              <button class="btn primary" data-action="update-ai-details">Update details</button>
+              <button class="btn" data-action="copy-ai-prompt">Copy prompt</button>
+              <button class="btn" data-action="download-ai-txt">Text</button>
+              <button class="btn" data-action="download-ai-md">Markdown</button>
+              <button class="btn" data-action="download-ai-json">JSON</button>
+              <button class="btn" data-action="download-ai-csv">CSV</button>
+              <button class="btn" data-action="download-ai-pdf">PDF</button>
+              <button class="btn" data-action="download-ai-doc">Word</button>
+              <button class="btn accent" id="sendAiButton" data-action="send-ai">Send to AI now</button>
+            </div>
+
+            <div class="ai-result" id="aiResult" hidden>
+              <h3>Coach reply</h3>
+              <div class="ai-result-body" id="aiResultBody"></div>
+            </div>
+
+            <section class="archive-block">
+              <div class="archive-head">
+                <div>
+                  <h3>Saved CSV history</h3>
+                  <p class="muted small">Older weeks are kept as separate day files.</p>
+                </div>
+              </div>
+              <div id="archivedCsvList" class="archive-list">-</div>
+            </section>
+
+            <label class="ai-prompt-label">Prompt preview (editable — copying always uses the live data)
+              <textarea id="aiPrompt" rows="18" spellcheck="false"></textarea>
+            </label>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- EXERCISE DETAILS
+     demo video, RIR, rest, tempo, equipment, cues — plus the fully custom set table. -->
+  <div class="modal" id="exerciseModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="modalExerciseTitle">
+      <div class="modal-header">
+        <div>
+          <b id="modalExerciseTitle">Exercise</b>
+        </div>
+        <button class="icon-btn" data-close-modal aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-media">
+          <div class="media-frame">
+            <video id="detailVideo" controls muted playsinline preload="metadata" hidden></video>
+            <img id="detailImage" alt="" hidden>
+            <div class="media-fallback" id="detailMediaFallback">
+              <span>▦</span>
+              <small>No image or demo video yet</small>
+            </div>
+          </div>
+
+          <div id="detailIntensity"></div>
+
+          <div class="media-actions">
+            <label class="btn file-btn">Upload image<input id="detailImageUpload" type="file" accept="image/*"
+                hidden></label>
+            <label class="btn file-btn">Upload demo video<input id="detailVideoUpload" type="file" accept="video/*"
+                hidden></label>
+            <button class="btn danger" data-action="remove-media">Remove media</button>
+          </div>
+
+          <div class="timer-options">
+            <label>Countdown (sec)<input id="timerCountdown" type="number" min="0" step="1" value="30"></label>
+            <label>Delay balance (sec)<input id="timerBalance" type="number" min="0" step="1" value="5"></label>
+          </div>
+        </div>
+
+        <div class="detail-main">
+          <div class="exercise-name-editor">
+            <label>Exercise name<input id="detailName"></label>
+          </div>
+
+          <section class="set-timer-card" aria-label="Set timer">
+            <div class="set-timer-head">
+              <div>
+                <h3>Set timer</h3>
+                <p class="muted small">Countdown first, then extra time counts up. Stop &amp; record applies the
+                  calculated time to this set.</p>
+              </div>
+              <div class="timer-recording-set">Recording set <b id="timerRecordingSet">Set 1</b></div>
+            </div>
+            <div class="set-timer-main">
+              <div class="timer-readout">
+                <span class="timer-phase" id="timerPhase">Ready</span>
+                <div class="timer-display" id="timer">00:00</div>
+                <div class="timer-recorded-preview">
+                  Will record <b id="timerRecordedPreview">00:00</b> after balancing
+                </div>
+              </div>
+              <div class="set-timer-actions">
+                <button class="btn primary" id="timerButton" data-action="toggle-timer">Start</button>
+                <button class="btn" data-action="stop-timer">Stop &amp; record</button>
+                <button class="btn" data-action="reset-timer">Reset</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="detail-sets">
+            <div class="sets-head">
+              <div>
+                <h3>Set log</h3>
+                <p class="muted small" id="setCountLabel">—</p>
+              </div>
+              <div class="sets-actions">
+                <button class="btn" data-action="add-set">+ Add set</button>
+                <button class="btn" data-action="fill-down" title="Copy set 1 into every current row">Fill down</button>
+                <button class="btn" data-action="apply-columns-day"
+                  title="Give every exercise on this day the same columns">Apply columns to day</button>
+              </div>
+            </div>
+            <div class="set-table-wrap" id="detailSetTable"></div>
+          </div>
+
+          <details class="detail-more" open>
+            <summary>Plan details</summary>
+            <div class="form-grid">
+              <label>Target weight
+                <div class="input-with-select"><input id="detailWeight" type="number" step="0.01"
+                    placeholder="e.g. 60"><select id="detailWeightUnit">
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                  </select></div>
+              </label>
+              <label>Target reps
+                <div class="input-with-select reps-range">
+                  <input id="detailRepsMin" type="number" min="0" step="1" placeholder="8" aria-label="Reps range low">
+                  <span class="reps-range-sep">–</span>
+                  <input id="detailRepsMax" type="number" min="0" step="1" placeholder="12"
+                    aria-label="Reps range high">
+                </div>
+              </label>
+              <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1"></label>
+              <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells"></label>
+              <label class="span-2">Image path<input id="detailImagePath"
+                  placeholder="e.g. images/bench_press.jpg"></label>
+              <label class="span-2">Video path<input id="detailVideoPath"
+                  placeholder="e.g. videos/bench_press.mp4"></label>
+              <label>Pulley system
+                <select id="detailPulleySystem">
+                  <option value="single">Single pulley</option>
+                  <option value="double">Double pulley</option>
+                  <option value="four">Four pulley</option>
+                </select>
+              </label>
+              <label class="span-2">Notes<textarea id="detailNotes" rows="2"
+                  placeholder="Setup, machine number, pin height…"></textarea></label>
+              <label class="span-2">Form cues<textarea id="detailCues" rows="3"
+                  placeholder="One cue per line"></textarea></label>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn danger" data-action="delete-exercise">Delete exercise</button>
+        <div class="spacer"></div>
+        <button class="btn" data-action="close-exercise">Close</button>
+        <button class="btn primary" data-action="save-exercise-detail">Save details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="modal" id="projectModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-project-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><b>Workout projects</b><span>Each project has its own days, exercises and logs.</span></div>
+        <button class="icon-btn" data-close-project-modal aria-label="Close">×</button>
+      </div>
+      <div class="modal-body single">
+        <div id="projectModalList" class="project-list"></div>
+
+        <div class="new-project">
+          <h3>Create a new workout plan</h3>
+          <div class="form-grid">
+            <label>Name<input id="newProjectName" placeholder="e.g. 5-Day PPL + Upper"></label>
+            <label>Goal<input id="newProjectGoal" placeholder="Goal"></label>
+            <label class="span-2">Start from<select id="newProjectTemplate"></select></label>
+          </div>
+          <p class="muted small" id="templateHint"></p>
+          <button class="btn primary full" data-action="create-project-from-modal">Create workout plan</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-project-modal></button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CARDIO -->
+  <div class="modal" id="cardioModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-cardio></div>
+    <div class="modal-card cardio-modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><b>Cardio</b><span>Optional activity details for the current day</span></div>
+        <button class="icon-btn" data-close-cardio aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single">
+        <div class="cardio-toolbar">
+          <div>
+            <h3 id="cardioDayTitle">Today</h3>
+            <p class="muted small">Leave any field blank when you did not count it. Export will show <b>not counted</b>.
+            </p>
+          </div>
+          <button class="btn primary" data-action="add-cardio-entry">+ Cardio entry</button>
+        </div>
+        <div id="cardioEntries" class="cardio-entries"></div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-cardio>Close</button>
+        <button class="btn primary" data-action="save-cardio">Save cardio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="modal" id="settingsModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-settings></div>
+    <div class="modal-card settings-modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header settings-modal-header">
+        <div class="settings-header-titles">
+          <b>⚙️ Settings &amp; Preferences</b>
+          <span>Branding, AI model connection and weekday workout playlists</span>
+        </div>
+        <button class="icon-btn" data-close-settings aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single settings-modal-body">
+        <!-- Segmented Tab Navigation -->
+        <div class="settings-nav-tabs">
+          <button class="settings-tab-btn active" id="settingsTabBtnGeneral" data-settings-tab="general" type="button">
+            <span class="tab-icon">⚡</span> General &amp; AI
+          </button>
+          <button class="settings-tab-btn" id="settingsTabBtnMusic" data-settings-tab="music" type="button">
+            <span class="tab-icon">🎵</span> Workout Music &amp; Playlists
+          </button>
+        </div>
+
+        <!-- TAB 1: GENERAL & AI -->
+        <div id="settingsGeneralTab" class="settings-tab-pane">
+          <!-- Logo Card -->
+          <section class="settings-block settings-card">
+            <div class="card-head-row">
+              <h3>🎨 Brand &amp; App Logo</h3>
+              <span class="tag">Local branding</span>
+            </div>
+            <p class="muted small">Customize the logo displayed in the top header and brand mark.</p>
+            <div class="logo-row">
+              <div class="logo-preview" id="logoPreview"></div>
+              <div class="logo-actions">
+                <label class="btn file-btn primary-glow">
+                  <span>Upload logo</span>
+                  <input id="logoUploadInput" type="file" accept="image/*" hidden>
+                </label>
+                <button class="btn" id="resetLogoButton" data-action="reset-logo">Reset to default</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- AI Connection Card -->
+          <section class="settings-block settings-card">
+            <div class="card-head-row">
+              <h3>🤖 AI Coach Connection</h3>
+              <span class="tag accent">Optional</span>
+            </div>
+            <p class="muted small">Connect your preferred AI provider to generate tailored coaching, critique workout
+              volume, and optimize hypertrophy based on your logs.</p>
+
+            <div class="form-grid settings-form-grid">
+              <label class="span-2">Provider
+                <select id="settingsProvider" class="custom-select">
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="groq">Groq (Ultra-Fast)</option>
+                  <option value="deepseek">DeepSeek (V3 / R1)</option>
+                  <option value="xai">xAI (Grok)</option>
+                  <option value="openrouter">OpenRouter (Unified)</option>
+                  <option value="mistral">Mistral AI</option>
+                  <option value="perplexity">Perplexity</option>
+                  <option value="together">Together AI</option>
+                  <option value="cohere">Cohere</option>
+                  <option value="custom">My own proxy / Worker</option>
+                  <option value="others">Others (OpenAI-compatible)</option>
+                  <option value="manual">Manually configure</option>
+                </select>
+              </label>
+
+              <div class="span-2 provider-hint-card" id="settingsProviderHintWrap">
+                <span class="hint-icon">💡</span>
+                <p class="muted small" id="settingsProviderHint"></p>
+              </div>
+
+              <label class="span-2" id="settingsKeyRow">API key
+                <div class="input-with-toggle">
+                  <input id="settingsApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+                  <button type="button" class="btn-toggle-eye" id="toggleApiKeyEye" title="Show/hide key">👁️</button>
+                </div>
+              </label>
+
+              <label class="span-2">Model
+                <input id="settingsModel" spellcheck="false" placeholder="Enter model ID">
+                <div class="model-chips-container" id="settingsModelChips" hidden></div>
+              </label>
+
+              <label class="span-2" id="settingsEndpointRow" hidden>Endpoint / base URL
+                <input id="settingsEndpoint" spellcheck="false" placeholder="https://api.openai.com/v1">
+              </label>
+
+              <label class="span-2">System instruction
+                <textarea id="settingsSystem" rows="3"
+                  placeholder="You are an experienced strength and hypertrophy coach..."></textarea>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn" id="testConnectionButton" data-action="test-connection">⚡ Test connection</button>
+              <button class="btn primary" data-action="save-settings">💾 Save settings</button>
+            </div>
+          </section>
+
+          <!-- Device Storage Card -->
+          <section class="settings-block settings-card">
+            <div class="card-head-row">
+              <h3>💾 Device Storage &amp; Backup</h3>
+              <span class="tag">Offline first</span>
+            </div>
+            <p class="muted small" id="settingsStorage">—</p>
+            <div class="settings-actions">
+              <button class="btn" data-action="export-backup">📥 Export backup (JSON)</button>
+              <button class="btn danger" data-action="clear-all-data">⚠️ Erase everything</button>
+            </div>
+            <p class="muted small hint-foot">A backup holds your projects, plans, logs, and workout notes. Media can be
+              included separately when needed.</p>
+          </section>
+        </div>
+
+        <!-- TAB 2: WORKOUT MUSIC & WEEKDAY PLAYLISTS -->
+        <div id="settingsMusicTab" class="settings-tab-pane" hidden>
+          <div class="music-settings-intro settings-card">
+            <div class="music-intro-left">
+              <div class="music-intro-icon">🎧</div>
+              <div>
+                <h4>Daily Workout Music &amp; Playlists</h4>
+                <p class="muted small">Customize playlists according to weekday. Extract MP3s from YouTube directly into
+                  <code class="code-path">music/&lt;weekday&gt;/</code> or upload local audio files.</p>
+              </div>
+            </div>
+            <div class="music-active-day-chip" id="musicActiveDayChip">
+              <span class="day-chip-dot"></span>
+              <span id="musicActiveDayText">Editing Monday</span>
+            </div>
+          </div>
+
+          <!-- Weekday Pills -->
+          <div class="music-weekday-nav">
+            <span class="music-nav-label">Select Day:</span>
+            <div class="music-weekday-pills" id="musicWeekdayPills">
+              <button type="button" class="weekday-pill-btn active" data-music-weekday="monday">
+                <span class="pill-day">Mon</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="tuesday">
+                <span class="pill-day">Tue</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="wednesday">
+                <span class="pill-day">Wed</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="thursday">
+                <span class="pill-day">Thu</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="friday">
+                <span class="pill-day">Fri</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="saturday">
+                <span class="pill-day">Sat</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="sunday">
+                <span class="pill-day">Sun</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="general">
+                <span class="pill-day">All</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- YouTube to MP3 Extractor -->
+          <section class="settings-block music-extractor-card settings-card">
+            <div class="block-title-row">
+              <h3>⚡ Extract MP3 from YouTube</h3>
+              <span class="tag accent">Auto-download to music/</span>
+            </div>
+            <p class="muted small">Extract high-quality audio from any YouTube link and save it directly to the selected
+              day's playlist and your local folder.</p>
+
+            <div class="yt-extractor-form">
+              <div class="yt-url-group">
+                <div class="yt-input-wrapper">
+                  <span class="yt-input-icon">🔗</span>
+                  <input id="ytExtractUrl" type="url"
+                    placeholder="Paste YouTube link (e.g. https://youtu.be/... or watch?v=...)" autocomplete="off"
+                    spellcheck="false">
+                  <button class="btn yt-paste-btn" id="ytPasteBtn" type="button" title="Paste link from clipboard">📋
+                    Paste</button>
+                </div>
+              </div>
+
+              <div class="yt-options-row">
+                <label>Target Weekday
+                  <select id="ytTargetWeekdaySelect" class="custom-select">
+                    <option value="monday">Monday (music/monday/)</option>
+                    <option value="tuesday">Tuesday (music/tuesday/)</option>
+                    <option value="wednesday">Wednesday (music/wednesday/)</option>
+                    <option value="thursday">Thursday (music/thursday/)</option>
+                    <option value="friday">Friday (music/friday/)</option>
+                    <option value="saturday">Saturday (music/saturday/)</option>
+                    <option value="sunday">Sunday (music/sunday/)</option>
+                    <option value="general">All Days (music/)</option>
+                  </select>
+                </label>
+                <label>Audio Quality
+                  <select id="ytBitrateSelect" class="custom-select">
+                    <option value="192" selected>192 kbps (Recommended)</option>
+                    <option value="256">256 kbps (High)</option>
+                    <option value="320">320 kbps (Maximum)</option>
+                    <option value="128">128 kbps (Compact)</option>
+                  </select>
+                </label>
+                <div class="yt-submit-wrap">
+                  <button class="btn primary yt-extract-btn" id="ytExtractBtn" type="button">⚡ Extract &amp; Add
+                    MP3</button>
+                </div>
+              </div>
+
+              <div id="ytExtractStatus" class="yt-status-box" hidden></div>
+            </div>
+          </section>
+
+          <!-- Upload Local Music Files -->
+          <section class="settings-block music-upload-card settings-card">
+            <div class="block-title-row">
+              <h3>📁 Upload Audio Files</h3>
+              <span class="muted small tag-subtle" id="uploadSelectedDayLabel">to Monday</span>
+            </div>
+            <div class="audio-drop-zone" id="audioDropZone">
+              <div class="drop-icon-wrap">🎵</div>
+              <p class="drop-title">Drag &amp; drop audio tracks here, or <label class="file-browse-btn">browse
+                  files<input type="file" id="settingsAudioUploadInput" accept="audio/*" multiple hidden></label></p>
+              <span class="drop-hint">Supports MP3, WAV, M4A, AAC, OGG, FLAC · Multiple files allowed</span>
+            </div>
+          </section>
+
+          <!-- Weekday Playlist Manager -->
+          <section class="settings-block music-tracks-block settings-card">
+            <div class="settings-playlist-head">
+              <div>
+                <h3 id="settingsPlaylistTitle">Monday Playlist</h3>
+                <p class="muted small" id="settingsPlaylistStats">0 tracks · 0:00 total</p>
+              </div>
+              <div class="settings-playlist-actions">
+                <button class="small-btn download-day-btn" id="settingsDownloadAllBtn" type="button"
+                  title="Download all tracks for this day to your computer">📥 Download Day MP3s</button>
+                <button class="small-btn danger clear-day-btn" id="settingsClearDayBtn" type="button"
+                  title="Clear this weekday's playlist">🗑️ Clear Day</button>
+              </div>
+            </div>
+
+            <div class="settings-tracks-list" id="settingsPlaylistTracks"></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-settings>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================== DESIRED BODY VIEWER
+       Lightbox / photo viewer for inspecting and managing desired body images -->
+  <div class="modal" id="desiredViewerModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-desired-viewer></div>
+    <div class="modal-card desired-viewer-card" role="dialog" aria-modal="true" aria-labelledby="desiredViewerTitle">
+      <div class="modal-header">
+        <div><b id="desiredViewerTitle">Desired physique photo</b><span>Target physique reference</span></div>
+        <button class="icon-btn" id="desiredViewerClose" data-close-desired-viewer aria-label="Close">×</button>
+      </div>
+      <div class="modal-body single desired-viewer-body">
+        <div class="desired-viewer-frame">
+          <img id="desiredViewerImg" alt="Desired body target">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn danger" id="desiredViewerDelete">Remove photo</button>
+        <div class="spacer"></div>
+        <button class="btn" data-close-desired-viewer>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================== INSTALL
+       Android/Chromium can install straight from beforeinstallprompt, so this
+       modal is a fallback there. On iOS Safari it is the ONLY route: that
+       browser never fires beforeinstallprompt, so the manual Share -> Add to
+       Home Screen steps have to be spelled out. settings.js shows whichever
+       block matches the device. -->
+  <div class="modal" id="installModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-install></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="installModalTitle">
+      <div class="modal-header">
+        <div><b id="installModalTitle">Install GymCoach</b><span>Runs offline, opens full-screen, no app store.</span>
+        </div>
+        <button class="icon-btn" data-close-install aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single">
+        <p class="muted small" id="installModalState">—</p>
+
+        <section class="install-steps" id="installStepsIos" hidden>
+          <h3>iPhone &amp; iPad</h3>
+          <ol class="install-list">
+            <li>Open this page in <b>Safari</b> (Chrome on iOS cannot add to the Home Screen).</li>
+            <li>Tap the <b>Share</b> button — the square with the arrow pointing up.</li>
+            <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+            <li>Tap <b>Add</b>. GymCoach appears as its own icon and opens without Safari's toolbars.</li>
+          </ol>
+          <p class="muted small">Your projects, logs and images stay on the device. Deleting the icon deletes the stored
+            data, so export a backup or the ZIP bundle first.</p>
+        </section>
+
+        <section class="install-steps" id="installStepsOther" hidden>
+          <h3>Android, Windows &amp; macOS</h3>
+          <ol class="install-list">
+            <li>Tap <b>Install</b> above if the button is offered — that is the one-step route.</li>
+            <li>Otherwise open the browser menu (<b>⋮</b> in Chrome, <b>…</b> in Edge).</li>
+            <li>Choose <b>Install app</b>, <b>Add to Home screen</b> or <b>Apps → Install this site as an app</b>.</li>
+            <li>Confirm. It then launches from your home screen or Start menu like any other app.</li>
+          </ol>
+          <p class="muted small">Installing needs the page served over https:// or from localhost. Opening index.html
+            directly from a folder still works, it just cannot register the offline cache.</p>
+        </section>
+
+        <section class="install-steps">
+          <h3>Works either way</h3>
+          <p class="muted small">Installed or not, every feature runs locally: the set timer, the ML forecast on Home
+            and the whole CSV pipeline need no network at all.</p>
+        </section>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-install>Close</button>
+        <button class="btn primary" data-action="install-app">Try install now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PDF export is optional: report.js checks for the library and falls back to
+     Markdown/JSON if the CDN is unreachable (e.g. offline). -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+
+  <script src="data/templates.js"></script>
+  <script src="data/seed-project.js"></script>
+  <script src="data/exercises.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/mediaStore.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ml.js"></script>
+  <script src="js/pipeline.js"></script>
+  <script src="js/youtubeExtractor.js"></script>
+  <script src="js/settings.js?v=17.2"></script>
+  <script src="js/player.js"></script>
+  <script src="js/autocomplete.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/manage.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/wearable.js"></script>
+  <script src="js/home.js"></script>
+
+</body>
+
+</html>

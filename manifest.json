@@ -1,0 +1,67 @@
+{
+  "name": "GymCoach — editable workout projects",
+  "short_name": "GymCoach",
+  "description": "Build your own workout projects with custom days, custom set columns and custom rows, log every set, forecast your progress on-device, and export the whole record to CSV or an AI coach.",
+  "id": "gymcoach-v4",
+  "start_url": "./index.html#home",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#0b0f14",
+  "theme_color": "#0d1117",
+  "categories": ["health", "fitness", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Home & forecast",
+      "short_name": "Home",
+      "description": "Performance chart, coach signals and the weekly check",
+      "url": "./index.html#home",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Today's session",
+      "short_name": "Today",
+      "description": "Log the sets for today's workout",
+      "url": "./index.html#today",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Build the plan",
+      "short_name": "Build",
+      "description": "Add days, exercises and set columns",
+      "url": "./index.html#build",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "AI Coach export",
+      "short_name": "AI Coach",
+      "description": "Copy or download the full record",
+      "url": "./index.html#ai",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
