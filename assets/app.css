@@ -52,10 +52,13 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; background: #000000; }
+html { -webkit-text-size-adjust: 100%; background: #000000; overflow-x: hidden; }
 
 body {
   margin: 0;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
   min-height: 100dvh;
   background:
     radial-gradient(1200px 650px at 15% -10%, rgba(26, 44, 76, 0.18) 0%, transparent 60%),
@@ -237,7 +240,7 @@ p { margin: 0 0 8px; }
 .tab:hover { color: var(--text); border-color: var(--line-2); }
 .tab.active { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 10px var(--accent-glow); }
 
-.drawer-btn { display: none; }
+.drawer-btn { display: none; flex: 0 0 auto; font-size: 18px; }
 
 /* ------------------------------------------------------------------ views */
 
@@ -801,7 +804,8 @@ input::placeholder, textarea::placeholder { color: #888888; }
 @media (max-width: 900px) {
   /* One column. The sidebar becomes an off-canvas drawer — a state of its own,
      so the collapse toggle is never overridden the way V3's media query did. */
-  .app-shell { grid-template-columns: minmax(0, 1fr); }
+  .app-shell { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100vw; overflow-x: hidden; }
+  .app-content { width: 100%; max-width: 100vw; overflow-x: hidden; }
 
   .sidebar {
     position: fixed; top: 0; left: 0; z-index: 50;
@@ -821,6 +825,7 @@ input::placeholder, textarea::placeholder { color: #888888; }
   .side-collapsed .nav-btn { justify-content: flex-start; padding: 8px 9px; }
   .side-collapsed .nav-label { justify-content: space-between; }
   .side-collapsed .nav-label::before { content: none; }
+  .side-collapsed .nav-label .small-btn { display: revert; }
 
   .drawer-btn { display: inline-grid; }
   .panel-toggle { display: none; }
@@ -834,11 +839,20 @@ input::placeholder, textarea::placeholder { color: #888888; }
 
   .modal-body { grid-template-columns: minmax(0, 1fr); }
   .view-tabs { width: 100%; order: 3; }
-  .topbar { flex-wrap: wrap; }
+  .topbar { flex-wrap: wrap; gap: 8px; }
+
+  /* Constrain media player for tablets & phones */
+  .detail-media .media-frame { min-height: 220px; aspect-ratio: 16 / 9; }
+  .detail-media .media-frame video,
+  .detail-media .media-frame img { max-height: 320px; }
+
+  /* Ensure panels don't overflow */
+  .panel { max-width: 100%; overflow-x: hidden; }
+  .views { max-width: 100vw; overflow-x: hidden; }
 }
 
 @media (max-width: 620px) {
-  .views { padding: 12px; }
+  .views { padding: 10px; max-width: 100vw; overflow-x: hidden; }
   .form-grid { grid-template-columns: minmax(0, 1fr); }
   .form-grid .span-2 { grid-column: auto; }
   .exercise-row { grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; }
@@ -848,6 +862,53 @@ input::placeholder, textarea::placeholder { color: #888888; }
   .manage-exercise-row .manage-ex-buttons { grid-column: 1 / -1; justify-content: flex-end; }
   .big-number { font-size: 36px; }
   .modal-card, .modal-card.wide { width: 100vw; max-height: 100dvh; margin: 0; border-radius: 0; border: none; }
+
+  /* Video / media player: fit to phone screen */
+  .detail-media .media-frame { min-height: 180px; max-height: 240px; aspect-ratio: 16 / 9; }
+  .detail-media .media-frame video,
+  .detail-media .media-frame img { max-height: 240px; width: 100%; object-fit: contain; }
+
+  /* Modal body single column */
+  .modal-body { padding: 12px; }
+
+  /* Hero and panel actions stack vertically */
+  .hero-head { flex-direction: column; }
+  .hero-actions { width: 100%; }
+  .hero-actions .btn { flex: 1; min-width: 0; text-align: center; }
+  .panel-head { flex-direction: column; gap: 8px; }
+  .panel-head-actions { width: 100%; }
+
+  /* Progress grid single column */
+  .progress-grid { grid-template-columns: 1fr; }
+
+  /* Home two-col to single col */
+  .home-two-col { grid-template-columns: 1fr !important; }
+
+  /* Body shots grid */
+  .body-shots { grid-template-columns: repeat(3, 1fr) !important; }
+
+  /* AI buttons wrap */
+  .ai-buttons { gap: 6px; }
+  .ai-buttons .btn { font-size: 12px; padding: 7px 10px; }
+
+  /* Safe area insets for notched phones */
+  .topbar { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
+  .views { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+}
+
+/* Extra small phones (iPhone SE, Galaxy S series) */
+@media (max-width: 400px) {
+  .views { padding: 8px; }
+  .panel { padding: 12px; }
+  h1 { font-size: 18px; }
+  h2 { font-size: 15px; }
+  .detail-media .media-frame { min-height: 150px; max-height: 200px; }
+  .detail-media .media-frame video,
+  .detail-media .media-frame img { max-height: 200px; }
+  .topbar-title b { font-size: 13px; }
+  .tab { padding: 6px 10px; font-size: 12px; }
+  .btn { padding: 7px 11px; font-size: 13px; }
+  .body-shots { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1318,3 +1379,56 @@ input::placeholder, textarea::placeholder { color: #888888; }
 .timer-display.timer-extra-white { color: #fff !important; }
 @media(max-width:900px){ .top-intensity { display:flex !important; } }
 @media(max-width:700px){ .top-intensity { order:3; width:100%; min-width:0; } .top-intensity-scale { min-width:0; } }
+
+/* ====================================================================
+   MOBILE FINAL OVERRIDES
+   These MUST remain at the very end of the file so they win over all
+   the V6/V6.1/V7.2/V9/V10/V11 blocks above that re-declare large
+   min-heights for the media frame, exercise thumbs, etc.
+   ==================================================================== */
+@media (max-width: 900px) {
+  /* Sidebar drawer: ensure it works properly on tablets & phones */
+  .drawer-btn { display: inline-grid !important; }
+
+  /* Media frame: phone-friendly size */
+  .detail-media .media-frame { min-height: 200px !important; max-height: 300px !important; aspect-ratio: 16 / 9 !important; }
+  .detail-media .media-frame video,
+  .detail-media .media-frame img { min-height: 0 !important; max-height: 300px !important; object-fit: contain !important; }
+
+  /* Prevent content overflow */
+  .app-shell { max-width: 100vw !important; overflow-x: hidden !important; }
+  .app-content { max-width: 100vw !important; overflow-x: hidden !important; }
+  .views { max-width: 100vw !important; overflow-x: hidden !important; }
+
+  /* Set table should scroll horizontally without pushing the page */
+  .set-table-wrap { max-width: 100%; }
+  .set-pane-table { max-width: 100%; }
+  .set-pane-table table { min-width: 0; width: 100%; }
+}
+
+@media (max-width: 620px) {
+  .detail-media .media-frame { min-height: 160px !important; max-height: 220px !important; }
+  .detail-media .media-frame video,
+  .detail-media .media-frame img { max-height: 220px !important; }
+
+  /* Smaller exercise thumbnails on phones */
+  .exercise-thumb { width: 54px !important; height: 48px !important; }
+
+  /* Topbar compact */
+  .topbar-title b { font-size: 13px; }
+  .topbar-title small { font-size: 10px; }
+
+  /* Modal fully full-screen */
+  .modal-card, .modal-card.wide { width: 100vw !important; max-height: 100dvh !important; margin: 0 !important; border-radius: 0 !important; }
+
+  /* Workout player bar compact */
+  .workout-player-bar { padding: 10px !important; }
+  .wpb-disc { width: 36px !important; height: 36px !important; flex: 0 0 36px !important; }
+}
+
+@media (max-width: 400px) {
+  .detail-media .media-frame { min-height: 130px !important; max-height: 180px !important; }
+  .detail-media .media-frame video,
+  .detail-media .media-frame img { max-height: 180px !important; }
+  .exercise-thumb { width: 48px !important; height: 42px !important; }
+}

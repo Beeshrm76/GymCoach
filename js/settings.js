@@ -572,16 +572,26 @@ window.Settings = (() => {
       showInstallSteps();
       return false;
     }
-    installPrompt.prompt();
-    const { outcome } = await installPrompt.userChoice;
-    installPrompt = null;
-    const btn = $("installButton");
-    if (btn && outcome === "accepted") btn.hidden = true;
-    if (outcome !== "accepted") {
+    try {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      installPrompt = null;
+      const btn = $("installButton");
+      if (btn && outcome === "accepted") btn.hidden = true;
+      if (outcome !== "accepted") {
+        UI.openModal("installModal");
+        showInstallSteps();
+      }
+      return outcome === "accepted";
+    } catch (err) {
+      // The prompt object may be stale (already used or expired).
+      // Clear it and fall back to the manual install instructions.
+      console.warn("Install prompt failed:", err);
+      installPrompt = null;
       UI.openModal("installModal");
       showInstallSteps();
+      return false;
     }
-    return outcome === "accepted";
   }
 
   // The modal carries both platforms' steps; only the relevant block is shown.
@@ -617,10 +627,13 @@ window.Settings = (() => {
       window.Home?.render?.();
     });
 
-    // On iOS the button is the only route to the instructions, so show it there
-    // even though beforeinstallprompt will never fire.
+    // Show the sidebar install button on ALL platforms (not just iOS) when the
+    // app isn't installed, so users always have a path to installation help.
+    // On Android/desktop, beforeinstallprompt will also unhide it, but if that
+    // event never fires (no HTTPS, file:// URL, etc.) the button still appears
+    // and leads to the manual install instructions modal.
     if (btn) {
-      btn.hidden = !(iosLike() && !isInstalled());
+      btn.hidden = isInstalled();
       btn.onclick = () => promptInstall();
     }
 
