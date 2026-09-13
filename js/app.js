@@ -1656,10 +1656,25 @@
   }
 
   const ACTIONS = {
-    "toggle-drawer": () => UI.toggleDrawer(),
-    // The brand icon+wordmark: a hard reload that lands on Home, so it doubles
-    // as the app's refresh control.
-    "go-home": () => { location.hash = "home"; location.reload(); },
+    "toggle-drawer": () => {
+      // On mobile (≤900px): toggle the slide-out drawer
+      // On desktop: toggle sidebar collapse/expand
+      if (window.innerWidth <= 900) {
+        UI.toggleDrawer();
+      } else {
+        UI.toggleSidebarCollapse();
+      }
+    },
+    // The brand icon+wordmark: when sidebar is collapsed, expand it.
+    // When sidebar is expanded, hard-reload to Home.
+    "go-home": () => {
+      const shell = document.querySelector(".app-shell");
+      if (shell && shell.classList.contains("side-collapsed")) {
+        UI.toggleSidebarCollapse(false);   // expand
+      } else {
+        location.hash = "home"; location.reload();
+      }
+    },
     // The tabs and the sidebar entry switch views without throwing away state.
     "show-home": showHome,
     "toggle-sidebar-collapse": () => UI.toggleSidebarCollapse(),

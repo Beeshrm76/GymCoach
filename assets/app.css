@@ -275,7 +275,7 @@ p { margin: 0 0 8px; }
 .side-collapsed .nav-label::before { content: "•••"; letter-spacing: .12em; }
 .side-collapsed .sidebar-scroll { padding: 10px 8px 10px; }
 
-.panel-toggle { flex: 0 0 auto; }
+
 
 /* ----------------------------------------------------------------- topbar */
 
@@ -306,7 +306,7 @@ p { margin: 0 0 8px; }
 .tab:hover { color: var(--text); border-color: var(--line-2); }
 .tab.active { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 10px transparent; }
 
-.drawer-btn { display: none; flex: 0 0 auto; font-size: 18px; }
+.drawer-btn { display: inline-grid; flex: 0 0 auto; font-size: 18px; }
 
 /* ------------------------------------------------------------------ views */
 
@@ -948,7 +948,7 @@ input::placeholder, textarea::placeholder { color: #888888; }
   .side-collapsed .nav-label .small-btn { display: revert; }
 
   .drawer-btn { display: inline-grid; }
-  .panel-toggle { display: none; }
+
 
   /* Rail drops below the list and scrolls with the page. */
   .workout-layout { grid-template-columns: minmax(0, 1fr); }
@@ -1096,7 +1096,7 @@ input::placeholder, textarea::placeholder { color: #888888; }
 .side-collapsed .sidebar-scroll{display:none}
 .side-collapsed .sidebar-head{justify-content:center;padding:14px 8px;min-height:var(--topbar-h)}
 .side-collapsed .sidebar-head .brand-text{display:none}
-.side-collapsed .sidebar-head .panel-toggle{display:block}
+
 .side-collapsed .sidebar{overflow:hidden}
 
 @media(max-width:900px){
@@ -1154,7 +1154,7 @@ input::placeholder, textarea::placeholder { color: #888888; }
 .side-collapsed .sidebar-head{justify-content:space-between;padding:12px 9px;min-height:var(--topbar-h)}
 .side-collapsed .sidebar-head .brand-text{display:none}
 .side-collapsed .sidebar-head .brand{justify-content:center}
-.side-collapsed .sidebar-head .panel-toggle{display:block}
+
 
 @media(max-width:900px){
   .top-intensity{display:none}

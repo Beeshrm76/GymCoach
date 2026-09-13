@@ -116,9 +116,14 @@ window.UI = (() => {
   function applyLayout() {
     shell()?.classList.toggle("side-collapsed", !!layout.sidebarCollapsed);
     workoutLayout()?.classList.toggle("rail-collapsed", !!layout.railCollapsed);
-    document.querySelectorAll("[data-action='toggle-sidebar-collapse']").forEach(b => {
-      b.textContent = layout.sidebarCollapsed ? "»" : "«";
-      b.title = layout.sidebarCollapsed ? "Expand panel" : "Minimize panel";
+    // Update the topbar ☰ button title based on sidebar state
+    document.querySelectorAll(".drawer-btn").forEach(b => {
+      b.title = layout.sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar";
+    });
+    // Update the brand logo button title
+    document.querySelectorAll(".brand-home-button").forEach(b => {
+      b.title = layout.sidebarCollapsed ? "Expand sidebar" : "GymCoach · Home";
+      b.setAttribute("aria-label", b.title);
     });
   }
 
