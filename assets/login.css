@@ -6,27 +6,27 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg-dark: #0a0e17;
-  --bg-card: rgba(15, 20, 35, 0.65);
-  --bg-card-hover: rgba(20, 28, 50, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-border-focus: rgba(130, 160, 255, 0.3);
-  --accent: #6c8cff;
-  --accent-glow: rgba(108, 140, 255, 0.35);
-  --accent-hover: #8da8ff;
-  --accent-secondary: #a78bfa;
-  --text-primary: #e8ecf4;
-  --text-secondary: #8892a8;
-  --text-muted: #5a6478;
-  --error: #ff6b6b;
-  --error-bg: rgba(255, 107, 107, 0.1);
-  --success: #51cf66;
-  --success-bg: rgba(81, 207, 102, 0.1);
-  --radius: 16px;
-  --radius-sm: 10px;
-  --radius-xs: 6px;
-  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --bg-dark: #040711;
+  --bg-card: rgba(14, 20, 36, 0.72);
+  --bg-card-hover: rgba(22, 32, 54, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-focus: rgba(0, 198, 255, 0.45);
+  --accent: #0077ed;
+  --accent-glow: rgba(0, 198, 255, 0.35);
+  --accent-hover: #0088ff;
+  --accent-secondary: #00c6ff;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --error: #ff453a;
+  --error-bg: rgba(255, 69, 58, 0.12);
+  --success: #30d158;
+  --success-bg: rgba(48, 209, 88, 0.12);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -63,33 +63,33 @@ body {
 
 .login-bg .orb-1 {
   width: 600px; height: 600px;
-  background: radial-gradient(circle, #6c8cff 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 119, 237, 0.45) 0%, rgba(30, 64, 175, 0.18) 55%, transparent 72%);
   top: -15%; left: -10%;
   animation-duration: 22s;
 }
 .login-bg .orb-2 {
   width: 500px; height: 500px;
-  background: radial-gradient(circle, #a78bfa 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.32) 0%, rgba(67, 56, 202, 0.15) 55%, transparent 72%);
   bottom: -10%; right: -8%;
   animation-duration: 18s;
   animation-delay: -5s;
 }
 .login-bg .orb-3 {
   width: 350px; height: 350px;
-  background: radial-gradient(circle, #38bdf8 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.32) 0%, rgba(14, 116, 144, 0.14) 55%, transparent 72%);
   top: 50%; left: 60%;
   transform: translate(-50%, -50%);
   animation-duration: 25s;
   animation-delay: -10s;
-  opacity: 0.25;
+  opacity: 0.3;
 }
 .login-bg .orb-4 {
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, #f472b6 0%, transparent 70%);
-  top: 20%; right: 20%;
-  animation-duration: 15s;
-  animation-delay: -3s;
-  opacity: 0.2;
+  width: 250px; height: 250px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.1) 55%, transparent 72%);
+  top: 15%; right: 15%;
+  animation-duration: 20s;
+  animation-delay: -4s;
+  opacity: 0.25;
 }
 
 @keyframes orb-float {
@@ -155,15 +155,15 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 64px; height: 64px;
-  border-radius: 18px;
+  width: 58px; height: 58px;
+  border-radius: 14px;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 800;
   color: #fff;
   margin-bottom: 16px;
-  box-shadow: 0 4px 20px transparent;
-  letter-spacing: -1px;
+  box-shadow: 0 4px 20px var(--accent-glow);
+  letter-spacing: 0.04em;
 }
 
 .login-brand h1 {
