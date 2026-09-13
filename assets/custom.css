@@ -849,7 +849,7 @@ button.brand:hover .brand-refresh{color:var(--accent);transform:rotate(140deg)}
   gap: 5px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px var(--accent-glow);
+  box-shadow: 0 2px 8px transparent;
 }
 
 .desired-dropdown-menu {
@@ -2422,143 +2422,344 @@ select#settingsProvider option {
 /* Universal Liquid Display Glass Base */
 .panel {
   position: relative !important;
-  background: linear-gradient(155deg, rgba(18, 24, 38, 0.78) 0%, rgba(9, 13, 21, 0.9) 100%) !important;
-  backdrop-filter: blur(28px) saturate(190%) brightness(104%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(104%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(11, 17, 33, 0.62) !important;
+  backdrop-filter: blur(30px) saturate(210%) brightness(108%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(210%) brightness(108%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 20px !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22),
-              inset 0 0 24px 0 rgba(255, 255, 255, 0.015),
-              0 16px 40px -6px rgba(0, 0, 0, 0.78),
-              0 4px 12px rgba(0, 0, 0, 0.45) !important;
+  box-shadow: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.38),
+              inset 0 0 20px 0 rgba(255, 255, 255, 0.02),
+              0 20px 50px -10px rgba(0, 0, 0, 0.75),
+              0 0 24px -2px rgba(0, 119, 237, 0.1) !important;
   transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease !important;
 }
 
 .panel:hover {
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.32),
-              inset 0 0 28px 0 rgba(255, 255, 255, 0.025),
-              0 22px 48px -8px rgba(0, 0, 0, 0.88),
-              0 6px 16px rgba(0, 0, 0, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: inset 0 2px 1.5px 0 rgba(255, 255, 255, 0.52),
+              0 26px 60px -10px rgba(0, 0, 0, 0.85),
+              0 0 32px rgba(56, 189, 248, 0.18) !important;
 }
 
-/* Shade 1: Hero Panels — Deep Royal Sapphire Liquid Glass */
+/* Shade 1: Hero Panels — Deep Royal Sapphire & Cyan Liquid Glass */
 .home-hero,
 .session-hero {
-  background: linear-gradient(155deg, rgba(24, 36, 62, 0.84) 0%, rgba(12, 18, 32, 0.94) 100%) !important;
-  border: 1px solid rgba(65, 145, 255, 0.28) !important;
-  box-shadow: inset 0 1px 2px 0 rgba(140, 200, 255, 0.42),
-              inset 0 0 32px 0 rgba(41, 151, 255, 0.05),
-              0 18px 46px -6px rgba(0, 0, 0, 0.82),
-              0 0 32px -4px rgba(41, 151, 255, 0.14) !important;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(0, 119, 237, 0.08) 45%, rgba(15, 23, 42, 0.65) 100%), rgba(10, 16, 32, 0.62) !important;
+  border: 1px solid rgba(56, 189, 248, 0.32) !important;
+  box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
+              inset 0 0 32px 0 rgba(0, 119, 237, 0.08),
+              0 22px 52px -8px rgba(0, 0, 0, 0.8),
+              0 0 36px -4px rgba(0, 119, 237, 0.22) !important;
 }
 
-/* Shade 2: Analytics & Chart Cards — Midnight Cobalt Liquid Glass */
+/* Shade 2: Analytics & Chart Cards — Cyber Cobalt & Amethyst Glass */
 .home-chart-card {
-  background: linear-gradient(155deg, rgba(19, 27, 46, 0.8) 0%, rgba(10, 14, 25, 0.9) 100%) !important;
-  border: 1px solid rgba(80, 160, 255, 0.18) !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(160, 210, 255, 0.26),
-              0 16px 38px -6px rgba(0, 0, 0, 0.78) !important;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(15, 23, 42, 0.65) 100%), rgba(11, 16, 34, 0.62) !important;
+  border: 1px solid rgba(168, 85, 247, 0.28) !important;
+  box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.36),
+              0 20px 48px -8px rgba(0, 0, 0, 0.78),
+              0 0 30px -4px rgba(147, 51, 234, 0.15) !important;
 }
 
 /* Shade 3: Side Tools & Right Rail — Elevated Obsidian Indigo Liquid Glass */
 .workout-side-panel {
-  background: linear-gradient(175deg, rgba(22, 28, 48, 0.84) 0%, rgba(11, 15, 27, 0.94) 100%) !important;
-  backdrop-filter: blur(34px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(34px) saturate(190%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(175deg, rgba(22, 30, 52, 0.7) 0%, rgba(10, 14, 26, 0.82) 100%) !important;
+  backdrop-filter: blur(34px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(210%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
   border-radius: 20px !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.24),
-              0 22px 50px -6px rgba(0, 0, 0, 0.88) !important;
+  box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.32),
+              0 24px 54px -6px rgba(0, 0, 0, 0.88),
+              0 0 28px rgba(99, 102, 241, 0.14) !important;
 }
 
 .rail-card,
 .playlist-card {
-  background: linear-gradient(155deg, rgba(25, 32, 52, 0.76) 0%, rgba(13, 17, 28, 0.86) 100%) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(16, 22, 38, 0.68) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.11) !important;
-  border-radius: 14px !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.2), 0 12px 30px rgba(0, 0, 0, 0.68) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28), 0 14px 32px rgba(0, 0, 0, 0.7) !important;
 }
 
-/* Shade 4: Cardio Strip & Quick Action Panels — Subtle Cyan-Tinted Midnight Glass */
+/* Shade 4: Cardio Strip & Quick Action Panels — Radiant Emerald & Cyan Frost Glass */
 .cardio-strip,
 .home-install {
-  background: linear-gradient(155deg, rgba(16, 32, 46, 0.8) 0%, rgba(9, 18, 27, 0.9) 100%) !important;
-  border: 1px solid rgba(56, 189, 248, 0.24) !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(125, 225, 255, 0.32),
-              0 16px 38px -6px rgba(0, 0, 0, 0.78) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 50%, rgba(15, 23, 42, 0.65) 100%), rgba(8, 20, 30, 0.62) !important;
+  border: 1px solid rgba(52, 211, 153, 0.3) !important;
+  box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.38),
+              0 20px 46px -8px rgba(0, 0, 0, 0.78),
+              0 0 28px -4px rgba(16, 185, 129, 0.16) !important;
 }
 
-/* Shade 5: Recovery & Body Physique Panels — Twilight Slate Liquid Glass */
+/* Shade 5: Recovery & Body Physique Panels — Twilight Amethyst Liquid Glass */
 .home-recovery-card,
 #desiredBodyPanel {
-  background: linear-gradient(155deg, rgba(25, 24, 46, 0.8) 0%, rgba(13, 14, 27, 0.9) 100%) !important;
-  border: 1px solid rgba(165, 140, 255, 0.22) !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(200, 180, 255, 0.3),
-              0 16px 38px -6px rgba(0, 0, 0, 0.78) !important;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(236, 72, 153, 0.06) 50%, rgba(15, 23, 42, 0.65) 100%), rgba(20, 16, 36, 0.62) !important;
+  border: 1px solid rgba(192, 132, 252, 0.3) !important;
+  box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.38),
+              0 20px 46px -8px rgba(0, 0, 0, 0.78),
+              0 0 28px -4px rgba(168, 85, 247, 0.16) !important;
 }
 
 /* Shade 6: Build Project & Days Management Cards */
 .manage-day-card {
-  background: linear-gradient(155deg, rgba(22, 28, 44, 0.76) 0%, rgba(11, 15, 25, 0.86) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 14px !important;
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.18),
-              0 12px 26px -4px rgba(0, 0, 0, 0.65) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(16, 22, 38, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.24),
+              0 14px 30px -4px rgba(0, 0, 0, 0.68) !important;
 }
 .manage-day-card.is-rest {
-  background: linear-gradient(155deg, rgba(16, 20, 30, 0.68) 0%, rgba(9, 12, 18, 0.8) 100%) !important;
-  border: 1px dashed rgba(255, 255, 255, 0.14) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(12, 16, 28, 0.58) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Shade 7: Modal Cards — Apple High-Density Frosted Crystal Glass */
 .modal-card,
 .settings-modal-card {
-  background: linear-gradient(155deg, rgba(22, 28, 46, 0.92) 0%, rgba(10, 14, 24, 0.96) 100%) !important;
-  backdrop-filter: blur(42px) saturate(210%) brightness(106%) !important;
-  -webkit-backdrop-filter: blur(42px) saturate(210%) brightness(106%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(14, 20, 36, 0.88) !important;
+  backdrop-filter: blur(44px) saturate(220%) brightness(108%) !important;
+  -webkit-backdrop-filter: blur(44px) saturate(220%) brightness(108%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 24px !important;
-  box-shadow: inset 0 1px 2px 0 rgba(255, 255, 255, 0.34),
-              0 30px 76px -12px rgba(0, 0, 0, 0.96) !important;
+  box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
+              0 32px 80px -12px rgba(0, 0, 0, 0.96),
+              0 0 40px rgba(0, 119, 237, 0.2) !important;
 }
 
-/* Harmonized Inner Chips & Stat Elements (Eliminate Chaotic Clash) */
+/* --- Vibrant Liquid Glass Stat Pills & Metric Chips --- */
+.stat,
+.w-stat-pill {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(16, 24, 44, 0.58) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.28), 0 6px 18px rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+.stat:hover,
+.w-stat-pill:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.26) !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.42), 0 10px 24px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Vibrant Curated Color-Coded Stat Metrics */
+/* Stat 1: Sessions / Exercises -> Electric Cyan */
+.hero-stats .stat:nth-child(1) b,
+#homeHeroStats .stat:nth-child(1) b {
+  color: #38bdf8 !important;
+}
+
+/* Stat 2: Streak (Home) -> Radiant Amber / Completion (Today) -> Apple Emerald */
+#homeHeroStats .stat:nth-child(2) b {
+  color: #fbbf24 !important;
+}
+.session-hero .hero-stats .stat:nth-child(2) b {
+  color: #34d399 !important;
+}
+
+/* Stat 3: Sets Recorded / Focus -> Lavender Violet */
+#homeHeroStats .stat:nth-child(3) b,
+.session-hero .hero-stats .stat:nth-child(3) b {
+  color: #c084fc !important;
+}
+
+/* Stat 4: Effective Volume (Home) / Muscles (Today) -> Vibrant Cyan / Blue */
+#homeHeroStats .stat:nth-child(4) b,
+.session-hero .hero-stats .stat:nth-child(4) b {
+  color: #38bdf8 !important;
+}
+
+/* Stat 5: Project Complete -> Apple Emerald */
+#homeHeroStats .stat:nth-child(5) b {
+  color: #34d399 !important;
+}
+
+.stat small {
+  color: rgba(255, 255, 255, 0.72) !important;
+  font-weight: 600 !important;
+  letter-spacing: .08em !important;
+}
+
+/* --- Exercise Rows: Liquid Glass Tiles --- */
+.exercise-row {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(14, 20, 36, 0.65) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border-left: 4px solid #38bdf8 !important;
+  border-radius: 16px !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.24), 0 10px 26px -4px rgba(0, 0, 0, 0.7) !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+
+.exercise-row:hover {
+  transform: translateY(-2px) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  border-left-color: #00c6ff !important;
+  box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.4),
+              0 16px 36px -4px rgba(0, 0, 0, 0.82),
+              0 0 22px rgba(56, 189, 248, 0.22) !important;
+}
+
+.exercise-row.started {
+  border-left-color: #fbbf24 !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.24), 0 10px 26px -4px rgba(0, 0, 0, 0.7), 0 0 18px rgba(251, 191, 36, 0.18) !important;
+}
+
+.exercise-row.completed {
+  border-left-color: #34d399 !important;
+  opacity: 0.88 !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.24), 0 10px 26px -4px rgba(0, 0, 0, 0.7), 0 0 18px rgba(52, 211, 153, 0.18) !important;
+}
+
+/* --- Buttons: Vibrant iOS Specular Gradients --- */
+.btn.primary {
+  background: linear-gradient(135deg, #0070f3 0%, #00c6ff 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.42),
+              0 4px 18px rgba(0, 198, 255, 0.38) !important;
+  font-weight: 600 !important;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
+}
+.btn.primary:hover {
+  transform: translateY(-1px) !important;
+  filter: brightness(1.08) !important;
+  box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.5),
+              0 6px 24px rgba(0, 198, 255, 0.48) !important;
+}
+.btn:not(.primary) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(20, 28, 48, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18) !important;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease !important;
+}
+.btn:not(.primary):hover {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* --- Topbar & View Tabs --- */
+.topbar {
+  background: rgba(6, 10, 20, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.tab.active {
+  background: linear-gradient(135deg, #0070f3 0%, #00c6ff 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 14px rgba(0, 198, 255, 0.4) !important;
+}
+
+/* --- Progress & Intensity Bars --- */
+.progress-track {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+.progress-fill {
+  background: linear-gradient(90deg, #0070f3 0%, #00c6ff 50%, #34d399 100%) !important;
+  box-shadow: 0 0 14px rgba(0, 198, 255, 0.5) !important;
+}
+.top-intensity-bar {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+.top-intensity-indicator {
+  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #f472b6 100%) !important;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6) !important;
+}
+
+/* Harmonized Inner Chips & Stat Elements */
 .model-stat,
 .signal,
 .kv-row,
 .trend-row,
-.record-row,
-.w-stat-pill {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+.record-row {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 12px !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
 }
 
 .home-model-badge {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   color: var(--text-dim) !important;
   backdrop-filter: blur(12px) !important;
 }
 .home-model-badge.model-ensemble {
-  background: rgba(56, 189, 248, 0.12) !important;
-  border-color: rgba(56, 189, 248, 0.35) !important;
+  background: rgba(56, 189, 248, 0.14) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
   color: #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25) !important;
 }
 .home-model-badge.model-holt {
-  background: rgba(41, 151, 255, 0.12) !important;
-  border-color: rgba(41, 151, 255, 0.35) !important;
+  background: rgba(0, 119, 237, 0.14) !important;
+  border-color: rgba(0, 119, 237, 0.4) !important;
   color: #2997ff !important;
+  box-shadow: 0 0 12px rgba(0, 119, 237, 0.25) !important;
 }
 .home-model-badge.model-mean,
 .home-model-badge.model-none {
-  background: rgba(255, 159, 10, 0.12) !important;
-  border-color: rgba(255, 159, 10, 0.35) !important;
+  background: rgba(255, 159, 10, 0.14) !important;
+  border-color: rgba(255, 159, 10, 0.4) !important;
   color: #ff9f0a !important;
+  box-shadow: 0 0 12px rgba(255, 159, 10, 0.25) !important;
+}
+
+/* --- Apple Liquid Toggle & Exercise Thumbnails --- */
+.exercise-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.thumb-fallback {
+  color: #38bdf8;
+  font-size: 20px;
+}
+
+.check-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+.check-btn:hover {
+  border-color: #34d399;
+  color: #34d399;
+  transform: scale(1.1);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.35);
+}
+.check-btn.checked {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+  border-color: #34d399 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 14px rgba(52, 211, 153, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
 }
 
 

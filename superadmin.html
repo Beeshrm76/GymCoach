@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e17">
+  <meta name="description" content="GymCoach Super Admin — Manage admins and system defaults.">
+  <title>GymCoach — Super Admin Panel</title>
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="assets/admin.css">
+  <style>
+    .brand-crown { font-size: 1.2rem; color: #ffcc00; margin-left: 4px; }
+  </style>
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="admin-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+  </div>
+
+  <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-brand">
+        <a href="index.html" class="sidebar-brand-inner">
+          <div class="sidebar-logo">GC</div>
+          <div>
+            <h2>GymCoach<span class="brand-crown">👑</span></h2>
+            <small>Super Admin</small>
+          </div>
+        </a>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
+        <button class="nav-item" data-section="admins"><span class="nav-icon">🛡</span> Manage Admins</button>
+        <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> All Users</button>
+        <button class="nav-item" data-section="defaults"><span class="nav-icon">⚙</span> System Settings</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="nav-item" onclick="window.location.href='index.html'"><span class="nav-icon">←</span> Back to App</button>
+        <button class="nav-item" id="adminLogoutBtn"><span class="nav-icon">⏻</span> Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <section class="admin-section active" id="sectionDashboard">
+        <div class="admin-header">
+          <div>
+            <h1>Super Admin Dashboard</h1>
+            <p>System overview</p>
+          </div>
+        </div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="statTotalUsers">—</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🛡</div>
+            <div class="stat-value" id="statAdmins">—</div>
+            <div class="stat-label">Total Admins</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-section" id="sectionAdmins" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>Manage Admins</h1>
+            <p>Create and manage administrator accounts</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn primary" id="btnCreateAdmin">+ Create Admin</button>
+          </div>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminsTableBody">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-section" id="sectionUsers" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>All Users</h1>
+            <p>View all system users and assign to admins</p>
+          </div>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Assigned Admin ID</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <section class="admin-section" id="sectionDefaults" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>System Settings</h1>
+            <p>Manage application defaults</p>
+          </div>
+        </div>
+        <p style="color:var(--text-secondary);">Only Super Admins can modify these settings.</p>
+      </section>
+
+    </main>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/superadmin.js"></script>
+</body>
+</html>

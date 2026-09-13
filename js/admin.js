@@ -1,0 +1,73 @@
+// admin.js
+document.addEventListener("DOMContentLoaded", async () => {
+  const supabase = window.supabaseClient;
+
+  // Wait for auth init
+  await window.Auth.init();
+
+  if (!window.Auth.isLoggedIn() || (window.Auth.getUser().role !== 'ADMIN' && window.Auth.getUser().role !== 'SUPER_ADMIN')) {
+    document.body.innerHTML = "<h2 style='color:white;text-align:center;padding:50px;'>Access Denied. Admin only.</h2>";
+    setTimeout(() => { window.location.href = "index.html"; }, 2000);
+    return;
+  }
+
+  // Basic navigation
+  const navItems = document.querySelectorAll(".nav-item[data-section]");
+  const sections = document.querySelectorAll(".admin-section");
+
+  navItems.forEach(btn => {
+    btn.addEventListener("click", () => {
+      navItems.forEach(n => n.classList.remove("active"));
+      sections.forEach(s => s.style.display = "none");
+      btn.classList.add("active");
+      const sectionId = "section" + btn.dataset.section.charAt(0).toUpperCase() + btn.dataset.section.slice(1);
+      const target = document.getElementById(sectionId);
+      if (target) target.style.display = "block";
+    });
+  });
+
+  document.getElementById("adminLogoutBtn")?.addEventListener("click", () => window.Auth.logout());
+
+  // Load data (RLS will enforce they only see assigned users)
+  async function loadData() {
+    try {
+      const { data: users, error } = await supabase
+         .from('profiles')
+         .select('*')
+         .eq('role', 'USER'); // RLS automatically filters to assigned users
+      
+      if (error) throw error;
+
+      document.getElementById('statTotalUsers').textContent = users.length;
+      document.getElementById('statActiveUsers').textContent = users.filter(u => u.status === 'ACTIVE').length;
+
+      // Render Users
+      const usersTbody = document.getElementById('usersTableBody');
+      if (users.length === 0) {
+        usersTbody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned users found.</td></tr>`;
+      } else {
+        usersTbody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.username}</td>
+            <td>${u.email}</td>
+            <td>${u.display_name || '—'}</td>
+            <td>${u.status}</td>
+            <td>
+               <button class="btn small-btn" onclick="viewUserWorkouts('${u.id}')">View Data</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load admin data. You might not have permission.");
+    }
+  }
+
+  window.viewUserWorkouts = async (userId) => {
+     alert(`Feature coming soon: Query sync_data table for user ${userId} and visualize their workouts.`);
+  };
+
+  loadData();
+});

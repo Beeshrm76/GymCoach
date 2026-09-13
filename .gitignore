@@ -5,3 +5,8 @@ Thumbs.db
 videos\
 images\
 music\
+
+# Server
+node_modules/
+server/data/
+server/sessions/

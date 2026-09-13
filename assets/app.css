@@ -23,22 +23,26 @@
    ========================================================================== */
 
 :root {
-  --bg: #000000;
-  --bg-2: #06080c;
-  --panel: #0c1017;
-  --panel-2: #131924;
-  --panel-3: #1a2232;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-2: rgba(255, 255, 255, 0.14);
+  --bg: #040711;
+  --bg-2: #080d1a;
+  --panel: rgba(14, 20, 36, 0.62);
+  --panel-2: rgba(22, 32, 54, 0.72);
+  --panel-3: rgba(30, 42, 70, 0.82);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-2: rgba(255, 255, 255, 0.2);
   --text: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.82);
-  --text-mute: rgba(255, 255, 255, 0.52);
-  --accent: #2997ff;
-  --accent-2: #38bdf8;
-  --accent-glow: rgba(41, 151, 255, 0.28);
+  --text-dim: rgba(255, 255, 255, 0.86);
+  --text-mute: rgba(255, 255, 255, 0.58);
+  --accent: #0077ed;
+  --accent-2: #00c6ff;
+  --accent-glow: rgba(0, 198, 255, 0.35);
   --warn: #ff9f0a;
   --danger: #ff453a;
   --ok: #30d158;
+  --cyan: #38bdf8;
+  --emerald: #34d399;
+  --amber: #fbbf24;
+  --violet: #c084fc;
 
   --side-w: 268px;      /* sidebar grid track  */
   --rail-w: 320px;      /* right rail track    */
@@ -46,13 +50,13 @@
   --r: 20px;
   --r-sm: 12px;
   --gap: 16px;
-  --shadow: 0 14px 36px -4px rgba(0, 0, 0, .75);
+  --shadow: 0 16px 40px -6px rgba(0, 0, 0, .8);
   --mono: -apple-system-monospaced, ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; background: #000000; overflow-x: hidden; }
+html { -webkit-text-size-adjust: 100%; background: #040711; overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -60,14 +64,77 @@ body {
   width: 100%;
   max-width: 100vw;
   min-height: 100dvh;
-  background:
-    radial-gradient(1200px 650px at 15% -10%, rgba(26, 44, 76, 0.18) 0%, transparent 60%),
-    radial-gradient(1000px 500px at 95% 15%, rgba(18, 32, 56, 0.12) 0%, transparent 55%),
-    radial-gradient(900px 600px at 50% 100%, rgba(14, 24, 42, 0.14) 0%, transparent 60%),
-    #000000;
+  background: #040711;
   color: var(--text);
   font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   padding-bottom: env(safe-area-inset-bottom);
+  position: relative;
+}
+
+/* --- Dynamic Liquid Ambient Canvas --- */
+.liquid-ambient-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  background: #040711;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(95px);
+  opacity: 0.82;
+  transform: translateZ(0);
+  pointer-events: none;
+  animation: ambientFloat 24s ease-in-out infinite alternate;
+}
+
+.ambient-orb.orb-1 {
+  top: -140px;
+  left: 12%;
+  width: 620px;
+  height: 540px;
+  background: radial-gradient(circle, rgba(0, 119, 237, 0.45) 0%, rgba(30, 64, 175, 0.18) 55%, transparent 72%);
+}
+
+.ambient-orb.orb-2 {
+  top: 40px;
+  right: -90px;
+  width: 650px;
+  height: 590px;
+  background: radial-gradient(circle, rgba(147, 51, 234, 0.32) 0%, rgba(67, 56, 202, 0.15) 55%, transparent 72%);
+  animation-duration: 28s;
+  animation-delay: -6s;
+}
+
+.ambient-orb.orb-3 {
+  bottom: 8%;
+  left: -110px;
+  width: 560px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.32) 0%, rgba(14, 116, 144, 0.14) 55%, transparent 72%);
+  animation-duration: 32s;
+  animation-delay: -12s;
+}
+
+.ambient-orb.orb-4 {
+  bottom: -160px;
+  right: 18%;
+  width: 680px;
+  height: 570px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.1) 55%, transparent 72%);
+  animation-duration: 22s;
+  animation-delay: -4s;
+}
+
+@keyframes ambientFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(32px, -24px) scale(1.06); }
+  100% { transform: translate(-26px, 22px) scale(0.96); }
 }
 
 body.no-scroll { overflow: hidden; }
@@ -90,15 +157,11 @@ p { margin: 0 0 8px; }
 /* ------------------------------------------------------------------ shell */
 
 .app-shell {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: var(--side-w) minmax(0, 1fr);
   align-items: start;
-  /* Deliberately NOT transitioned. `transition: grid-template-columns` looks
-     tempting here, but when the track is a var() Chrome keeps reporting - and
-     laying out - the old width, so the collapse silently does nothing. Verified
-     in the browser: with the transition the track stayed 268px, without it the
-     same click gives 74px. The panels snap, which for a collapse toggle reads as
-     responsive anyway. */
 }
 
 .app-shell.side-collapsed { --side-w: 74px; }
@@ -241,7 +304,7 @@ p { margin: 0 0 8px; }
   border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
 }
 .tab:hover { color: var(--text); border-color: var(--line-2); }
-.tab.active { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 10px var(--accent-glow); }
+.tab.active { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 10px transparent; }
 
 .drawer-btn { display: none; flex: 0 0 auto; font-size: 18px; }
 
@@ -499,8 +562,8 @@ p { margin: 0 0 8px; }
 }
 .btn:hover { border-color: var(--accent); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 12px var(--accent-glow); }
-.btn.primary:hover { filter: brightness(1.1); box-shadow: 0 4px 18px var(--accent-glow); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #ffffff; font-weight: 600; box-shadow: 0 2px 12px transparent; }
+.btn.primary:hover { filter: brightness(1.1); box-shadow: 0 4px 18px transparent; }
 .btn.accent { background: linear-gradient(135deg, var(--accent-2), #34c69a); border-color: var(--accent-2); color: #04231a; font-weight: 600; }
 .btn.danger { color: var(--danger); border-color: rgba(255, 107, 107, .42); background: rgba(255, 107, 107, .08); }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #22060a; font-weight: 600; }
@@ -544,7 +607,7 @@ input, select, textarea {
   border: 1px solid var(--line-2); border-radius: 8px;
   font: inherit; font-size: 14px; text-transform: none; letter-spacing: normal;
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px transparent; }
 textarea { resize: vertical; }
 input::placeholder, textarea::placeholder { color: #888888; }
 

@@ -23,11 +23,18 @@
   <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.png">
   <link rel="apple-touch-startup-image" href="assets/icons/icon-512.png">
 
-  <link rel="stylesheet" href="assets/app.css">
-  <link rel="stylesheet" href="assets/custom.css?v=17.2">
+  <link rel="stylesheet" href="assets/app.css?v=18.0">
+  <link rel="stylesheet" href="assets/custom.css?v=18.0">
 </head>
 
 <body>
+
+  <div class="liquid-ambient-canvas" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+    <div class="ambient-orb orb-4"></div>
+  </div>
 
   <div class="drawer-scrim" aria-hidden="true"></div>
 
@@ -95,6 +102,13 @@
             </button>
           </div>
         </div>
+
+        <div class="nav-section">
+          <div class="nav-label"><span>Account</span></div>
+          <div id="authUserNav" class="nav-list">
+            <!-- Populated by js/auth.js -->
+          </div>
+        </div>
       </div>
     </aside>
 
@@ -102,8 +116,6 @@
     <div class="app-content">
 
       <header class="topbar">
-        <button class="icon-btn drawer-btn" data-action="toggle-drawer"
-          title="Open menu" aria-label="Open navigation menu">☰</button>
         <div class="topbar-title">
           <b id="sessionProject">GymCoach</b>
           <small><span id="sessionDay">—</span> · <span id="dateLabel"></span> · <span
@@ -1134,24 +1146,28 @@
   <!-- PDF export is optional: report.js checks for the library and falls back to
      Markdown/JSON if the CDN is unreachable (e.g. offline). -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script src="data/templates.js"></script>
-  <script src="data/seed-project.js"></script>
-  <script src="data/exercises.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/mediaStore.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/ml.js"></script>
-  <script src="js/pipeline.js"></script>
-  <script src="js/youtubeExtractor.js"></script>
-  <script src="js/settings.js?v=17.2"></script>
-  <script src="js/player.js"></script>
-  <script src="js/autocomplete.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/manage.js"></script>
-  <script src="js/report.js"></script>
-  <script src="js/wearable.js"></script>
-  <script src="js/home.js"></script>
+  <script src="data/templates.js?v=18.0"></script>
+  <script src="data/seed-project.js?v=18.0"></script>
+  <script src="data/exercises.js?v=18.0"></script>
+  <script src="js/ui.js?v=18.0"></script>
+  <script src="js/supabaseClient.js?v=18.0"></script>
+  <script src="js/auth.js?v=18.0"></script>
+  <script src="js/sync.js?v=18.0"></script>
+  <script src="js/mediaStore.js?v=18.0"></script>
+  <script src="js/store.js?v=18.0"></script>
+  <script src="js/ml.js?v=18.0"></script>
+  <script src="js/pipeline.js?v=18.0"></script>
+  <script src="js/youtubeExtractor.js?v=18.0"></script>
+  <script src="js/settings.js?v=18.0"></script>
+  <script src="js/player.js?v=18.0"></script>
+  <script src="js/autocomplete.js?v=18.0"></script>
+  <script src="js/app.js?v=18.0"></script>
+  <script src="js/manage.js?v=18.0"></script>
+  <script src="js/report.js?v=18.0"></script>
+  <script src="js/wearable.js?v=18.0"></script>
+  <script src="js/home.js?v=18.0"></script>
 
 </body>
 

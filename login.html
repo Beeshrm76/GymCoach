@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e17">
+  <meta name="description" content="GymCoach — Sign in to your workout account or create a new one.">
+  <title>GymCoach — Login</title>
+
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="assets/login.css">
+  <style>
+    .login-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .login-checkbox input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .forgot-link {
+      color: var(--accent);
+      font-size: 13px;
+      text-decoration: none;
+      margin-top: 1rem;
+      display: inline-block;
+    }
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+    .forgot-form {
+      display: none;
+    }
+    .forgot-form.active {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Animated background orbs -->
+  <div class="login-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
+
+  <div class="login-page">
+    <div class="login-card">
+
+      <!-- Brand -->
+      <div class="login-brand">
+        <div class="login-logo">GC</div>
+        <h1>GymCoach</h1>
+        <p>Sign in to track your workouts</p>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="login-tabs">
+        <button class="login-tab active" data-tab="login" id="tabLogin">Sign In</button>
+        <button class="login-tab" data-tab="register" id="tabRegister">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="login-form active" id="loginForm" autocomplete="on">
+        <div class="form-group">
+          <label for="loginUsername">Username or Email</label>
+          <input class="form-input" type="text" id="loginUsername" name="username"
+            placeholder="Enter your username or email" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input class="form-input" type="password" id="loginPassword" name="password"
+            placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+        
+        <label class="login-checkbox">
+          <input type="checkbox" id="loginRememberMe" checked> Remember me
+        </label>
+
+        <button type="submit" class="login-btn" id="loginBtn">
+          <span class="spinner"></span>
+          <span class="btn-text">Sign In</span>
+        </button>
+
+        <div style="text-align: center;">
+          <a href="#" class="forgot-link" id="showForgotBtn">Forgot Password?</a>
+        </div>
+      </form>
+
+      <!-- Forgot Password Form -->
+      <form class="login-form forgot-form" id="forgotForm" autocomplete="off">
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;text-align:center;">Enter your email to receive a password reset link.</p>
+        <div class="form-group">
+          <label for="forgotEmail">Email</label>
+          <input class="form-input" type="email" id="forgotEmail" name="email"
+            placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <button type="submit" class="login-btn" id="forgotBtn">
+          <span class="spinner"></span>
+          <span class="btn-text">Send Reset Link</span>
+        </button>
+        <div style="text-align: center;">
+          <a href="#" class="forgot-link" id="backToLoginBtn">Back to Login</a>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form class="login-form" id="registerForm" autocomplete="on">
+        <div class="form-group">
+          <label for="regUsername">Username</label>
+          <input class="form-input" type="text" id="regUsername" name="username"
+            placeholder="Choose a username (min 3 chars)" required minlength="3" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <input class="form-input" type="email" id="regEmail" name="email"
+            placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="regDisplayName">Display Name (optional)</label>
+          <input class="form-input" type="text" id="regDisplayName" name="displayName"
+            placeholder="How should we greet you?" autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <input class="form-input" type="password" id="regPassword" name="password"
+            placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="regConfirmPassword">Confirm Password</label>
+          <input class="form-input" type="password" id="regConfirmPassword" name="confirmPassword"
+            placeholder="Repeat password" required minlength="6" autocomplete="new-password">
+        </div>
+        <button type="submit" class="login-btn" id="registerBtn">
+          <span class="spinner"></span>
+          <span class="btn-text">Create Account</span>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="login-divider">or</div>
+
+      <!-- Skip / Continue without account -->
+      <button class="login-skip" id="skipBtn">Continue without an account (Offline Mode)</button>
+
+      <p class="login-footer">
+        Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to the cloud.
+      </p>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const supabase = window.supabaseClient;
+
+      // ── Tab switching ───────────────────────────────────────
+      const tabs = document.querySelectorAll(".login-tab");
+      const loginForm = $("loginForm");
+      const registerForm = $("registerForm");
+      const forgotForm = $("forgotForm");
+
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          tabs.forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          const isLogin = tab.dataset.tab === "login";
+          loginForm.classList.toggle("active", isLogin);
+          registerForm.classList.toggle("active", !isLogin);
+          forgotForm.classList.remove("active");
+        });
+      });
+
+      $("showForgotBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        loginForm.classList.remove("active");
+        forgotForm.classList.add("active");
+      });
+
+      $("backToLoginBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        forgotForm.classList.remove("active");
+        loginForm.classList.add("active");
+      });
+
+      // ── Toast helper ────────────────────────────────────────
+      function toast(msg, type = "error") {
+        document.querySelectorAll(".login-toast").forEach(t => t.remove());
+        const el = document.createElement("div");
+        el.className = `login-toast ${type}`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => {
+          el.classList.add("out");
+          setTimeout(() => el.remove(), 300);
+        }, 4000);
+      }
+
+      // ── Login ───────────────────────────────────────────────
+      loginForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const btn = $("loginBtn");
+        btn.classList.add("loading");
+        btn.disabled = true;
+        
+        try {
+          const inputVal = $("loginUsername").value.trim();
+          const password = $("loginPassword").value;
+          const rememberMe = $("loginRememberMe").checked;
+
+          let emailToUse = inputVal;
+
+          // If the input doesn't look like an email, assume it's a username
+          if (!inputVal.includes('@')) {
+            const { data: resolvedEmail, error: rpcError } = await supabase.rpc('resolve_username_to_email', { p_username: inputVal });
+            if (rpcError) throw new Error("Could not verify username. " + rpcError.message);
+            if (!resolvedEmail) throw new Error("Username not found.");
+            emailToUse = resolvedEmail;
+          }
+
+          // Before signing in, we set the storage mechanism based on Remember Me
+          // Supabase Auth stores tokens in localStorage by default.
+          // However, we can't easily swap the global client's storage post-creation without re-instantiating.
+          // Wait, supabase-js handles this internally if we configure it, but for our existing global client,
+          // the simplest way is to manually clear localStorage on close if Remember Me is false.
+          // Better yet, we just set a flag in sessionStorage.
+          if (!rememberMe) {
+             sessionStorage.setItem("gymcoach_no_remember", "true");
+          } else {
+             sessionStorage.removeItem("gymcoach_no_remember");
+          }
+
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: emailToUse,
+            password: password
+          });
+          
+          if (error) throw error;
+          
+          toast("Welcome back!", "success");
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 800);
+        } catch (err) {
+          toast(err.message);
+        } finally {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+        }
+      });
+
+      // ── Register ────────────────────────────────────────────
+      registerForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const btn = $("registerBtn");
+        
+        const username = $("regUsername").value.trim();
+        const email = $("regEmail").value.trim();
+        const displayName = $("regDisplayName").value.trim();
+        const password = $("regPassword").value;
+        const confirmPassword = $("regConfirmPassword").value;
+
+        if (password !== confirmPassword) {
+          toast("Passwords do not match.");
+          return;
+        }
+
+        btn.classList.add("loading");
+        btn.disabled = true;
+        
+        try {
+          const { data: isAvailable, error: rpcError } = await supabase.rpc('check_username_available', { p_username: username });
+          
+          if (rpcError) throw new Error("Could not verify username availability.");
+          if (isAvailable === false) {
+             throw new Error("Username is already in use.");
+          }
+
+          const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+              data: {
+                username: username,
+                display_name: displayName,
+                role: 'USER'
+              }
+            }
+          });
+          
+          if (error) throw error;
+          
+          toast("Account created! Redirecting…", "success");
+          setTimeout(() => { window.location.href = "index.html"; }, 800);
+        } catch (err) {
+          toast(err.message);
+        } finally {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+        }
+      });
+
+      // ── Forgot Password ─────────────────────────────────────
+      forgotForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const btn = $("forgotBtn");
+        btn.classList.add("loading");
+        btn.disabled = true;
+
+        try {
+          const email = $("forgotEmail").value.trim();
+          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + '/login.html'
+          });
+          
+          if (error) throw error;
+          
+          toast("Password reset email sent!", "success");
+          $("forgotEmail").value = "";
+          setTimeout(() => {
+            forgotForm.classList.remove("active");
+            loginForm.classList.add("active");
+          }, 2000);
+        } catch (err) {
+          toast(err.message);
+        } finally {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+        }
+      });
+
+      // ── Skip ────────────────────────────────────────────────
+      $("skipBtn").addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+
+      // ── Auto-redirect if already logged in ──────────────────
+      (async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            window.location.href = "index.html";
+          }
+        } catch { /* Not logged in, stay on login page */ }
+      })();
+    })();
+  </script>
+</body>
+</html>

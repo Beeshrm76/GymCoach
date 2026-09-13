@@ -1,6 +1,6 @@
 /* sw.js — offline cache */
 
-const VERSION = "gymcoach-v16-1";
+const VERSION = "gymcoach-v18-0";
 const CORE = `${VERSION}-core`;
 const RUNTIME = `${VERSION}-runtime`;
 
@@ -17,15 +17,20 @@ const FILES = [
   "./assets/icons/icon-maskable-512.png",
   "./data/templates.js",
   "./data/seed-project.js",
+  "./data/exercises.js",
   "./js/ui.js",
   "./js/mediaStore.js",
   "./js/store.js",
   "./js/ml.js",
   "./js/pipeline.js",
+  "./js/youtubeExtractor.js",
   "./js/settings.js",
+  "./js/player.js",
+  "./js/autocomplete.js",
   "./js/app.js",
   "./js/manage.js",
   "./js/report.js",
+  "./js/wearable.js",
   "./js/home.js"
 ];
 

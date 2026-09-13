@@ -195,6 +195,36 @@ window.Settings = (() => {
     return get();
   }
 
+  // Fetch admin-configured defaults from the server and merge into state.
+  // Server defaults act as a baseline — explicit user overrides in localStorage
+  // take priority. This runs once on load and is non-blocking.
+  async function mergeServerDefaults() {
+    if (typeof Auth === "undefined" || !Auth.isLoggedIn || !Auth.isLoggedIn()) return;
+    try {
+      const defaults = await Auth.fetchDefaults();
+      if (!defaults) return;
+      const keyMap = {
+        ai_provider: "provider",
+        ai_model: "model",
+        ai_endpoint: "endpoint",
+        ai_system_prompt: "system"
+      };
+      const localRaw = localStorage.getItem(KEY);
+      const localOverrides = localRaw ? JSON.parse(localRaw) : {};
+      for (const [serverKey, value] of Object.entries(defaults)) {
+        const stateKey = keyMap[serverKey] || serverKey;
+        // Only apply if user hasn't explicitly set this key.
+        if (!(stateKey in localOverrides) && stateKey in DEFAULTS) {
+          state[stateKey] = value;
+        }
+      }
+    } catch { /* server not available, keep local state */ }
+  }
+
+  // Non-blocking: merge server defaults after auth is ready.
+  setTimeout(() => mergeServerDefaults(), 1500);
+
+
   // ----------------------------------------------------------------- modal
   let currentMusicWeekday = "monday";
 
