@@ -213,10 +213,10 @@ p { margin: 0 0 8px; }
   overflow-y: auto;
   overscroll-behavior: contain;      /* don't chain the wheel to the page */
   scrollbar-width: thin;
-  padding: 10px 10px 24px;
+  padding: 10px 10px 10px;
 }
 
-.nav-section { margin-bottom: 18px; }
+.nav-section { margin-bottom: 12px; }
 
 .nav-label {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -273,7 +273,7 @@ p { margin: 0 0 8px; }
 .side-collapsed .nav-btn { justify-content: center; padding: 8px 4px; }
 .side-collapsed .nav-label { justify-content: center; padding-bottom: 4px; }
 .side-collapsed .nav-label::before { content: "•••"; letter-spacing: .12em; }
-.side-collapsed .sidebar-scroll { padding: 10px 8px 24px; }
+.side-collapsed .sidebar-scroll { padding: 10px 8px 10px; }
 
 .panel-toggle { flex: 0 0 auto; }
 

@@ -349,11 +349,15 @@
       // ── Auto-redirect if already logged in ──────────────────
       (async () => {
         try {
+          if (!supabase) return;  // Supabase didn't load (e.g. offline/Live Server)
           const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
+          if (session && session.user) {
             window.location.href = "index.html";
           }
-        } catch { /* Not logged in, stay on login page */ }
+        } catch (e) {
+          // Supabase unavailable or session invalid — stay on login page
+          console.log("Auth check skipped:", e.message || e);
+        }
       })();
     })();
   </script>
