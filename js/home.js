@@ -47,7 +47,12 @@ window.Home = (() => {
     const volume = rows.reduce((s, r) => s + (r.loadKg && r.reps ? r.loadKg * r.reps : 0), 0);
 
     const hour = new Date().getHours();
-    const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    let greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    if (window.Auth && window.Auth.getUser()) {
+      const u = window.Auth.getUser();
+      const n = u.username || u.display_name;
+      if (n) greeting = `${greeting}, ${n}`;
+    }
     const scheduled = Store.dayForWeekday
       ? Store.dayForWeekday(p, new Date().getDay())
       : p.days.find(d => Number.isInteger(d.weekday) && d.weekday === new Date().getDay());

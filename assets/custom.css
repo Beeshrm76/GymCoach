@@ -2762,4 +2762,302 @@ select#settingsProvider option {
   box-shadow: 0 2px 14px rgba(52, 211, 153, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
 }
 
+/* Sidebar and Topbar Alignment Fix */
+.sidebar-head {
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px)) !important;
+}
+.topbar {
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px)) !important;
+    border-bottom: 1px solid var(--line) !important;
+}
 
+/* Fix gap next to bar chart by allowing panels to not span full width */
+.progress-grid > .panel {
+    grid-column: auto !important;
+}
+
+/* Sub Navigation */
+.home-sub-nav {
+    margin: 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.home-sub-nav::-webkit-scrollbar {
+    display: none;
+}
+.home-sub-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: var(--panel-2);
+    border-radius: 999px;
+    width: max-content;
+}
+.home-sub-tab {
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text-mute);
+    border: none;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.home-sub-tab:hover {
+    color: var(--text);
+}
+.home-sub-tab.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Sub Panels Sliding */
+.home-sub-content {
+    position: relative;
+    overflow: hidden;
+}
+.home-sub-panel {
+    display: none;
+    animation: slideInRight 0.3s forwards ease-out;
+}
+.home-sub-panel.active {
+    display: block;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* --- Topbar & View Tabs --- */
+.topbar {
+  background: rgba(6, 10, 20, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.tab.active {
+  background: linear-gradient(135deg, #0070f3 0%, #00c6ff 100%) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 14px rgba(0, 198, 255, 0.4) !important;
+}
+
+/* --- Progress & Intensity Bars --- */
+.progress-track {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+.progress-fill {
+  background: linear-gradient(90deg, #0070f3 0%, #00c6ff 50%, #34d399 100%) !important;
+  box-shadow: 0 0 14px rgba(0, 198, 255, 0.5) !important;
+}
+.top-intensity-bar {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+.top-intensity-indicator {
+  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #f472b6 100%) !important;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6) !important;
+}
+
+/* Harmonized Inner Chips & Stat Elements */
+.model-stat,
+.signal,
+.kv-row,
+.trend-row,
+.record-row {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
+}
+
+.home-model-badge {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: var(--text-dim) !important;
+  backdrop-filter: blur(12px) !important;
+}
+.home-model-badge.model-ensemble {
+  background: rgba(56, 189, 248, 0.14) !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25) !important;
+}
+.home-model-badge.model-holt {
+  background: rgba(0, 119, 237, 0.14) !important;
+  border-color: rgba(0, 119, 237, 0.4) !important;
+  color: #2997ff !important;
+  box-shadow: 0 0 12px rgba(0, 119, 237, 0.25) !important;
+}
+.home-model-badge.model-mean,
+.home-model-badge.model-none {
+  background: rgba(255, 159, 10, 0.14) !important;
+  border-color: rgba(255, 159, 10, 0.4) !important;
+  color: #ff9f0a !important;
+  box-shadow: 0 0 12px rgba(255, 159, 10, 0.25) !important;
+}
+
+/* --- Apple Liquid Toggle & Exercise Thumbnails --- */
+.exercise-thumb {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.thumb-fallback {
+  color: #38bdf8;
+  font-size: 20px;
+}
+
+.check-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+.check-btn:hover {
+  border-color: #34d399;
+  color: #34d399;
+  transform: scale(1.1);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.35);
+}
+.check-btn.checked {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%) !important;
+  border-color: #34d399 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 14px rgba(52, 211, 153, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Sidebar and Topbar Alignment Fix */
+.sidebar-head {
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px)) !important;
+}
+.topbar {
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px)) !important;
+    border-bottom: 1px solid var(--line) !important;
+}
+
+/* Fix gap next to bar chart by allowing panels to not span full width */
+.progress-grid > .panel {
+    grid-column: auto !important;
+}
+
+/* Sub Navigation */
+.home-sub-nav {
+    margin: 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.home-sub-nav::-webkit-scrollbar {
+    display: none;
+}
+.home-sub-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    background: var(--panel-2);
+    border-radius: 999px;
+    width: max-content;
+}
+.home-sub-tab {
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text-mute);
+    border: none;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.home-sub-tab:hover {
+    color: var(--text);
+}
+.home-sub-tab.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Sub Panels Sliding */
+.home-sub-content {
+    position: relative;
+    overflow: hidden;
+}
+.home-sub-panel {
+    display: none;
+    animation: slideInRight 0.3s forwards ease-out;
+}
+.home-sub-panel.active {
+    display: block;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Fix overlapping button in weekly check */
+.previous-current-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: auto !important;
+}
+.previous-current-card .btn.full {
+    margin-top: auto;
+}
+
+/* Liquid glass effect for sliders (sub-tabs) */
+.home-sub-tabs {
+    padding: 6px !important;
+    background: linear-gradient(155deg, rgba(18, 24, 38, 0.76) 0%, rgba(9, 13, 21, 0.88) 100%) !important;
+    backdrop-filter: blur(28px) saturate(190%) brightness(104%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(104%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Push bar chart to bottom from middle */
+.progress-grid > .panel:nth-child(1) {
+    display: flex;
+    flex-direction: column;
+}
+.progress-grid > .panel:nth-child(1) .bar-chart {
+    margin-top: auto !important;
+}

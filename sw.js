@@ -1,6 +1,6 @@
 /* sw.js — offline cache */
 
-const VERSION = "gymcoach-v18-1";
+const VERSION = "gymcoach-v18-8";
 const CORE = `${VERSION}-core`;
 const RUNTIME = `${VERSION}-runtime`;
 
@@ -23,7 +23,7 @@ const FILES = [
   "./js/store.js",
   "./js/ml.js",
   "./js/pipeline.js",
-  "./js/youtubeExtractor.js",
+
   "./js/settings.js",
   "./js/player.js",
   "./js/autocomplete.js",
@@ -73,10 +73,11 @@ self.addEventListener("fetch", event => {
     event.respondWith((async () => {
       try {
         const fresh = await fetch(req);
-        (await caches.open(CORE)).put("./index.html", fresh.clone());
+        const cacheUrl = new URL(req.url).pathname; // e.g. /login.html
+        (await caches.open(CORE)).put(req, fresh.clone());
         return fresh;
       } catch {
-        return (await caches.match("./index.html")) || Response.error();
+        return (await caches.match(req)) || (await caches.match("./index.html")) || Response.error();
       }
     })());
     return;

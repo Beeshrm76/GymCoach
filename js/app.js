@@ -427,7 +427,7 @@
       $("completion").textContent = "0%";
       $("focus").textContent = "No days";
       $("muscles").textContent = "";
-      $("dayFocusShort").textContent = "—";
+      // $("dayFocusShort").textContent = "—";
       $("progressBar").style.width = "0%";
       $("exerciseList").innerHTML = `<div class="empty-state">
           <b>Nothing scheduled yet</b>
@@ -451,7 +451,7 @@
     $("pageSubtitle").textContent = isRest ? (d.restNotes || "Recovery day") : (d.subtitle || "");
     $("focus").textContent = isRest ? "Recovery / Rest" : (d.focus || d.title || "Workout");
     $("muscles").textContent = isRest ? (d.restNotes || "No training scheduled") : (d.muscles || "");
-    $("dayFocusShort").textContent = (isRest ? d.restNotes : d.focus) || d.title || "—";
+    // $("dayFocusShort").textContent = (isRest ? d.restNotes : d.focus) || d.title || "—";
     $("progressBar").style.width = `${isRest ? 0 : prog.pct}%`;
     $("dayProgressLabel").textContent = isRest ? "Rest day" : `${prog.done} of ${prog.total} done`;
     renderWorkTime(d);
@@ -520,7 +520,7 @@
       row.dataset.exId = ex.id;
       row.innerHTML = `
         <div class="exercise-thumb" data-thumb="${ex.id}">
-          <div class="thumb-fallback">▦</div>
+          <div class="thumb-fallback">${getExerciseIcon(ex.name)}</div>
         </div>
         <div class="exercise-main">
           <div class="exercise-name">${esc(ex.name)}</div>
@@ -538,6 +538,18 @@
       box.appendChild(row);
       paintThumb(ex);
     });
+  }
+
+  function getExerciseIcon(name) {
+    const n = (name || "").toLowerCase();
+    if (n.includes("pull") || n.includes("row") || n.includes("chin") || n.includes("lat")) {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#0369a1"/><circle cx="18.5" cy="7.5" r="2.2" fill="#ffffff"/><line x1="18" y1="9.5" x2="11.5" y2="15.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="15" y1="12" x2="9" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="18" x2="15" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="4" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/><rect x="14" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/><line x1="11.5" y1="15.5" x2="13.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="15" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="15.5" x2="8.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="20.5" x2="8" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+    } else if (n.includes("push") || n.includes("press") || n.includes("bench")) {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#2563eb"/><line x1="6" y1="5" x2="22" y2="5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="3" width="2" height="4.5" rx=".8" fill="#ffffff"/><rect x="21.5" y="3" width="2" height="4.5" rx=".8" fill="#ffffff"/><circle cx="14" cy="10" r="2.3" fill="#ffffff"/><line x1="14" y1="12.5" x2="8.5" y2="5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="12.5" x2="19.5" y2="5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="12" x2="14" y2="18.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="18.5" x2="10" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="18.5" x2="18" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+    } else if (n.includes("squat") || n.includes("leg") || n.includes("curl") || n.includes("calf")) {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#6b21a8"/><circle cx="14" cy="5.2" r="2.3" fill="#ffffff"/><line x1="5" y1="9" x2="23" y2="9" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="3.5" y="7" width="2" height="4.5" rx=".8" fill="#ffffff"/><rect x="22.5" y="7" width="2" height="4.5" rx=".8" fill="#ffffff"/><line x1="14" y1="9" x2="14" y2="15" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="15" x2="9" y2="19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="15" x2="19" y2="19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="19" x2="7" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="19" x2="21" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+    }
+    return "▦";
   }
 
   async function paintThumb(ex) {
@@ -1590,9 +1602,12 @@
 
     const previous = prof.history?.[1] || null;
     if ($("previousProfileDate")) $("previousProfileDate").textContent = previous?.date ? UI.fmtDate(previous.date, { month: "short", day: "numeric", year: "numeric" }) : "- record";
-    if ($("previousProfileValues")) $("previousProfileValues").innerHTML = previous
-      ? `<span>Weight ${esc(previous.weight || "—")} kg</span><span>Waist ${esc(previous.waist || "—")} cm</span><span>Chest ${esc(previous.chest || "—")} cm</span><span>Arm ${esc(previous.arm || "—")} cm</span>`
-      : `<span>Weight —</span><span>Waist —</span><span>Chest —</span><span>Arm —</span>`;
+    if ($("previousProfileValues")) $("previousProfileValues").innerHTML = `
+      <label>Weight (kg)<input disabled value="${esc(previous?.weight || "")}" placeholder="—"></label>
+      <label>Waist (cm)<input disabled value="${esc(previous?.waist || "")}" placeholder="—"></label>
+      <label>Chest (cm)<input disabled value="${esc(previous?.chest || "")}" placeholder="—"></label>
+      <label>Arm (cm)<input disabled value="${esc(previous?.arm || "")}" placeholder="—"></label>
+    `;
     if ($("projectIntensityProgress")) $("projectIntensityProgress").innerHTML = intensityMarkup(Store.projectIntensity(p), "Workout Intensity");
 
     // Recent set-level history, newest first.
@@ -1675,6 +1690,19 @@
         location.hash = "home"; location.reload();
       }
     },
+    "home-tab": (btn) => {
+      if (!btn) return;
+      const targetId = btn.dataset.target;
+      
+      // Update buttons
+      document.querySelectorAll(".home-sub-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      
+      // Update panels
+      document.querySelectorAll(".home-sub-panel").forEach(p => p.classList.remove("active"));
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) targetPanel.classList.add("active");
+    },
     // The tabs and the sidebar entry switch views without throwing away state.
     "show-home": showHome,
     "toggle-sidebar-collapse": () => UI.toggleSidebarCollapse(),
@@ -1710,6 +1738,8 @@
     // download-ai-csv is handled in report.js, next to the other AI exports, so
     // that it honours the All-projects checkbox on that view.
 
+    "open-support": openSupport,
+
     // ---- data pipeline (Home). exportOptions() honours the All-projects box.
     "export-zip-bundle": () => window.DataPipeline?.downloadBundle?.(exportOptions()),
     "export-master-csv": () => window.DataPipeline?.downloadMaster?.(exportOptions()),
@@ -1718,8 +1748,224 @@
     "toggle-timer": toggleTimer,
     "stop-timer": stopTimer,
     "reset-timer": resetTimer,
-    "save-profile": saveProfile
+    "save-profile": () => {},
+    "open-user-profile": () => {
+       if (!window.Auth || !window.Auth.isLoggedIn()) return;
+       UI.openModal("userProfileModal");
+       loadUserProfile();
+    },
+    "close-support": () => UI.closeModal("supportModal"),
+    "close-profile": () => UI.closeModal("userProfileModal")
   };
+
+  // --- USER PROFILE LOGIC ---
+  async function loadUserProfile() {
+    const user = window.Auth?.getUser();
+    if (!user) return;
+    
+    $("profileUsername").value = user.username || "";
+    $("profileName").value = user.name || user.display_name || "";
+    $("profileEmail").value = user.email || "";
+    $("profileBio").value = user.bio || "";
+    
+    if (user.avatar_url) {
+      $("profileAvatarPreview").innerHTML = `<img src="${esc(user.avatar_url)}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else {
+      $("profileAvatarPreview").innerHTML = `👤`;
+    }
+
+    // Load stats
+    const p = window.Store?.all ? window.Store.all() : [];
+    const days = p.reduce((n, pr) => n + pr.days.length, 0);
+    $("profileStats").textContent = `${p.length} Projects · ${days} Workout Days`;
+  }
+
+  $("profileAvatarUpload")?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const user = window.Auth?.getUser();
+    if (!user) return;
+
+    try {
+      UI.toast("Uploading avatar...", "ok");
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatar-${user.id}-${Date.now()}.${fileExt}`;
+      const { error } = await window.supabaseClient.storage.from('app-media').upload(fileName, file);
+      if (error) throw error;
+      
+      const { data } = window.supabaseClient.storage.from('app-media').getPublicUrl(fileName);
+      const url = data.publicUrl;
+      
+      // Update profile
+      const { error: updateErr } = await window.supabaseClient.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+      if (updateErr) throw updateErr;
+      
+      // Update local session cache
+      user.avatar_url = url;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+      
+      loadUserProfile();
+      window.Auth.init(); // Re-render sidebar
+      UI.toast("Avatar updated!", "success");
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to upload avatar: " + err.message, "error");
+    }
+  });
+
+  $("userProfileForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = window.Auth?.getUser();
+    if (!user) return;
+
+    const username = $("profileUsername").value.trim();
+    const name = $("profileName").value.trim();
+    const bio = $("profileBio").value.trim();
+
+    try {
+      const { error } = await window.supabaseClient.from('profiles').update({
+        username, name, bio, display_name: name
+      }).eq('id', user.id);
+
+      if (error) throw error;
+
+      user.username = username;
+      user.name = name;
+      user.display_name = name;
+      user.bio = bio;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+
+      window.Auth.init(); // Re-render sidebar
+      UI.toast("Profile saved successfully!", "success");
+      UI.closeModal("userProfileModal");
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to update profile", "error");
+    }
+  });
+
+  $("btnChangePassword")?.addEventListener("click", async () => {
+    const newPass = prompt("Enter your new password (minimum 6 characters):");
+    if (!newPass || newPass.length < 6) {
+      if (newPass) alert("Password must be at least 6 characters.");
+      return;
+    }
+    
+    try {
+      const { error } = await window.supabaseClient.auth.updateUser({ password: newPass });
+      if (error) throw error;
+      UI.toast("Password updated successfully!", "success");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update password: " + err.message);
+    }
+  });
+
+  $("btnResetDefaults")?.addEventListener("click", async () => {
+    if (!await UI.confirm("Erase all local logs and data?", "This clears your device's local data and resets to defaults. This cannot be undone.")) return;
+    if (!await UI.confirm("Are you absolutely sure?", "All projects, logs, and settings will be wiped.", { confirmLabel: "Erase it all" })) return;
+    
+    const keys = ["gymcoach_settings_v4", "gymcoach_projects", "gymcoach_active", "gymcoach_profile", "gymcoach_csv_archives", "gymcoach_layout_v4"];
+    keys.forEach(k => localStorage.removeItem(k));
+    location.reload();
+  });
+
+  $("btnDeleteAccount")?.addEventListener("click", async () => {
+    if (!await UI.confirm("Delete your account permanently?", "This will remove your account and all associated data. This action is irreversible.", { confirmLabel: "Delete Account" })) return;
+    alert("To completely delete your account, please contact an Admin via the Support Inbox. Account deletion involves removing associated database records safely.");
+  });
+
+  // --- SUPPORT TICKETS LOGIC ---
+  async function checkSupportBadge() {
+    if (!window.Auth || !window.Auth.isLoggedIn()) return;
+    try {
+      // Check if there are any tickets that are CLOSED (which means admin replied). 
+      // (A real "unread" system would need an 'is_read' flag, but for now we just show a dot if there are ANY closed tickets that the user might want to see).
+      // We will clear the badge when they open the support modal.
+      const { data, error } = await window.supabaseClient
+        .from('support_tickets')
+        .select('id')
+        .eq('status', 'CLOSED')
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        if ($("supportBadge")) $("supportBadge").style.display = "inline-block";
+      }
+    } catch (err) { }
+  }
+
+  function openSupport() {
+    if (!window.Auth || !window.Auth.isLoggedIn()) {
+      UI.toast("You must be logged in to access Support.", "error");
+      return;
+    }
+    UI.openModal("supportModal");
+    if ($("supportBadge")) $("supportBadge").style.display = "none";
+    loadMyTickets();
+  }
+
+  async function loadMyTickets() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      const list = $("supportTicketsList");
+      if (data.length === 0) {
+        list.innerHTML = `<p class="empty-state">No tickets found.</p>`;
+      } else {
+        list.innerHTML = data.map(t => `
+          <div class="card" style="padding:10px; border-left: 4px solid ${t.status==='OPEN'?'var(--danger)':'var(--success)'};">
+            <h4 style="margin:0;">${esc(t.title)}</h4>
+            <small class="muted">${new Date(t.created_at).toLocaleString()}</small>
+            <p style="margin-top:5px; font-size:0.9rem;">${esc(t.body)}</p>
+            ${t.response ? `<div style="margin-top:10px; padding:10px; background:rgba(255,255,255,0.05); border-radius:4px;"><strong style="color:var(--primary);">Admin Reply:</strong><p style="margin:5px 0 0; font-size:0.9rem;">${esc(t.response)}</p></div>` : ''}
+          </div>
+        `).join('');
+      }
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to load tickets", "error");
+    }
+  }
+
+  $("btnTabInbox")?.addEventListener("click", () => {
+    $("supportInboxView").style.display = "block";
+    $("supportNewTicketView").style.display = "none";
+    $("btnTabInbox").classList.add("primary");
+    $("btnTabNewTicket").classList.remove("primary");
+    loadMyTickets();
+  });
+
+  $("btnTabNewTicket")?.addEventListener("click", () => {
+    $("supportInboxView").style.display = "none";
+    $("supportNewTicketView").style.display = "block";
+    $("btnTabNewTicket").classList.add("primary");
+    $("btnTabInbox").classList.remove("primary");
+  });
+
+  $("supportTicketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = $("ticketTitle").value.trim();
+    const body = $("ticketBody").value.trim();
+    if (!title || !body) return;
+    
+    try {
+      const { error } = await window.supabaseClient.from('support_tickets').insert({ title, body });
+      if (error) throw error;
+      
+      UI.toast("Ticket submitted successfully!", "success");
+      $("supportTicketForm").reset();
+      $("btnTabInbox").click(); // switch back to inbox tab
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to submit ticket: " + err.message, "error");
+    }
+  });
 
   document.addEventListener("click", e => {
     const completeBtn = e.target.closest("[data-complete]");
@@ -1727,7 +1973,7 @@
 
     const actionEl = e.target.closest("[data-action]");
     if (actionEl && ACTIONS[actionEl.dataset.action]) {
-      ACTIONS[actionEl.dataset.action]();
+      ACTIONS[actionEl.dataset.action](actionEl, e);
     }
   });
 
@@ -1796,6 +2042,9 @@
     window.WorkoutPlayer?.init?.();
     MediaStore.applyLogo();
     routeFromHash();
+    
+    // Check for support notifications
+    checkSupportBadge();
   }
 
   // Hash routing. Home is the landing view, which is what makes the brand

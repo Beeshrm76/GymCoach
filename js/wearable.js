@@ -484,8 +484,8 @@ window.WearableStore = (() => {
 document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
-  // Inject the panel right after the "Recent sets" panel
-  const anchor = $("historyList")?.closest(".panel");
+  // Inject the panel into the recovery tab
+  const anchor = $("tab-recovery");
   if (!anchor) return;
 
   const panel = document.createElement("div");
@@ -575,7 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div id="wearableTable" class="wearable-table"></div>
     </div>
   `;
-  anchor.insertAdjacentElement("afterend", panel);
+  anchor.appendChild(panel);
 
   // ---- helpers ---------------------------------------------------------------
 

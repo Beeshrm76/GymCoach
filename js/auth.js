@@ -12,6 +12,8 @@ window.Auth = (() => {
   // ── Initialise on load ──────────────────────────────────────
 
   async function init() {
+    loadSystemSettings();
+
     // Check if we have a cached session.
     try {
       const cached = JSON.parse(localStorage.getItem(SESSION_KEY));
@@ -94,6 +96,10 @@ window.Auth = (() => {
       const roleStr = currentUser.role === 'SUPER_ADMIN' ? 'Super Admin' : 
                       currentUser.role === 'ADMIN' ? 'Admin' : 'User';
 
+      if (document.getElementById("sidebarUserLabel")) {
+        document.getElementById("sidebarUserLabel").textContent = "@" + (currentUser.username || name);
+      }
+
       let adminBtns = '';
       if (currentUser.role === 'SUPER_ADMIN') {
         adminBtns += `
@@ -101,8 +107,7 @@ window.Auth = (() => {
             <span class="nav-icon">👑</span>
             <span class="nav-text"><b>Super Admin</b><small>Manage Admins & System</small></span>
           </button>`;
-      }
-      if (currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN') {
+      } else if (currentUser.role === 'ADMIN') {
         adminBtns += `
           <button class="nav-btn" onclick="window.open('admin.html','_blank')" title="Open Admin Panel">
             <span class="nav-icon">🛡</span>
@@ -110,9 +115,14 @@ window.Auth = (() => {
           </button>`;
       }
 
+      let avatarHtml = `<span class="nav-icon auth-avatar">${initial}</span>`;
+      if (currentUser.avatar_url) {
+        avatarHtml = `<img src="${escHtml(currentUser.avatar_url)}" class="nav-icon auth-avatar" style="border-radius:50%; object-fit:cover;" alt="Avatar">`;
+      }
+
       container.innerHTML = `
-        <button class="nav-btn auth-user-btn" data-action="auth-menu" title="Account: ${name}">
-          <span class="nav-icon auth-avatar">${initial}</span>
+        <button class="nav-btn auth-user-btn" data-action="open-user-profile" title="Account: ${name}">
+          ${avatarHtml}
           <span class="nav-text">
             <b>${escHtml(name)}</b>
             <small>${roleStr}${serverAvailable ? "" : " · Offline"}</small>
@@ -129,6 +139,9 @@ window.Auth = (() => {
       const logoutBtn = container.querySelector("[data-action='auth-logout']");
       if (logoutBtn) logoutBtn.addEventListener("click", logout);
     } else {
+      if (document.getElementById("sidebarUserLabel")) {
+        document.getElementById("sidebarUserLabel").textContent = "Home";
+      }
       container.innerHTML = `
         <button class="nav-btn" onclick="window.location.href='login.html'" title="Sign In">
           <span class="nav-icon">👤</span>
@@ -146,12 +159,8 @@ window.Auth = (() => {
     } catch { /* Server might not be available */ }
     currentUser = null;
     localStorage.removeItem(SESSION_KEY);
-    renderUserUI();
-    
-    // Redirect to login if we are in admin page
-    if (window.location.pathname.endsWith('admin.html') || window.location.pathname.endsWith('superadmin.html')) {
-        window.location.href = "index.html";
-    }
+    // Always redirect to login page when signed out
+    window.location.href = "login.html";
   }
 
   // ── Helpers ─────────────────────────────────────────────────
@@ -161,6 +170,26 @@ window.Auth = (() => {
     const el = document.createElement("span");
     el.textContent = s;
     return el.innerHTML;
+  }
+
+  async function loadSystemSettings() {
+    try {
+      const { data, error } = await supabase.from('system_settings').select('*');
+      if (!error && data) {
+        const logo = data.find(s => s.key === 'app_logo');
+        if (logo && logo.value) {
+          document.querySelectorAll('.brand-logo-img').forEach(img => {
+            img.src = logo.value;
+            img.hidden = false;
+            if (img.nextElementSibling) img.nextElementSibling.hidden = true; // hide brand-dot
+          });
+        }
+        const exSetting = data.find(s => s.key === 'default_exercises');
+        if (exSetting && exSetting.value && Array.isArray(exSetting.value) && exSetting.value.length > 0) {
+          window.EXERCISE_DB = exSetting.value;
+        }
+      }
+    } catch { }
   }
 
   function getUser() { return currentUser; }

@@ -36,6 +36,7 @@
         <button class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
         <button class="nav-item" data-section="admins"><span class="nav-icon">🛡</span> Manage Admins</button>
         <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> All Users</button>
+        <button class="nav-item" data-section="support"><span class="nav-icon">📬</span> Support Tickets</button>
         <button class="nav-item" data-section="defaults"><span class="nav-icon">⚙</span> System Settings</button>
       </nav>
       <div class="sidebar-footer">
@@ -119,14 +120,81 @@
         </div>
       </section>
       
+      <section class="admin-section" id="sectionSupport" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>Support Tickets</h1>
+            <p>View and respond to user feedback and issues</p>
+          </div>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTableBody">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
       <section class="admin-section" id="sectionDefaults" style="display: none;">
         <div class="admin-header">
           <div>
             <h1>System Settings</h1>
-            <p>Manage application defaults</p>
+            <p>Manage application defaults and assets</p>
           </div>
         </div>
-        <p style="color:var(--text-secondary);">Only Super Admins can modify these settings.</p>
+
+        <div class="settings-grid">
+          <!-- Media Settings -->
+          <div class="card">
+            <h3>App Logo & Media</h3>
+            <p class="muted small">Upload a logo directly to Supabase storage.</p>
+            <div class="form-group" style="margin-top:1rem;">
+              <label>App Logo Upload</label>
+              <input type="file" id="logoUploadInput" accept="image/*" class="input-text">
+              <button class="btn primary" id="btnUploadLogo" style="margin-top:8px;">Upload Logo</button>
+            </div>
+            <div class="form-group" style="margin-top:1rem;">
+              <label>Current Logo URL</label>
+              <input type="text" id="currentLogoUrl" class="input-text" readonly>
+            </div>
+          </div>
+
+          <!-- Default Exercises Manager -->
+          <div class="card">
+            <h3>Default Exercises</h3>
+            <p class="muted small">Manage the default exercise list available to all users.</p>
+            <div style="margin-top:1rem; display:flex; gap:8px;">
+              <input type="text" id="newExerciseName" placeholder="New Exercise Name" class="input-text" style="flex:1;">
+              <button class="btn primary" id="btnAddExercise">Add</button>
+            </div>
+            <div class="table-card" style="margin-top:1rem; max-height:400px; overflow-y:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Exercise Name</th>
+                    <th style="width:100px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="exercisesTableBody">
+                  <tr><td colspan="2" class="empty-state">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top:1rem; text-align:right;">
+              <button class="btn primary" id="btnSaveExercises">Save All Changes</button>
+            </div>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -135,6 +203,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>
+  <script src="data/exercises.js"></script>
   <script src="js/superadmin.js"></script>
 </body>
 </html>

@@ -102,5 +102,162 @@ document.addEventListener("DOMContentLoaded", async () => {
      alert("To create an admin, register a normal user via the UI, then assign the ADMIN role via Super Admin DB update (or build a dedicated RPC function here).");
   });
 
+  // --- SYSTEM SETTINGS ---
+  let defaultExercises = [];
+
+  async function loadSettings() {
+    try {
+      const { data, error } = await supabase.from('system_settings').select('*');
+      if (error) throw error;
+      
+      const logoSetting = data.find(s => s.key === 'app_logo');
+      if (logoSetting) {
+        document.getElementById('currentLogoUrl').value = logoSetting.value;
+      }
+      
+      const exSetting = data.find(s => s.key === 'default_exercises');
+      if (exSetting) {
+        defaultExercises = exSetting.value || [];
+      } else {
+        defaultExercises = window.EXERCISE_DB || [];
+      }
+      renderExercises();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Upload Logo
+  document.getElementById('btnUploadLogo')?.addEventListener('click', async () => {
+    const fileInput = document.getElementById('logoUploadInput');
+    const file = fileInput.files[0];
+    if (!file) return alert("Please select an image file first.");
+    
+    const btn = document.getElementById('btnUploadLogo');
+    btn.textContent = "Uploading...";
+    btn.disabled = true;
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `logo-${Date.now()}.${fileExt}`;
+      const { data, error } = await supabase.storage.from('app-media').upload(fileName, file);
+      
+      if (error) throw error;
+      
+      const { data: publicData } = supabase.storage.from('app-media').getPublicUrl(fileName);
+      const url = publicData.publicUrl;
+      
+      document.getElementById('currentLogoUrl').value = url;
+      await saveSetting('app_logo', url);
+      alert("Logo uploaded and saved!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload logo: " + err.message);
+    } finally {
+      btn.textContent = "Upload Logo";
+      btn.disabled = false;
+    }
+  });
+
+  // Exercises Manager
+  function renderExercises() {
+    const tbody = document.getElementById('exercisesTableBody');
+    if (defaultExercises.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="2" class="empty-state">No default exercises.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = defaultExercises.map((ex, i) => `
+      <tr>
+        <td>${ex.name}</td>
+        <td>
+          <button class="btn small-btn btn-danger" onclick="deleteExercise(${i})">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('btnAddExercise')?.addEventListener('click', () => {
+    const input = document.getElementById('newExerciseName');
+    const name = input.value.trim();
+    if (!name) return;
+    defaultExercises.push({ name, aliases: [] });
+    input.value = '';
+    renderExercises();
+  });
+
+  window.deleteExercise = (index) => {
+    if(!confirm("Remove this exercise?")) return;
+    defaultExercises.splice(index, 1);
+    renderExercises();
+  };
+
+  document.getElementById('btnSaveExercises')?.addEventListener('click', async () => {
+    try {
+      await saveSetting('default_exercises', defaultExercises);
+      alert("Exercises saved!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save exercises.");
+    }
+  });
+
+  async function saveSetting(key, value) {
+    const { error } = await supabase.from('system_settings').upsert({ key, value });
+    if (error) throw error;
+  }
+
+  // --- SUPPORT TICKETS ---
+  async function loadTickets() {
+    try {
+      // Super Admin loads all tickets
+      const { data: tickets, error } = await supabase.from('support_tickets').select('*, profiles:user_id(username)').order('created_at', { ascending: false });
+      if (error) throw error;
+      
+      const tbody = document.getElementById('ticketsTableBody');
+      if (tickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No support tickets found.</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = tickets.map(t => {
+        const date = new Date(t.created_at).toLocaleString();
+        const username = t.profiles?.username || 'Unknown';
+        return `
+        <tr>
+          <td>${date}</td>
+          <td>${username}</td>
+          <td><b>${t.title}</b><br><small class="muted">${t.body}</small></td>
+          <td><span class="role-badge" style="background:${t.status==='OPEN'?'var(--danger)':'var(--success)'}">${t.status}</span></td>
+          <td>
+            <button class="btn small-btn" onclick="replyTicket('${t.id}')">Reply</button>
+          </td>
+        </tr>
+      `}).join('');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  window.replyTicket = async (id) => {
+    const response = prompt("Enter your response to this user:");
+    if (!response) return;
+    
+    try {
+      const { error } = await supabase.from('support_tickets').update({ 
+        response: response, 
+        status: 'CLOSED' 
+      }).eq('id', id);
+      
+      if (error) throw error;
+      loadTickets();
+      alert("Reply sent.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send reply.");
+    }
+  };
+
   loadData();
+  loadSettings();
+  loadTickets();
 });

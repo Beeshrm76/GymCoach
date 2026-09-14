@@ -56,11 +56,11 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; background: #040711; overflow-x: hidden; }
+html { -webkit-text-size-adjust: 100%; background: #040711; overflow-x: clip; }
 
 body {
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
   max-width: 100vw;
   min-height: 100dvh;
@@ -924,8 +924,8 @@ input::placeholder, textarea::placeholder { color: #888888; }
 @media (max-width: 900px) {
   /* One column. The sidebar becomes an off-canvas drawer — a state of its own,
      so the collapse toggle is never overridden the way V3's media query did. */
-  .app-shell { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100vw; overflow-x: hidden; }
-  .app-content { width: 100%; max-width: 100vw; overflow-x: hidden; }
+  .app-shell { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 100vw; overflow-x: clip; }
+  .app-content { width: 100%; max-width: 100vw; overflow-x: clip; }
 
   .sidebar {
     position: fixed; top: 0; left: 0; z-index: 50;
@@ -967,12 +967,12 @@ input::placeholder, textarea::placeholder { color: #888888; }
   .detail-media .media-frame img { max-height: 320px; }
 
   /* Ensure panels don't overflow */
-  .panel { max-width: 100%; overflow-x: hidden; }
-  .views { max-width: 100vw; overflow-x: hidden; }
+  .panel { max-width: 100%; overflow-x: clip; }
+  .views { max-width: 100vw; overflow-x: clip; }
 }
 
 @media (max-width: 620px) {
-  .views { padding: 10px; max-width: 100vw; overflow-x: hidden; }
+  .views { padding: 10px; max-width: 100vw; overflow-x: clip; }
   .form-grid { grid-template-columns: minmax(0, 1fr); }
   .form-grid .span-2 { grid-column: auto; }
   .exercise-row { grid-template-columns: 54px minmax(0, 1fr) auto; gap: 10px; }
@@ -1526,9 +1526,9 @@ input::placeholder, textarea::placeholder { color: #888888; }
   .detail-media .media-frame img { min-height: 0 !important; max-height: 300px !important; object-fit: contain !important; }
 
   /* Prevent content overflow */
-  .app-shell { max-width: 100vw !important; overflow-x: hidden !important; }
-  .app-content { max-width: 100vw !important; overflow-x: hidden !important; }
-  .views { max-width: 100vw !important; overflow-x: hidden !important; }
+  .app-shell { max-width: 100vw !important; overflow-x: clip !important; }
+  .app-content { max-width: 100vw !important; overflow-x: clip !important; }
+  .views { max-width: 100vw !important; overflow-x: clip !important; }
 
   /* Set table should scroll horizontally without pushing the page */
   .set-table-wrap { max-width: 100%; }

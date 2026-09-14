@@ -23,8 +23,8 @@
   <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.png">
   <link rel="apple-touch-startup-image" href="assets/icons/icon-512.png">
 
-  <link rel="stylesheet" href="assets/app.css?v=18.1">
-  <link rel="stylesheet" href="assets/custom.css?v=18.1">
+  <link rel="stylesheet" href="assets/app.css?v=18.8">
+  <link rel="stylesheet" href="assets/custom.css?v=18.8">
 </head>
 
 <body>
@@ -50,7 +50,7 @@
           </span>
           <span class="brand-text">
             <b>GymCoach</b>
-            <small>Home</small>
+            <small id="sidebarUserLabel">Home</small>
           </span>
         </button>
       </div>
@@ -63,13 +63,27 @@
               title="Switch, create, copy or delete a project">Manage</button>
           </div>
           <div id="projectNav" class="nav-list"></div>
-          <button class="nav-add" data-action="open-projects">+ New workout</button>
+          <button class="nav-add" data-action="open-projects" style="margin-top:10px;">+ New workout</button>
+
+          <div class="nav-label" style="margin-top:1.5rem;">
+            <span>Support</span>
+          </div>
+          <div class="nav-list">
+            <button class="nav-btn" data-action="open-support" title="Inbox & Support Tickets">
+              <span class="nav-icon">📬</span>
+              <span class="nav-text">
+                <b>Inbox / Support</b><small>Messages & Feedback</small>
+              </span>
+              <span class="badge" id="supportBadge" style="display:none; background:var(--danger); margin-left:auto; width:8px; height:8px; border-radius:50%;"></span>
+            </button>
+          </div>
         </div>
 
         <div class="nav-section">
           <div class="nav-label">
             <span>Days</span>
-            <button class="small-btn" data-view-btn="manageView" data-action="manage-project" title="Build days and exercises">Build</button>
+            <button class="small-btn" data-view-btn="manageView" data-action="manage-project"
+              title="Build days and exercises">Build</button>
           </div>
           <div id="dayNav" class="nav-list"></div>
           <button class="nav-add" data-action="create-day">+ Add a day</button>
@@ -196,46 +210,6 @@
             <p class="muted small model-note" id="homeChartNote">—</p>
           </div>
 
-          <!-- wearable recovery -->
-          <div class="panel home-recovery-card" id="homeRecoveryCard" style="display:none">
-            <div class="panel-head">
-              <div>
-                <h2>Wearable Recovery</h2>
-                <p class="muted small">Smartwatch &amp; wearable data — last night's sleep, activity and today's
-                  readiness.</p>
-              </div>
-            </div>
-            <div class="home-recovery-body" id="homeRecoveryBody"></div>
-          </div>
-
-          <!-- signals + consistency -->
-          <div class="home-two-col">
-            <div class="panel">
-              <h2>Coach signals</h2>
-              <p class="muted small">Written from the fitted models, not from templates.</p>
-              <div class="signal-list" id="homeInsights"></div>
-            </div>
-            <div class="panel">
-              <h2>Consistency</h2>
-              <p class="muted small">Streaks count a single rest day between sessions as unbroken.</p>
-              <div class="kv-list" id="homeConsistency"></div>
-            </div>
-          </div>
-
-          <!-- trends + personal records -->
-          <div class="home-two-col">
-            <div class="panel">
-              <h2>Exercise trends</h2>
-              <p class="muted small">Slope of your top standardised set per session, per exercise.</p>
-              <div class="trend-list" id="homeTrends"></div>
-            </div>
-            <div class="panel">
-              <h2>Best standardised loads</h2>
-              <p class="muted small">Effective kg after unit conversion and pulley division.</p>
-              <div class="record-list" id="homeRecords"></div>
-            </div>
-          </div>
-
           <div class="progress-grid">
             <div class="panel">
               <h2>Completion</h2>
@@ -245,18 +219,17 @@
             </div>
 
             <div class="panel">
-              <h2>Workout Intensity</h2>
-              <div id="projectIntensityProgress"></div>
-            </div>
-
-            <div class="panel">
               <h2>Weekly check</h2>
               <div class="previous-current-grid">
                 <section class="previous-current-card previous">
                   <div class="pc-head"><b>Previous</b><small id="previousProfileDate">-</small></div>
-                  <div class="pc-values" id="previousProfileValues">
-                    <span>Weight —</span><span>Waist —</span><span>Chest —</span><span>Arm —</span>
+                  <div class="form-grid compact" id="previousProfileValues">
+                    <label>Weight (kg)<input disabled placeholder="—"></label>
+                    <label>Waist (cm)<input disabled placeholder="—"></label>
+                    <label>Chest (cm)<input disabled placeholder="—"></label>
+                    <label>Arm (cm)<input disabled placeholder="—"></label>
                   </div>
+                  <button class="btn full" style="visibility: hidden; pointer-events: none;">Placeholder</button>
                 </section>
                 <section class="previous-current-card current">
                   <div class="pc-head"><b>Current</b><small id="profileStamp">Not recorded yet</small></div>
@@ -269,14 +242,63 @@
                   <button class="btn primary full" data-action="save-profile">Save current</button>
                 </section>
               </div>
+              <div class="panel">
+                <h2>Workout Intensity</h2>
+                <div id="projectIntensityProgress"></div>
+              </div>
+
             </div>
           </div>
 
-          <div class="panel">
-            <h2>Recent sets</h2>
-            <div id="historyList" class="history-list"></div>
+
+          <div class="home-sub-nav">
+            <div class="home-sub-tabs">
+              <button class="home-sub-tab active" data-action="home-tab" data-target="tab-recovery">Recovery</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-signals">Signals</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-consistency">Consistency</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-trends">Trends</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-records">Records</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-history">History</button>
+            </div>
           </div>
-          <!-- ================== end of the moved Progress block ======= -->
+          <div class="home-sub-content">
+            <div id="tab-recovery" class="home-sub-panel active">
+              <div class="panel home-recovery-card" id="homeRecoveryCard" style="margin-bottom: 16px;">
+                <div class="panel-head">
+                  <div>
+                    <h2>Wearable Recovery</h2>
+                    <p class="muted small">Smartwatch &amp; wearable data — last night's sleep, activity and today's
+                      readiness.</p>
+                  </div>
+                </div>
+                <div class="home-recovery-body" id="homeRecoveryBody"></div>
+              </div>
+            </div>
+            <div id="tab-signals" class="panel home-sub-panel">
+              <h2>Coach signals</h2>
+              <p class="muted small">Written from the fitted models, not from templates.</p>
+              <div class="signal-list" id="homeInsights"></div>
+            </div>
+            <div id="tab-consistency" class="panel home-sub-panel">
+              <h2>Consistency</h2>
+              <p class="muted small">Streaks count a single rest day between sessions as unbroken.</p>
+              <div class="kv-list" id="homeConsistency"></div>
+            </div>
+            <div id="tab-trends" class="panel home-sub-panel">
+              <h2>Exercise trends</h2>
+              <p class="muted small">Slope of your top standardised set per session, per exercise.</p>
+              <div class="trend-list" id="homeTrends"></div>
+            </div>
+            <div id="tab-records" class="panel home-sub-panel">
+              <h2>Best standardised loads</h2>
+              <p class="muted small">Effective kg after unit conversion and pulley division.</p>
+              <div class="record-list" id="homeRecords"></div>
+            </div>
+            <div id="tab-history" class="panel home-sub-panel">
+              <h2>Recent sets</h2>
+              <div id="historyList" class="history-list"></div>
+            </div>
+          </div>
 
           <!-- desired body pictures -->
           <div class="panel" id="desiredBodyPanel">
@@ -325,32 +347,6 @@
                 <figcaption>Legs<small>Reserved</small></figcaption>
               </figure>
             </div>
-          </div>
-
-          <!-- data pipeline -->
-          <div class="panel">
-            <div class="panel-head">
-              <div>
-                <h2>Data pipeline</h2>
-                <p class="muted small">Every recorded field — weight, unit, pulley system, effective kg, sets, reps,
-                  RIR, set completion, total rest after balancing, workout clock time, body weight and every note —
-                  written to CSV. Blank means never recorded, so numeric columns stay numeric.</p>
-              </div>
-              <div class="panel-head-actions">
-                <label class="check-inline"><input type="checkbox" id="homeExportAll"> All projects</label>
-              </div>
-            </div>
-
-            <div class="kv-list" id="homePipelineStats"></div>
-
-            <div class="pipeline-actions">
-              <button class="btn primary" data-action="export-zip-bundle">Download ZIP bundle</button>
-              <button class="btn" data-action="export-master-csv">Master sets CSV</button>
-              <button class="btn" data-action="export-long-csv">Tidy long CSV</button>
-              <button class="btn" data-action="save-csv-snapshot">Save snapshot on device</button>
-            </div>
-            <p class="muted small">The ZIP holds one CSV per table plus a README describing every column. The tidy file
-              is one row per recorded value, so custom set columns survive intact.</p>
           </div>
 
           <!-- install card -->
@@ -441,22 +437,17 @@
             <!-- Right rail: collapsible and independently scrollable -->
             <aside class="workout-side-panel" aria-label="Session tools">
               <div class="rail-head">
-                <span id="dayFocusShort" class="rail-title">—</span>
-                <button class="icon-btn panel-toggle" data-action="toggle-rail" title="Minimize this panel"
-                  aria-label="Minimize or expand the session panel">›</button>
+                <span id="dayFocusShort" class="rail-title">Music</span>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <button class="icon-btn wpb-settings-link" id="wpbSettingsBtn" type="button" title="Manage Playlist">⚙️</button>
+                  <button class="icon-btn panel-toggle" data-action="toggle-rail" title="Minimize this panel" aria-label="Minimize or expand the session panel">›</button>
+                </div>
               </div>
 
               <div class="rail-scroll">
                 <!-- Workout Music Player Card -->
                 <div class="panel rail-card playlist-card" id="workoutPlaylistCard">
-                  <div class="playlist-card-head">
-                    <div class="wpb-head-title-wrap">
-                      <span class="wpb-day-badge" id="wpbDayBadge" title="Click to cycle weekday playlist">Today</span>
-                      <small class="muted" id="wpbPlaylistStatus">Workout Music</small>
-                    </div>
-                    <button class="icon-btn wpb-settings-link" id="wpbSettingsBtn" type="button"
-                      title="Manage Playlist, YouTube Extractor & Uploads in Settings">⚙️ Music</button>
-                  </div>
+
                   <!-- Embedded In-Page Music Player Block -->
                   <div class="workout-player-bar spotify-widget in-page-player" id="workoutPlayerBar">
                     <div class="spotify-widget-inner">
@@ -545,6 +536,58 @@
           <div id="manageDays" class="manage-days"></div>
         </section>
 
+        <!-- User Profile Modal -->
+  <div class="modal" id="userProfileModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-profile"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 500px;">
+      <div class="modal-header">
+        <div><b>👤 User Profile</b></div>
+        <button class="icon-btn" data-action="close-profile" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single">
+        <form id="userProfileForm" class="settings-form">
+          <div style="text-align: center; margin-bottom: 1rem;">
+            <div id="profileAvatarPreview" style="width: 80px; height: 80px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2rem;">
+              👤
+            </div>
+            <label class="btn small-btn primary">
+              <span>Change Picture</span>
+              <input type="file" id="profileAvatarUpload" accept="image/*" hidden>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Username<input type="text" id="profileUsername" class="input-text" required></label>
+          </div>
+          <div class="form-group">
+            <label>Full Name<input type="text" id="profileName" class="input-text"></label>
+          </div>
+          <div class="form-group">
+            <label>Email Address<input type="email" id="profileEmail" class="input-text" disabled title="Contact support to change email"></label>
+          </div>
+          <div class="form-group">
+            <label>Bio<textarea id="profileBio" class="input-text" rows="3" placeholder="Tell us about your fitness journey..."></textarea></label>
+          </div>
+
+          <div class="card" style="margin-top:1rem; padding: 10px; text-align: center; background: rgba(0,0,0,0.2);">
+            <small class="muted">WORKOUT STATS</small>
+            <div id="profileStats" style="font-weight: bold; margin-top: 5px;">Loading...</div>
+          </div>
+
+          <button type="submit" class="btn primary" style="width:100%; margin-top:1rem;">Save Profile Changes</button>
+        </form>
+
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
+        <h3 style="margin-bottom: 1rem;">Account Management</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" id="btnChangePassword">Change Password</button>
+          <button class="btn" id="btnResetDefaults" style="color: var(--warning);">Restore to Defaults (Clear Data)</button>
+          <button class="btn" id="btnDeleteAccount" style="color: var(--danger); border-color: var(--danger);">Delete Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
         <!-- AI COACH -->
         <section id="aiView" class="view" hidden>
           <div class="panel">
@@ -593,6 +636,33 @@
               <textarea id="aiPrompt" rows="18" spellcheck="false"></textarea>
             </label>
           </div>
+          <!-- data pipeline -->
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Data pipeline</h2>
+                <p class="muted small">Every recorded field — weight, unit, pulley system, effective kg, sets, reps,
+                  RIR, set completion, total rest after balancing, workout clock time, body weight and every note —
+                  written to CSV. Blank means never recorded, so numeric columns stay numeric.</p>
+              </div>
+              <div class="panel-head-actions">
+                <label class="check-inline"><input type="checkbox" id="homeExportAll"> All projects</label>
+              </div>
+            </div>
+
+            <div class="kv-list" id="homePipelineStats"></div>
+
+            <div class="pipeline-actions">
+              <button class="btn primary" data-action="export-zip-bundle">Download ZIP bundle</button>
+              <button class="btn" data-action="export-master-csv">Master sets CSV</button>
+              <button class="btn" data-action="export-long-csv">Tidy long CSV</button>
+              <button class="btn" data-action="save-csv-snapshot">Save snapshot on device</button>
+            </div>
+            <p class="muted small">The ZIP holds one CSV per table plus a README describing every column. The tidy file
+              is one row per recorded value, so custom set columns survive intact.</p>
+          </div>
+
+
         </section>
 
       </main>
@@ -734,6 +804,41 @@
     </div>
   </div>
 
+  <!-- Support / Inbox Modal -->
+  <div class="modal" id="supportModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-support"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 600px;">
+      <div class="modal-header">
+        <div><b>📬 Support Inbox</b></div>
+        <button class="icon-btn" data-action="close-support" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single">
+        <div style="display:flex; gap:10px; margin-bottom: 1rem;">
+          <button class="btn primary" id="btnTabInbox" style="flex:1;">My Inbox</button>
+          <button class="btn" id="btnTabNewTicket" style="flex:1;">New Ticket</button>
+        </div>
+        
+        <div id="supportInboxView">
+          <div id="supportTicketsList" style="display:flex; flex-direction:column; gap:10px;">
+             <!-- Tickets will render here -->
+          </div>
+        </div>
+        
+        <div id="supportNewTicketView" style="display:none;">
+          <form id="supportTicketForm" class="settings-form">
+            <div class="form-group">
+              <label>Title / Subject<input type="text" id="ticketTitle" class="input-text" required placeholder="E.g. Found a bug, or Feature Request"></label>
+            </div>
+            <div class="form-group">
+              <label>Description<textarea id="ticketBody" class="input-text" rows="5" required placeholder="Explain your issue or suggestion here..."></textarea></label>
+            </div>
+            <button type="submit" class="btn primary" style="width:100%; margin-top:1rem;">Submit Ticket</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- PROJECTS -->
   <div class="modal" id="projectModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-project-modal></div>
@@ -818,24 +923,6 @@
 
         <!-- TAB 1: GENERAL & AI -->
         <div id="settingsGeneralTab" class="settings-tab-pane">
-          <!-- Logo Card -->
-          <section class="settings-block settings-card">
-            <div class="card-head-row">
-              <h3>🎨 Brand &amp; App Logo</h3>
-              <span class="tag">Local branding</span>
-            </div>
-            <p class="muted small">Customize the logo displayed in the top header and brand mark.</p>
-            <div class="logo-row">
-              <div class="logo-preview" id="logoPreview"></div>
-              <div class="logo-actions">
-                <label class="btn file-btn primary-glow">
-                  <span>Upload logo</span>
-                  <input id="logoUploadInput" type="file" accept="image/*" hidden>
-                </label>
-                <button class="btn" id="resetLogoButton" data-action="reset-logo">Reset to default</button>
-              </div>
-            </div>
-          </section>
 
           <!-- AI Connection Card -->
           <section class="settings-block settings-card">
@@ -922,8 +1009,8 @@
               <div class="music-intro-icon">🎧</div>
               <div>
                 <h4>Daily Workout Music &amp; Playlists</h4>
-                <p class="muted small">Customize playlists according to weekday. Extract MP3s from YouTube directly into
-                  <code class="code-path">music/&lt;weekday&gt;/</code> or upload local audio files.</p>
+                <p class="muted small">Customize playlists according to weekday by uploading local audio files.
+                </p>
               </div>
             </div>
             <div class="music-active-day-chip" id="musicActiveDayChip">
@@ -971,57 +1058,6 @@
             </div>
           </div>
 
-          <!-- YouTube to MP3 Extractor -->
-          <section class="settings-block music-extractor-card settings-card">
-            <div class="block-title-row">
-              <h3>⚡ Extract MP3 from YouTube</h3>
-              <span class="tag accent">Auto-download to music/</span>
-            </div>
-            <p class="muted small">Extract high-quality audio from any YouTube link and save it directly to the selected
-              day's playlist and your local folder.</p>
-
-            <div class="yt-extractor-form">
-              <div class="yt-url-group">
-                <div class="yt-input-wrapper">
-                  <span class="yt-input-icon">🔗</span>
-                  <input id="ytExtractUrl" type="url"
-                    placeholder="Paste YouTube link (e.g. https://youtu.be/... or watch?v=...)" autocomplete="off"
-                    spellcheck="false">
-                  <button class="btn yt-paste-btn" id="ytPasteBtn" type="button" title="Paste link from clipboard">📋
-                    Paste</button>
-                </div>
-              </div>
-
-              <div class="yt-options-row">
-                <label>Target Weekday
-                  <select id="ytTargetWeekdaySelect" class="custom-select">
-                    <option value="monday">Monday (music/monday/)</option>
-                    <option value="tuesday">Tuesday (music/tuesday/)</option>
-                    <option value="wednesday">Wednesday (music/wednesday/)</option>
-                    <option value="thursday">Thursday (music/thursday/)</option>
-                    <option value="friday">Friday (music/friday/)</option>
-                    <option value="saturday">Saturday (music/saturday/)</option>
-                    <option value="sunday">Sunday (music/sunday/)</option>
-                    <option value="general">All Days (music/)</option>
-                  </select>
-                </label>
-                <label>Audio Quality
-                  <select id="ytBitrateSelect" class="custom-select">
-                    <option value="192" selected>192 kbps (Recommended)</option>
-                    <option value="256">256 kbps (High)</option>
-                    <option value="320">320 kbps (Maximum)</option>
-                    <option value="128">128 kbps (Compact)</option>
-                  </select>
-                </label>
-                <div class="yt-submit-wrap">
-                  <button class="btn primary yt-extract-btn" id="ytExtractBtn" type="button">⚡ Extract &amp; Add
-                    MP3</button>
-                </div>
-              </div>
-
-              <div id="ytExtractStatus" class="yt-status-box" hidden></div>
-            </div>
-          </section>
 
           <!-- Upload Local Music Files -->
           <section class="settings-block music-upload-card settings-card">
@@ -1148,26 +1184,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script src="data/templates.js?v=18.1"></script>
-  <script src="data/seed-project.js?v=18.1"></script>
-  <script src="data/exercises.js?v=18.1"></script>
-  <script src="js/ui.js?v=18.1"></script>
-  <script src="js/supabaseClient.js?v=18.1"></script>
-  <script src="js/auth.js?v=18.1"></script>
-  <script src="js/sync.js?v=18.1"></script>
-  <script src="js/mediaStore.js?v=18.1"></script>
-  <script src="js/store.js?v=18.1"></script>
-  <script src="js/ml.js?v=18.1"></script>
-  <script src="js/pipeline.js?v=18.1"></script>
-  <script src="js/youtubeExtractor.js?v=18.1"></script>
-  <script src="js/settings.js?v=18.1"></script>
-  <script src="js/player.js?v=18.1"></script>
-  <script src="js/autocomplete.js?v=18.1"></script>
-  <script src="js/app.js?v=18.1"></script>
-  <script src="js/manage.js?v=18.1"></script>
-  <script src="js/report.js?v=18.1"></script>
-  <script src="js/wearable.js?v=18.1"></script>
-  <script src="js/home.js?v=18.1"></script>
+  <script src="data/templates.js?v=18.8"></script>
+  <script src="data/seed-project.js?v=18.8"></script>
+  <script src="data/exercises.js?v=18.8"></script>
+  <script src="js/ui.js?v=18.8"></script>
+  <script src="js/supabaseClient.js?v=18.8"></script>
+  <script src="js/auth.js?v=18.8"></script>
+  <script src="js/sync.js?v=18.8"></script>
+  <script src="js/mediaStore.js?v=18.8"></script>
+  <script src="js/store.js?v=18.8"></script>
+  <script src="js/ml.js?v=18.8"></script>
+  <script src="js/pipeline.js?v=18.8"></script>
+
+  <script src="js/settings.js?v=18.8"></script>
+  <script src="js/player.js?v=18.8"></script>
+  <script src="js/autocomplete.js?v=18.8"></script>
+  <script src="js/app.js?v=18.8"></script>
+  <script src="js/manage.js?v=18.8"></script>
+  <script src="js/report.js?v=18.8"></script>
+  <script src="js/wearable.js?v=18.8"></script>
+  <script src="js/home.js?v=18.8"></script>
 
 </body>
 

@@ -20,10 +20,12 @@
       font-size: 14px;
       cursor: pointer;
     }
+
     .login-checkbox input {
       accent-color: var(--accent);
       cursor: pointer;
     }
+
     .forgot-link {
       color: var(--accent);
       font-size: 13px;
@@ -31,12 +33,15 @@
       margin-top: 1rem;
       display: inline-block;
     }
+
     .forgot-link:hover {
       text-decoration: underline;
     }
+
     .forgot-form {
       display: none;
     }
+
     .forgot-form.active {
       display: block;
     }
@@ -78,10 +83,10 @@
         </div>
         <div class="form-group">
           <label for="loginPassword">Password</label>
-          <input class="form-input" type="password" id="loginPassword" name="password"
-            placeholder="Enter your password" required autocomplete="current-password">
+          <input class="form-input" type="password" id="loginPassword" name="password" placeholder="Enter your password"
+            required autocomplete="current-password">
         </div>
-        
+
         <label class="login-checkbox">
           <input type="checkbox" id="loginRememberMe" checked> Remember me
         </label>
@@ -98,11 +103,12 @@
 
       <!-- Forgot Password Form -->
       <form class="login-form forgot-form" id="forgotForm" autocomplete="off">
-        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;text-align:center;">Enter your email to receive a password reset link.</p>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;text-align:center;">Enter your email to
+          receive a password reset link.</p>
         <div class="form-group">
           <label for="forgotEmail">Email</label>
-          <input class="form-input" type="email" id="forgotEmail" name="email"
-            placeholder="you@example.com" required autocomplete="email">
+          <input class="form-input" type="email" id="forgotEmail" name="email" placeholder="you@example.com" required
+            autocomplete="email">
         </div>
         <button type="submit" class="login-btn" id="forgotBtn">
           <span class="spinner"></span>
@@ -122,8 +128,8 @@
         </div>
         <div class="form-group">
           <label for="regEmail">Email</label>
-          <input class="form-input" type="email" id="regEmail" name="email"
-            placeholder="you@example.com" required autocomplete="email">
+          <input class="form-input" type="email" id="regEmail" name="email" placeholder="you@example.com" required
+            autocomplete="email">
         </div>
         <div class="form-group">
           <label for="regDisplayName">Display Name (optional)</label>
@@ -132,8 +138,8 @@
         </div>
         <div class="form-group">
           <label for="regPassword">Password</label>
-          <input class="form-input" type="password" id="regPassword" name="password"
-            placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+          <input class="form-input" type="password" id="regPassword" name="password" placeholder="At least 6 characters"
+            required minlength="6" autocomplete="new-password">
         </div>
         <div class="form-group">
           <label for="regConfirmPassword">Confirm Password</label>
@@ -146,6 +152,16 @@
         </button>
       </form>
 
+      <!-- Logged In State (Hidden initially) -->
+      <div id="loggedInState" style="display: none; text-align: center; padding: 1rem 0;">
+        <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-weight: normal;" id="loggedInUserMsg">You are
+          already signed in.</h3>
+        <button class="login-btn" onclick="window.location.href='index.html'" style="margin-bottom: 1rem;">
+          <span class="btn-text">Continue to App</span>
+        </button>
+        <button class="login-skip" id="signOutBtn" style="color: var(--accent);">Sign Out</button>
+      </div>
+
       <!-- Divider -->
       <div class="login-divider">or</div>
 
@@ -153,7 +169,8 @@
       <button class="login-skip" id="skipBtn">Continue without an account (Offline Mode)</button>
 
       <p class="login-footer">
-        Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to the cloud.
+        Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to
+        the cloud.
       </p>
 
     </div>
@@ -214,7 +231,7 @@
         const btn = $("loginBtn");
         btn.classList.add("loading");
         btn.disabled = true;
-        
+
         try {
           const inputVal = $("loginUsername").value.trim();
           const password = $("loginPassword").value;
@@ -237,22 +254,22 @@
           // the simplest way is to manually clear localStorage on close if Remember Me is false.
           // Better yet, we just set a flag in sessionStorage.
           if (!rememberMe) {
-             sessionStorage.setItem("gymcoach_no_remember", "true");
+            sessionStorage.setItem("gymcoach_no_remember", "true");
           } else {
-             sessionStorage.removeItem("gymcoach_no_remember");
+            sessionStorage.removeItem("gymcoach_no_remember");
           }
 
           const { data, error } = await supabase.auth.signInWithPassword({
             email: emailToUse,
             password: password
           });
-          
+
           if (error) throw error;
-          
-          toast("Welcome back!", "success");
+
+          toast("Signed in successfully!", "success");
           setTimeout(() => {
             window.location.href = "index.html";
-          }, 800);
+          }, 1500);
         } catch (err) {
           toast(err.message);
         } finally {
@@ -265,7 +282,7 @@
       registerForm.addEventListener("submit", async e => {
         e.preventDefault();
         const btn = $("registerBtn");
-        
+
         const username = $("regUsername").value.trim();
         const email = $("regEmail").value.trim();
         const displayName = $("regDisplayName").value.trim();
@@ -279,13 +296,16 @@
 
         btn.classList.add("loading");
         btn.disabled = true;
-        
+
         try {
           const { data: isAvailable, error: rpcError } = await supabase.rpc('check_username_available', { p_username: username });
-          
-          if (rpcError) throw new Error("Could not verify username availability.");
+
+          if (rpcError) {
+            console.error(rpcError);
+            throw new Error(`Could not verify username: ${rpcError.message}`);
+          }
           if (isAvailable === false) {
-             throw new Error("Username is already in use.");
+            throw new Error("Username is already in use.");
           }
 
           const { data, error } = await supabase.auth.signUp({
@@ -299,11 +319,22 @@
               }
             }
           });
-          
+
           if (error) throw error;
-          
-          toast("Account created! Redirecting…", "success");
-          setTimeout(() => { window.location.href = "index.html"; }, 800);
+
+          if (data?.user && !data?.session) {
+            toast("Please check your email to verify your account before logging in.", "success");
+            // Switch back to login tab after 3 seconds
+            setTimeout(() => {
+              registerForm.classList.remove("active");
+              loginForm.classList.add("active");
+              tabs.forEach(t => t.classList.remove("active"));
+              $("tabLogin").classList.add("active");
+            }, 3000);
+          } else {
+            toast("Account created! Redirecting…", "success");
+            setTimeout(() => { window.location.href = "index.html"; }, 800);
+          }
         } catch (err) {
           toast(err.message);
         } finally {
@@ -324,9 +355,9 @@
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: window.location.origin + '/login.html'
           });
-          
+
           if (error) throw error;
-          
+
           toast("Password reset email sent!", "success");
           $("forgotEmail").value = "";
           setTimeout(() => {
@@ -352,7 +383,22 @@
           if (!supabase) return;  // Supabase didn't load (e.g. offline/Live Server)
           const { data: { session } } = await supabase.auth.getSession();
           if (session && session.user) {
-            window.location.href = "index.html";
+            // Show logged-in state instead of redirecting immediately
+            document.querySelector('.login-tabs').style.display = 'none';
+            document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+            document.querySelector('.login-divider').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'none';
+
+            const name = session.user.user_metadata?.display_name || session.user.user_metadata?.username || session.user.email || 'User';
+            document.getElementById('loggedInUserMsg').textContent = `Signed in as ${name}`;
+            document.getElementById('loggedInState').style.display = 'block';
+
+            document.getElementById('signOutBtn').addEventListener('click', async () => {
+              const btn = document.getElementById('signOutBtn');
+              btn.textContent = "Signing out...";
+              await supabase.auth.signOut();
+              window.location.reload();
+            });
           }
         } catch (e) {
           // Supabase unavailable or session invalid — stay on login page
@@ -362,4 +408,5 @@
     })();
   </script>
 </body>
+
 </html>

@@ -31,6 +31,7 @@
       <nav class="sidebar-nav">
         <button class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
         <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> Assigned Users</button>
+        <button class="nav-item" data-section="support"><span class="nav-icon">📬</span> Support Tickets</button>
       </nav>
       <div class="sidebar-footer">
         <button class="nav-item" onclick="window.location.href='index.html'"><span class="nav-icon">←</span> Back to App</button>
@@ -79,6 +80,31 @@
               </tr>
             </thead>
             <tbody id="usersTableBody">
+              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-section" id="sectionSupport" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>Support Tickets</h1>
+            <p>View and respond to issues from your assigned athletes</p>
+          </div>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>User</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTableBody">
               <tr><td colspan="5" class="empty-state">Loading...</td></tr>
             </tbody>
           </table>

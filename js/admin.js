@@ -69,5 +69,57 @@ document.addEventListener("DOMContentLoaded", async () => {
      alert(`Feature coming soon: Query sync_data table for user ${userId} and visualize their workouts.`);
   };
 
+  // --- SUPPORT TICKETS ---
+  async function loadTickets() {
+    try {
+      // Admin loads tickets (RLS enforces they only see tickets from assigned users)
+      const { data: tickets, error } = await supabase.from('support_tickets').select('*, profiles:user_id(username)').order('created_at', { ascending: false });
+      if (error) throw error;
+      
+      const tbody = document.getElementById('ticketsTableBody');
+      if (tickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No support tickets found from assigned users.</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = tickets.map(t => {
+        const date = new Date(t.created_at).toLocaleString();
+        const username = t.profiles?.username || 'Unknown';
+        return `
+        <tr>
+          <td>${date}</td>
+          <td>${username}</td>
+          <td><b>${t.title}</b><br><small class="muted">${t.body}</small></td>
+          <td><span class="role-badge" style="background:${t.status==='OPEN'?'var(--danger)':'var(--success)'}">${t.status}</span></td>
+          <td>
+            <button class="btn small-btn" onclick="replyTicket('${t.id}')">Reply</button>
+          </td>
+        </tr>
+      `}).join('');
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  window.replyTicket = async (id) => {
+    const response = prompt("Enter your response to this user:");
+    if (!response) return;
+    
+    try {
+      const { error } = await supabase.from('support_tickets').update({ 
+        response: response, 
+        status: 'CLOSED' 
+      }).eq('id', id);
+      
+      if (error) throw error;
+      loadTickets();
+      alert("Reply sent.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send reply.");
+    }
+  };
+
   loadData();
+  loadTickets();
 });

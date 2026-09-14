@@ -250,7 +250,6 @@ window.Settings = (() => {
   function open(section = "general") {
     renderForm();
     renderStorage();
-    renderLogoPreview();
     switchTab(section);
     UI.openModal("settingsModal");
   }
@@ -512,32 +511,6 @@ window.Settings = (() => {
   }
 
   // --------------------------------------------------------------- branding
-
-  async function renderLogoPreview() {
-    const src = await MediaStore.getLogoURL();
-    const box = $("logoPreview");
-    if (!box) return;
-    box.innerHTML = src
-      ? `<img src="${src}" alt="Your logo">`
-      : `<span class="muted">No logo — using the default mark</span>`;
-    $("resetLogoButton").disabled = !src;
-  }
-
-  async function onLogoPicked(file) {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) { UI.toast("Pick an image file.", "error"); return; }
-    await MediaStore.saveLogo(file);
-    await MediaStore.applyLogo();
-    await renderLogoPreview();
-    UI.toast("Logo updated");
-  }
-
-  async function resetLogo() {
-    await MediaStore.deleteLogo();
-    await MediaStore.applyLogo();
-    await renderLogoPreview();
-    UI.toast("Logo reset");
-  }
 
   // ---------------------------------------------------------------- storage
 
@@ -818,96 +791,7 @@ window.Settings = (() => {
       }
     });
 
-    // YouTube Extract Button
-    $("ytExtractBtn")?.addEventListener("click", async () => {
-      const urlInput = $("ytExtractUrl");
-      const url = urlInput?.value.trim();
-      const statusBox = $("ytExtractStatus");
-      const btn = $("ytExtractBtn");
-
-      if (!url) {
-        UI.toast("Please enter a YouTube link.", "error");
-        return;
-      }
-
-      const videoId = window.YouTubeExtractor?.parseYouTubeId(url);
-      if (!videoId) {
-        UI.toast("Invalid YouTube URL. Please check the link.", "error");
-        return;
-      }
-
-      const targetWeekday = $("ytTargetWeekdaySelect")?.value || currentMusicWeekday || "monday";
-      const bitrate = $("ytBitrateSelect")?.value || "192";
-
-      if (btn) btn.disabled = true;
-      if (statusBox) {
-        statusBox.hidden = false;
-        statusBox.className = "yt-status-box is-loading";
-        statusBox.innerHTML = `
-          <div class="yt-status-loading">
-            <span class="spinner"></span>
-            <span id="ytStatusMessage">Connecting to YouTube…</span>
-          </div>`;
-      }
-
-      const updateStatus = msg => {
-        const el = $("ytStatusMessage");
-        if (el) el.textContent = msg;
-      };
-
-      try {
-        const extracted = await window.YouTubeExtractor.extract(url, {
-          weekday: targetWeekday,
-          bitrate,
-          onStatus: updateStatus
-        });
-
-        // Add track to player & store
-        await window.WorkoutPlayer?.addTrack(extracted, targetWeekday, extracted.blob);
-
-        // Auto-download file for local music/<weekday>/ folder
-        const downloadFilename = `music_${targetWeekday}_${extracted.filename}`;
-        window.YouTubeExtractor.downloadBlob(extracted.blob, downloadFilename);
-
-        if (statusBox) {
-          statusBox.className = "yt-status-box is-success";
-          statusBox.innerHTML = `
-            <div class="yt-success-wrap">
-              <img src="${extracted.thumbnail}" class="yt-thumb-preview" alt="">
-              <div class="yt-success-info">
-                <b>${UI.esc(extracted.title)}</b>
-                <small class="text-success">✓ Saved to ${targetWeekday.toUpperCase()} playlist &amp; downloaded!</small>
-                <small class="muted">${fmtTime(extracted.duration)} · ${(extracted.size / 1048576).toFixed(1)} MB</small>
-              </div>
-              <button class="small-btn primary" id="ytRedownloadBtn" type="button">📥 Re-download MP3</button>
-            </div>`;
-          $("ytRedownloadBtn")?.addEventListener("click", () => {
-            window.YouTubeExtractor.downloadBlob(extracted.blob, downloadFilename);
-          });
-        }
-
-        if (urlInput) urlInput.value = "";
-        setMusicWeekday(targetWeekday);
-        UI.toast(`Added "${extracted.title}" to ${targetWeekday.toUpperCase()} playlist!`, "ok");
-      } catch (err) {
-        console.warn("Extraction error:", err);
-        if (statusBox) {
-          statusBox.className = "yt-status-box is-error";
-          statusBox.innerHTML = `
-            <div class="yt-error-wrap">
-              <b>Extraction Notice</b>
-              <p>${UI.esc(err.message || "Extraction service is busy.")}</p>
-              <div class="yt-cmd-box">
-                <small>Terminal / yt-dlp direct command for <code>music/${targetWeekday}/</code>:</small>
-                <code>yt-dlp -x --audio-format mp3 -o "music/${targetWeekday}/%(title)s.%(ext)s" "${url}"</code>
-              </div>
-            </div>`;
-        }
-        UI.toast("Could not convert audio online. See direct options.", "error");
-      } finally {
-        if (btn) btn.disabled = false;
-      }
-    });
+    // YouTube Extract feature removed as per request
 
     // Audio upload file picker
     $("settingsAudioUploadInput")?.addEventListener("change", async e => {
@@ -984,7 +868,6 @@ window.Settings = (() => {
         case "open-settings": UI.toggleDrawer(false); open(); break;
         case "save-settings": saveFromForm(); break;
         case "test-connection": testConnection(); break;
-        case "reset-logo": resetLogo(); break;
         case "clear-all-data": clearAllData(); break;
         case "install-app": promptInstall(); break;
         case "show-install-help": UI.openModal("installModal"); showInstallSteps(); break;
@@ -994,11 +877,6 @@ window.Settings = (() => {
       b.onclick = () => UI.closeModal("settingsModal"));
     $("settingsProvider")?.addEventListener("change", e => { onProviderChange(e.target.value); });
     $("toggleApiKeyEye")?.addEventListener("click", () => { toggleApiKeyVisibility(); });
-    $("logoUploadInput")?.addEventListener("change", e => {
-      const f = e.target.files?.[0];
-      e.target.value = "";
-      onLogoPicked(f);
-    });
     wireInstall();
     registerServiceWorker();
     wireMusicSettings();
