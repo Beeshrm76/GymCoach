@@ -39,12 +39,12 @@ window.UI = (() => {
           <div class="modal-header"><div><b>${esc(title)}</b>${body ? `<span>${esc(body)}</span>` : ""}</div></div>
           <div class="dialog-body">
             ${fields.map((f, i) => f.type === "select"
-              ? `<label>${esc(f.label)}<select data-field="${i}">${(f.options || []).map(o =>
-                  `<option value="${esc(o.value)}"${o.value === f.value ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>`
-              : f.type === "textarea"
-                ? `<label>${esc(f.label)}<textarea data-field="${i}" rows="3" placeholder="${esc(f.placeholder || "")}">${esc(f.value || "")}</textarea></label>`
-                : `<label>${esc(f.label)}<input data-field="${i}" value="${esc(f.value || "")}" placeholder="${esc(f.placeholder || "")}"></label>`
-            ).join("")}
+        ? `<label>${esc(f.label)}<select data-field="${i}">${(f.options || []).map(o =>
+          `<option value="${esc(o.value)}"${o.value === f.value ? " selected" : ""}>${esc(o.label)}</option>`).join("")}</select></label>`
+        : f.type === "textarea"
+          ? `<label>${esc(f.label)}<textarea data-field="${i}" rows="3" placeholder="${esc(f.placeholder || "")}">${esc(f.value || "")}</textarea></label>`
+          : `<label>${esc(f.label)}<input data-field="${i}" value="${esc(f.value || "")}" placeholder="${esc(f.placeholder || "")}"></label>`
+      ).join("")}
           </div>
           <div class="dialog-actions">
             <button class="btn" data-dialog-cancel>${esc(cancelLabel)}</button>
@@ -86,13 +86,31 @@ window.UI = (() => {
     dialog({ title, body, confirmLabel, fields: [{ name: "value", label, value, placeholder }] })
       .then(r => (r ? r.value : null));
 
+  // ---- scroll lock ---------------------------------------------------------
+  // Shared by modals and the mobile drawer so they can't clobber each other's
+  // lock/unlock. Just toggles a class — the CSS (`overflow:hidden` +
+  // `overscroll-behavior:contain`) does the actual work, including stopping
+  // iOS Safari from rubber-banding the page behind an overlay. No JS touch
+  // interception, no position:fixed, no layout shift.
+  let scrollLockCount = 0;
+
+  function lockScroll() {
+    if (scrollLockCount === 0) document.body.classList.add("no-scroll");
+    scrollLockCount++;
+  }
+
+  function unlockScroll() {
+    scrollLockCount = Math.max(0, scrollLockCount - 1);
+    if (scrollLockCount === 0) document.body.classList.remove("no-scroll");
+  }
+
   // ---- modals ------------------------------------------------------------
   function openModal(id) {
     const m = $(id);
     if (!m) return;
     m.classList.add("open");
     m.setAttribute("aria-hidden", "false");
-    document.body.classList.add("no-scroll");
+    lockScroll();
   }
 
   function closeModal(id) {
@@ -100,7 +118,7 @@ window.UI = (() => {
     if (!m) return;
     m.classList.remove("open");
     m.setAttribute("aria-hidden", "true");
-    if (!document.querySelector(".modal.open")) document.body.classList.remove("no-scroll");
+    if (!document.querySelector(".modal.open")) unlockScroll();
   }
 
   // ---- collapsible panels ------------------------------------------------
@@ -114,7 +132,12 @@ window.UI = (() => {
   const workoutLayout = () => document.querySelector(".workout-layout");
 
   function applyLayout() {
-    shell()?.classList.toggle("side-collapsed", !!layout.sidebarCollapsed);
+    // side-collapsed is a desktop-only concept. Applying it while the phone
+    // drawer is in play makes the drawer inherit collapsed-desktop styling
+    // it was never designed for, which is what makes opening the drawer look
+    // like it's fighting with (or is coupled to) the desktop collapse state.
+    const isDesktop = window.innerWidth > 900;
+    shell()?.classList.toggle("side-collapsed", isDesktop && !!layout.sidebarCollapsed);
     workoutLayout()?.classList.toggle("rail-collapsed", !!layout.railCollapsed);
     // Update the topbar ☰ button title based on sidebar state
     document.querySelectorAll(".drawer-btn").forEach(b => {
@@ -140,13 +163,41 @@ window.UI = (() => {
   }
 
   // Mobile drawer is separate from the desktop collapse so the two can't fight.
+  // Track our own open/locked state rather than re-deriving it from the DOM,
+  // so we never call lockScroll()/unlockScroll() more than once for the same
+  // open drawer (that would desync the shared scroll-lock counter).
+  let drawerLocked = false;
+
   function toggleDrawer(force) {
     const sb = document.getElementById("sidebar");
     if (!sb) return;
     const open = force === undefined ? !sb.classList.contains("drawer-open") : !!force;
     sb.classList.toggle("drawer-open", open);
     document.querySelector(".drawer-scrim")?.classList.toggle("show", open);
+
+    // Lock body scroll on mobile to prevent background scrolling when sidebar is open.
+    // Shares the same lock as modals so opening a dialog from within the drawer
+    // (or vice versa) can't cause one to unlock scrolling out from under the other.
+    if (open && window.innerWidth <= 900) {
+      if (!drawerLocked) { drawerLocked = true; lockScroll(); }
+    } else if (drawerLocked) {
+      drawerLocked = false;
+      unlockScroll();
+    }
   }
+
+  // Ensure drawer state is cleaned up if user resizes back to desktop, and
+  // re-derive side-collapsed vs drawer-open any time the breakpoint is crossed
+  // in either direction (applyLayout() itself decides which applies).
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 900) {
+      const sb = document.getElementById("sidebar");
+      if (sb && sb.classList.contains("drawer-open")) {
+        toggleDrawer(false);
+      }
+    }
+    applyLayout();
+  });
 
   // ---- misc --------------------------------------------------------------
   function fmtDate(iso, opts = { month: "short", day: "numeric" }) {
@@ -189,6 +240,7 @@ window.UI = (() => {
   return {
     esc, toast, dialog, confirm, prompt, openModal, closeModal,
     toggleSidebarCollapse, toggleRail, toggleDrawer, applyLayout,
+    lockScroll, unlockScroll,
     fmtDate, download, copy, layout
   };
 })();
