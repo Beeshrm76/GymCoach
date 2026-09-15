@@ -3511,11 +3511,6 @@ select#settingsProvider option {
   }
 }
 
-border-color: rgba(255, 255, 255, 0.28) !important;
-background: rgba(255, 255, 255, 0.12) !important;
-transform: translateY(-1px) !important;
-}
-
 /* --- Topbar & View Tabs --- */
 .topbar {
   background: rgba(6, 10, 20, 0.98) !important;
@@ -3758,4 +3753,69 @@ transform: translateY(-1px) !important;
 
 .progress-grid>.panel:nth-child(1) .bar-chart {
   margin-top: auto !important;
+}
+
+/* ============================================================
+   DRAWER + SCROLL-LOCK FIXES
+   ============================================================ */
+
+/* ---- 1. Scroll lock that actually holds -------------------
+   html has `overflow-x: clip`, which is a non-visible overflow.
+   Per the CSS viewport-propagation rule, body's overflow is only
+   propagated to the viewport when html's overflow is `visible`.
+   So `body.no-scroll{overflow:hidden}` was silently doing nothing
+   to the page scroll — body just became its own scroll box while
+   the viewport (html) kept scrolling. That is the "background
+   scrolls instead" bug. Lock the root element too. */
+html.no-scroll {
+  overflow: hidden;
+  overscroll-behavior: contain;
+  /* iOS Safari keeps momentum-scrolling the root unless it is also
+     given a hard height, so pin it to the visual viewport. */
+  height: 100%;
+}
+
+html.no-scroll body {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+/* ---- 2. Drawer / scrim stacking ---------------------------
+   .app-shell sets `position:relative; z-index:1`, which makes it a
+   stacking context. The sidebar's z-index:50 was therefore trapped
+   INSIDE that context, while .drawer-scrim (z-index:40) is a sibling
+   of .app-shell in the root context. 40 > 1, so the scrim painted on
+   top of the whole shell — dimming the open drawer and swallowing
+   every tap meant for it. Dropping the shell's stacking context on
+   mobile lets the real order apply: content < scrim < drawer. */
+@media (max-width: 900px) {
+  .app-shell {
+    z-index: auto;
+  }
+
+  /* Sidebar is a sibling-level layer again, so these now mean what
+     they say relative to each other. */
+  .drawer-scrim {
+    z-index: 40;
+  }
+
+  .sidebar {
+    z-index: 50;
+  }
+
+  /* The drawer owns its own scrolling and must not chain to the page. */
+  .sidebar.drawer-open {
+    height: 100dvh;
+    max-height: 100dvh;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  /* Keep the topbar under the scrim while the drawer is open, so the
+     dim reads as covering the whole page rather than stopping at the
+     header. */
+  .sidebar.drawer-open~.app-content .topbar,
+  .app-shell:has(.sidebar.drawer-open) .topbar {
+    z-index: 1;
+  }
 }

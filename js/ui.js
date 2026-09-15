@@ -94,14 +94,31 @@ window.UI = (() => {
   // interception, no position:fixed, no layout shift.
   let scrollLockCount = 0;
 
+  // The class has to go on <html> as well as <body>: html carries
+  // `overflow-x: clip`, and the viewport only inherits body's overflow when
+  // html's own overflow is `visible`. With the class on body alone the page
+  // kept scrolling behind the drawer/modal.
+  let lockedScrollY = 0;
+
   function lockScroll() {
-    if (scrollLockCount === 0) document.body.classList.add("no-scroll");
+    if (scrollLockCount === 0) {
+      // Pinning the root can drop the page back to the top, so remember
+      // where the reader was and put them back on unlock.
+      lockedScrollY = window.scrollY || window.pageYOffset || 0;
+      document.documentElement.classList.add("no-scroll");
+      document.body.classList.add("no-scroll");
+    }
     scrollLockCount++;
   }
 
   function unlockScroll() {
     scrollLockCount = Math.max(0, scrollLockCount - 1);
-    if (scrollLockCount === 0) document.body.classList.remove("no-scroll");
+    if (scrollLockCount === 0) {
+      document.documentElement.classList.remove("no-scroll");
+      document.body.classList.remove("no-scroll");
+      // Restore synchronously, before paint, so there's no visible jump.
+      window.scrollTo(0, lockedScrollY);
+    }
   }
 
   // ---- modals ------------------------------------------------------------
