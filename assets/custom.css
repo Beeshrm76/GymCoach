@@ -2670,14 +2670,7 @@ select#settingsProvider option {
   background: linear-gradient(90deg, #0070f3 0%, #00c6ff 50%, #34d399 100%) !important;
   box-shadow: 0 0 14px rgba(0, 198, 255, 0.5) !important;
 }
-.top-intensity-bar {
-  background: rgba(0, 0, 0, 0.55) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-}
-.top-intensity-indicator {
-  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #f472b6 100%) !important;
-  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6) !important;
-}
+
 
 /* Harmonized Inner Chips & Stat Elements */
 .model-stat,
@@ -2865,14 +2858,7 @@ select#settingsProvider option {
   background: linear-gradient(90deg, #0070f3 0%, #00c6ff 50%, #34d399 100%) !important;
   box-shadow: 0 0 14px rgba(0, 198, 255, 0.5) !important;
 }
-.top-intensity-bar {
-  background: rgba(0, 0, 0, 0.55) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-}
-.top-intensity-indicator {
-  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #f472b6 100%) !important;
-  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6) !important;
-}
+
 
 /* Harmonized Inner Chips & Stat Elements */
 .model-stat,

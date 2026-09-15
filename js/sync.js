@@ -2,16 +2,7 @@
 // Syncs local storage blobs to Supabase sync_data table based on Last Write Wins
 
 window.SyncEngine = (() => {
-  const SYNC_KEYS = [
-    "gymcoach_projects_v2",
-    "gymcoach_active_v2",
-    "gymcoach_profile_v1",
-    "gymcoach_wearable_v1",
-    "gymcoach_layout_v1",
-    "gymcoach_settings",
-    "gymcoach_csv_archives"
-  ];
-  
+  const SYNC_PREFIX = "gymcoach_";
   const TIMESTAMPS_KEY = "gymcoach_sync_timestamps";
 
   let syncQueue = new Set();
@@ -42,7 +33,7 @@ window.SyncEngine = (() => {
     localStorage.setItem = function(key, value) {
       window._originalSetItem.apply(this, arguments);
       
-      if (SYNC_KEYS.includes(key)) {
+      if (key.startsWith(SYNC_PREFIX) && key !== TIMESTAMPS_KEY) {
         setLocalTimestamp(key, new Date().toISOString());
         queueSync(key);
       }
@@ -77,9 +68,11 @@ window.SyncEngine = (() => {
       if (!val) continue;
 
       try {
-        let jsonVal = JSON.parse(val);
-        // Special case: active key is a string not an object, wrap it
-        if (key === "gymcoach_active_v2" && typeof jsonVal !== 'object') {
+        let jsonVal = null;
+        try { jsonVal = JSON.parse(val); } catch { jsonVal = val; }
+        
+        // Ensure non-objects are wrapped properly if needed, though raw text is fine for most fields
+        if (key.includes("active") && typeof jsonVal !== 'object') {
            jsonVal = { value: jsonVal };
         }
 
@@ -133,7 +126,14 @@ window.SyncEngine = (() => {
          cloudMap[row.storage_key] = row;
       }
 
-      for (let key of SYNC_KEYS) {
+      // Collect all keys from both cloud and local that match the prefix
+      const allKeys = new Set(Object.keys(cloudMap).filter(k => k.startsWith(SYNC_PREFIX) && k !== TIMESTAMPS_KEY));
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(SYNC_PREFIX) && k !== TIMESTAMPS_KEY) allKeys.add(k);
+      }
+
+      for (let key of allKeys) {
         const cRow = cloudMap[key];
         const localVal = localStorage.getItem(key);
         const localTs = localTimestamps[key];
@@ -142,11 +142,11 @@ window.SyncEngine = (() => {
           // Device has no data for this key, use Cloud
           console.log(`Pulling ${key} from cloud (empty local)...`);
           let valToStore = cRow.value;
-          if (key === "gymcoach_active_v2" && valToStore.value !== undefined) {
+          if (key.includes("active") && valToStore && valToStore.value !== undefined) {
              valToStore = valToStore.value;
              window._originalSetItem.call(localStorage, key, valToStore);
           } else {
-             window._originalSetItem.call(localStorage, key, JSON.stringify(valToStore));
+             window._originalSetItem.call(localStorage, key, typeof valToStore === 'string' ? valToStore : JSON.stringify(valToStore));
           }
           setLocalTimestamp(key, cRow.updated_at);
           reloadedNeeded = true;
@@ -159,7 +159,7 @@ window.SyncEngine = (() => {
           if (cTime > lTime) {
             console.log(`Cloud data newer for ${key}, pulling...`);
             let valToStore = cRow.value;
-            if (key === "gymcoach_active_v2" && valToStore.value !== undefined) {
+            if (key.includes("active") && valToStore && valToStore.value !== undefined) {
                valToStore = valToStore.value;
                window._originalSetItem.call(localStorage, key, valToStore);
             } else {

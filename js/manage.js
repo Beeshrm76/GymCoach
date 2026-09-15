@@ -15,6 +15,7 @@ window.Manage = (() => {
     const p = project();
     $("projectName").value = p.name || "";
     $("projectGoal").value = p.goal || "";
+    $("projectIntensityBand").value = p.intensityBand || "";
     $("projectDescription").value = p.description || "";
     $("projectNotes").value = p.notes || "";
 
@@ -28,8 +29,9 @@ window.Manage = (() => {
 
   function saveProjectSettings() {
     const p = project();
-    p.name = $("projectName").value.trim() || "Workout Project";
+    p.name = $("projectName").value.trim() || "My Project";
     p.goal = $("projectGoal").value.trim();
+    p.intensityBand = $("projectIntensityBand").value;
     p.description = $("projectDescription").value.trim();
     p.notes = $("projectNotes").value;
     save();
@@ -105,6 +107,14 @@ window.Manage = (() => {
            </div>
          </label>
          <label>Subtitle<input data-meta="subtitle" value="${esc(d.subtitle || "")}"></label>
+         <label>Intensity Band
+           <select data-meta="intensityBand">
+             <option value="" ${!d.intensityBand ? "selected" : ""}>None</option>
+             <option value="Low" ${d.intensityBand === "Low" ? "selected" : ""}>Low</option>
+             <option value="Medium" ${d.intensityBand === "Medium" ? "selected" : ""}>Medium</option>
+             <option value="High" ${d.intensityBand === "High" ? "selected" : ""}>High</option>
+           </select>
+         </label>
          <label>Focus<input data-meta="focus" value="${esc(d.focus || "")}"></label>
          <label>Muscles<input data-meta="muscles" value="${esc(d.muscles || "")}"></label>`
       : `<label>Day name<input data-meta="name" value="${esc(d.name)}"></label>
@@ -401,6 +411,7 @@ window.Manage = (() => {
     const p = Store.createProject({
       name,
       goal: $("newProjectGoal").value.trim() || template?.goal || "",
+      intensityBand: $("newProjectIntensityBand").value,
       template
     });
     $("newProjectName").value = "";

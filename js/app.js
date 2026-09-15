@@ -745,6 +745,7 @@
     $("detailName").value = ex.name;
     $("detailWeight").value = numericWeightText(ex.weight);
     $("detailWeightUnit").value = Store.normalizeWeightUnit(ex.weightUnit || "kg");
+    $("detailIntensityBand").value = ex.intensityBand || "";
     $("detailPulleySystem").value = Store.pulleyKey(ex.pulleySystem || "single");
     const [repsMin, repsMax] = repsRangeParts(ex.reps);
     $("detailRepsMin").value = repsMin;
@@ -1046,6 +1047,7 @@
     ex.name = $("detailName").value.trim() || "Exercise";
     ex.weight = $("detailWeight").value.trim();
     ex.weightUnit = Store.normalizeWeightUnit($("detailWeightUnit").value);
+    ex.intensityBand = $("detailIntensityBand").value;
     ex.pulleySystem = Store.pulleyKey($("detailPulleySystem").value);
     ex.reps = repsRangeValue();
     ex.details.tempo = $("detailTempo").value.trim();
@@ -1791,10 +1793,10 @@
       UI.toast("Uploading avatar...", "ok");
       const fileExt = file.name.split('.').pop();
       const fileName = `avatar-${user.id}-${Date.now()}.${fileExt}`;
-      const { error } = await window.supabaseClient.storage.from('app-media').upload(fileName, file);
+      const { error } = await window.supabaseClient.storage.from('avatars').upload(fileName, file);
       if (error) throw error;
       
-      const { data } = window.supabaseClient.storage.from('app-media').getPublicUrl(fileName);
+      const { data } = window.supabaseClient.storage.from('avatars').getPublicUrl(fileName);
       const url = data.publicUrl;
       
       // Update profile
@@ -1866,7 +1868,21 @@
     if (!await UI.confirm("Erase all local logs and data?", "This clears your device's local data and resets to defaults. This cannot be undone.")) return;
     if (!await UI.confirm("Are you absolutely sure?", "All projects, logs, and settings will be wiped.", { confirmLabel: "Erase it all" })) return;
     
-    const keys = ["gymcoach_settings_v4", "gymcoach_projects", "gymcoach_active", "gymcoach_profile", "gymcoach_csv_archives", "gymcoach_layout_v4"];
+    // Wipe cloud data if logged in
+    if (window.Auth && window.Auth.isLoggedIn() && window.supabaseClient) {
+      try {
+        const uid = window.Auth.user.id;
+        await window.supabaseClient.from('sync_data').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_projects').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_days').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_exercises').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_sets').delete().eq('user_id', uid);
+      } catch (err) {
+        console.error("Failed to clear cloud data", err);
+      }
+    }
+    
+    const keys = ["gymcoach_settings_v4", "gymcoach_projects_v4", "gymcoach_active_project_v4", "gymcoach_profile_v4", "gymcoach_csv_archives_v1", "gymcoach_layout_v4"];
     keys.forEach(k => localStorage.removeItem(k));
     location.reload();
   });
@@ -2045,6 +2061,59 @@
     
     // Check for support notifications
     checkSupportBadge();
+    
+    // Fetch system settings from cloud (non-blocking)
+    fetchSystemSettings();
+  }
+
+  async function fetchSystemSettings() {
+    if (!window.supabaseClient || !Auth.isLoggedIn()) return;
+    try {
+      const { data, error } = await window.supabaseClient.from('system_settings').select('*');
+      if (error) return;
+      
+      const settingsMap = {};
+      data.forEach(s => settingsMap[s.key] = s.value);
+      
+      // 1. Maintenance Mode
+      if (settingsMap['maintenance_mode'] === true || settingsMap['maintenance_mode'] === 'true') {
+        if (!Auth.isRole('SUPER_ADMIN')) {
+          const msg = settingsMap['maintenance_message'] || "We're performing scheduled maintenance. Check back soon!";
+          const overlay = document.getElementById('maintenanceOverlay');
+          if (overlay) {
+            document.getElementById('maintenanceMessageText').textContent = msg;
+            overlay.style.display = 'flex';
+          }
+        }
+      }
+      
+      // 2. App Logo
+      const logoUrl = settingsMap['app_logo'];
+      if (logoUrl) {
+        document.querySelectorAll(".brand-logo-img").forEach(img => {
+          img.src = logoUrl; img.hidden = false;
+        });
+        document.querySelectorAll(".brand-dot").forEach(dot => dot.style.display = "none");
+      }
+      
+      // 3. Merge Default Exercises
+      const cloudExercises = settingsMap['default_exercises'];
+      if (cloudExercises && Array.isArray(cloudExercises) && cloudExercises.length > 0) {
+        // Merge with window.EXERCISE_DB, deduplicating by lowercased name
+        const existingNames = new Set((window.EXERCISE_DB || []).map(e => e.name.toLowerCase()));
+        cloudExercises.forEach(ce => {
+          if (ce && ce.name && !existingNames.has(ce.name.toLowerCase())) {
+            window.EXERCISE_DB.push(ce);
+            existingNames.add(ce.name.toLowerCase());
+          }
+        });
+        if (window.ExerciseAutocomplete && window.ExerciseAutocomplete.rebuildIndex) {
+          window.ExerciseAutocomplete.rebuildIndex();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch system settings:", err);
+    }
   }
 
   // Hash routing. Home is the landing view, which is what makes the brand

@@ -256,5 +256,9 @@ window.ExerciseAutocomplete = (() => {
     };
   }
 
-  return { attach, search };
+  // Invalidate cached index so next search() call rebuilds it from the
+  // (possibly updated) window.EXERCISE_DB array.
+  function rebuildIndex() { _index = null; }
+
+  return { attach, search, rebuildIndex };
 })();

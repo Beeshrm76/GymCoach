@@ -288,6 +288,7 @@ window.Store = (() => {
     p.id ||= uid("project");
     p.name ||= "Workout Project";
     p.goal ??= "";
+    p.intensityBand ??= "";
     p.description ??= "";
     p.notes ??= "";
     if (!Array.isArray(p.playlist)) p.playlist = [];
@@ -301,6 +302,9 @@ window.Store = (() => {
     }
     if (!p.desiredBody || typeof p.desiredBody !== "object") p.desiredBody = {};
     if (!Array.isArray(p.days)) p.days = [];
+    
+    // Grab latest body stats for the day's record
+    const prof = readRaw(PROFILE_KEY)?.current || {};
 
     p.days.forEach(day => {
       day.id ||= uid("day");
@@ -333,6 +337,13 @@ window.Store = (() => {
       day.subtitle ??= "";
       day.focus ??= "";
       day.muscles ??= "";
+      day.intensityBand ??= "";
+      day.completionPct ??= 0;
+      day.bodyWeight = prof.weight || "";
+      day.bodyWaist = prof.waist || "";
+      day.bodyChest = prof.chest || "";
+      day.bodyArm = prof.arm || "";
+      day.bodyMeasuredOn = prof.measured_on || "";
       day.restNotes ??= "";
       if (!day.workTimes || typeof day.workTimes !== "object") day.workTimes = {};
       if (!Array.isArray(day.cardio)) day.cardio = [];
@@ -367,9 +378,19 @@ window.Store = (() => {
         ex.sets = Math.max(1, Number(ex.sets) || 1);
         ex.image ??= "";
         ex.video ??= "";
+        ex.intensityBand ??= "";
 
         ex.details ||= {};
         ["targetRIR", "rest", "tempo", "equipment", "notes"].forEach(k => { ex.details[k] ??= ""; });
+        
+        ex.targetWeightKg = weightToKg(ex.weight, ex.weightUnit) || "";
+        ex.targetEffectiveWeightKg = effectiveKg(ex.weight, ex.weightUnit, ex.pulleySystem) || "";
+        ex.targetRir = Number(ex.details.targetRIR) || 0;
+        
+        const repsMatch = String(ex.reps || "").match(/(\d+)/g);
+        ex.targetRepsMin = repsMatch ? Number(repsMatch[0]) : 0;
+        ex.targetRepsMax = repsMatch && repsMatch.length > 1 ? Number(repsMatch[repsMatch.length - 1]) : ex.targetRepsMin;
+        
         ex.restStats ||= { plannedSec: 0, extraSec: 0, balanceSec: 0, defaultDelaySec: 0, totalSec: 0, intervals: [] };
         ex.restStats.plannedSec = Number(ex.restStats.plannedSec) || 0;
         ex.restStats.extraSec = Number(ex.restStats.extraSec) || 0;
@@ -417,10 +438,44 @@ window.Store = (() => {
           }
           delete log.values.rir;
           ex.setColumns.forEach(c => { log.values[c.key] ??= ""; });
+          
+          log.number = Number(log.number) || 0;
+          log.weightRaw = parseWeightNumber(log.values.weight) || "";
+          log.weightKg = weightToKg(log.values.weight, ex.weightUnit) || "";
+          log.effectiveWeightKg = effectiveKg(log.values.weight, ex.weightUnit, ex.pulleySystem) || "";
+          log.volumeKg = log.completed ? ((log.effectiveWeightKg || 0) * Number(log.values.reps || 0)) : 0;
+          
+          const timeParts = String(log.values.time || "").split(":").map(Number);
+          log.recordedSeconds = timeParts.length === 2 ? (timeParts[0] * 60 + timeParts[1]) : 
+                                timeParts.length === 3 ? (timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]) : 0;
+          log.recordedTime = log.values.time || "";
+          log.timeRecordedAt = log.date || "";
         });
+        
+        ex.loggedSets = ex.logs.filter(l => l.completed).length;
+        ex.recordedTotalSec = ex.restStats?.totalSec || 0;
+        
         // A set table with no rows can't be typed into, so guarantee one.
         if (!ex.logs.length) ex.logs.push(newSetRow(ex.setColumns));
       });
+      
+      const wt = getWorkTime(day, todayKey());
+      day.workoutStart = wt.startTime ? `${wt.startTime} ${wt.startAmPm || ""}`.trim() : "";
+      day.workoutEnd = wt.endTime ? `${wt.endTime} ${wt.endAmPm || ""}`.trim() : "";
+      if (wt.startTime && wt.endTime) {
+         // rough calculation of minutes
+         const parseAmPm = (t, ap) => {
+           let [h, m] = t.split(":").map(Number);
+           if (ap === "PM" && h !== 12) h += 12;
+           if (ap === "AM" && h === 12) h = 0;
+           return h * 60 + m;
+         };
+         let duration = parseAmPm(wt.endTime, wt.endAmPm) - parseAmPm(wt.startTime, wt.startAmPm);
+         if (duration < 0) duration += 24 * 60;
+         day.workoutDurationMin = duration;
+      }
+      day.completionPct = day.type === "workout" ? (day.exercises.length ? (day.exercises.filter(isExerciseDone).length / day.exercises.length) * 100 : 0) : 100;
+      day.completionPct = Math.round(day.completionPct * 10) / 10;
     });
     return p;
   }

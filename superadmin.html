@@ -10,6 +10,46 @@
   <link rel="stylesheet" href="assets/admin.css">
   <style>
     .brand-crown { font-size: 1.2rem; color: #ffcc00; margin-left: 4px; }
+
+    /* Toggle Switch */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; cursor: pointer; user-select: none;
+    }
+    .toggle-row span:first-child { font-size: 14px; font-weight: 500; }
+    .toggle-switch { display: none; }
+    .toggle-slider {
+      width: 44px; height: 24px; background: rgba(255,255,255,0.1);
+      border-radius: 12px; position: relative; transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .toggle-slider::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; background: #fff; border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle-switch:checked + .toggle-slider {
+      background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+    }
+    .toggle-switch:checked + .toggle-slider::after { transform: translateX(20px); }
+
+    /* Exercise icon cell */
+    .ex-icon-cell {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--bg-input); border: 1px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; cursor: pointer; position: relative;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .ex-icon-cell img { width: 100%; height: 100%; object-fit: cover; }
+    .ex-icon-cell input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+
+    /* Exercise Add Modal */
+    #exerciseAddModal .admin-modal { max-width: 520px; }
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
   </style>
 </head>
 <body>
@@ -37,6 +77,7 @@
         <button class="nav-item" data-section="admins"><span class="nav-icon">🛡</span> Manage Admins</button>
         <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> All Users</button>
         <button class="nav-item" data-section="support"><span class="nav-icon">📬</span> Support Tickets</button>
+        <button class="nav-item" data-section="exercises"><span class="nav-icon">🏋️</span> Exercises</button>
         <button class="nav-item" data-section="defaults"><span class="nav-icon">⚙</span> System Settings</button>
       </nav>
       <div class="sidebar-footer">
@@ -46,6 +87,8 @@
     </aside>
 
     <main class="admin-main">
+
+      <!-- ══════════ DASHBOARD ══════════ -->
       <section class="admin-section active" id="sectionDashboard">
         <div class="admin-header">
           <div>
@@ -64,9 +107,20 @@
             <div class="stat-value" id="statAdmins">—</div>
             <div class="stat-label">Total Admins</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-icon">🏋️</div>
+            <div class="stat-value" id="statExercises">—</div>
+            <div class="stat-label">Exercises in Library</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📬</div>
+            <div class="stat-value" id="statOpenTickets">—</div>
+            <div class="stat-label">Open Tickets</div>
+          </div>
         </div>
       </section>
 
+      <!-- ══════════ MANAGE ADMINS ══════════ -->
       <section class="admin-section" id="sectionAdmins" style="display: none;">
         <div class="admin-header">
           <div>
@@ -95,6 +149,7 @@
         </div>
       </section>
 
+      <!-- ══════════ ALL USERS ══════════ -->
       <section class="admin-section" id="sectionUsers" style="display: none;">
         <div class="admin-header">
           <div>
@@ -119,7 +174,8 @@
           </table>
         </div>
       </section>
-      
+
+      <!-- ══════════ SUPPORT TICKETS ══════════ -->
       <section class="admin-section" id="sectionSupport" style="display: none;">
         <div class="admin-header">
           <div>
@@ -144,54 +200,171 @@
           </table>
         </div>
       </section>
-      
+
+      <!-- ══════════ EXERCISES MANAGER ══════════ -->
+      <section class="admin-section" id="sectionExercises" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>Default Exercises</h1>
+            <p>Manage the exercise library. Upload icons and demo videos.</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn primary" id="btnAddExercise">+ Add Exercise</button>
+          </div>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+          <input type="text" id="exerciseSearch" placeholder="Search exercises..." class="setting-input" style="max-width:300px;">
+          <select id="exerciseFilterType" class="setting-select" style="max-width:180px;">
+            <option value="">All Types</option>
+            <option value="push">Push</option>
+            <option value="pull">Pull</option>
+            <option value="legs">Legs</option>
+            <option value="core">Core</option>
+            <option value="cardio">Cardio</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="exerciseFilterBody" class="setting-select" style="max-width:180px;">
+            <option value="">All Body Parts</option>
+            <option value="chest">Chest</option>
+            <option value="back">Back</option>
+            <option value="shoulders">Shoulders</option>
+            <option value="biceps">Biceps</option>
+            <option value="triceps">Triceps</option>
+            <option value="quads">Quads</option>
+            <option value="hamstrings">Hamstrings</option>
+            <option value="glutes">Glutes</option>
+            <option value="calves">Calves</option>
+            <option value="core">Core</option>
+            <option value="forearms">Forearms</option>
+            <option value="full body">Full Body</option>
+          </select>
+        </div>
+
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:50px;">Icon</th>
+                <th>Exercise Name</th>
+                <th>Type</th>
+                <th>Body Part</th>
+                <th>Video</th>
+                <th style="width:140px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="exercisesTableBody">
+              <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
+          <small style="color:var(--text-muted);" id="exerciseCount">0 exercises</small>
+          <button class="btn primary" id="btnSaveExercises">💾 Save All Changes</button>
+        </div>
+      </section>
+
+      <!-- ══════════ SYSTEM SETTINGS ══════════ -->
       <section class="admin-section" id="sectionDefaults" style="display: none;">
         <div class="admin-header">
           <div>
             <h1>System Settings</h1>
-            <p>Manage application defaults and assets</p>
+            <p>Control app behavior and appearance without code changes</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn primary" id="btnSaveAllSettings">💾 Save All Settings</button>
           </div>
         </div>
 
         <div class="settings-grid">
-          <!-- Media Settings -->
-          <div class="card">
-            <h3>App Logo & Media</h3>
-            <p class="muted small">Upload a logo directly to Supabase storage.</p>
-            <div class="form-group" style="margin-top:1rem;">
-              <label>App Logo Upload</label>
-              <input type="file" id="logoUploadInput" accept="image/*" class="input-text">
-              <button class="btn primary" id="btnUploadLogo" style="margin-top:8px;">Upload Logo</button>
+          <!-- App Branding -->
+          <div class="setting-card">
+            <h4>🎨 App Branding</h4>
+            <div class="setting-desc">Customize the app's visual identity.</div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">App Logo</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <div id="logoPreview" style="width:48px; height:48px; border-radius:10px; background:var(--bg-input); border:1px solid var(--glass-border); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">
+                  <span style="font-size:20px;">GC</span>
+                </div>
+                <div style="flex:1;">
+                  <input type="file" id="logoUploadInput" accept="image/*" class="setting-input" style="font-size:12px;">
+                </div>
+                <button class="btn btn-sm" id="btnUploadLogo">Upload</button>
+              </div>
+              <input type="text" id="currentLogoUrl" class="setting-input" readonly placeholder="No logo uploaded yet" style="margin-top:8px; font-size:12px;">
             </div>
-            <div class="form-group" style="margin-top:1rem;">
-              <label>Current Logo URL</label>
-              <input type="text" id="currentLogoUrl" class="input-text" readonly>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">App Name</label>
+              <input type="text" id="settingAppName" class="setting-input" placeholder="GymCoach" value="GymCoach">
+            </div>
+            <div class="form-group">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Welcome Message</label>
+              <input type="text" id="settingWelcomeMsg" class="setting-input" placeholder="Welcome to GymCoach!">
             </div>
           </div>
 
-          <!-- Default Exercises Manager -->
-          <div class="card">
-            <h3>Default Exercises</h3>
-            <p class="muted small">Manage the default exercise list available to all users.</p>
-            <div style="margin-top:1rem; display:flex; gap:8px;">
-              <input type="text" id="newExerciseName" placeholder="New Exercise Name" class="input-text" style="flex:1;">
-              <button class="btn primary" id="btnAddExercise">Add</button>
+          <!-- Maintenance & Access -->
+          <div class="setting-card">
+            <h4>🛡️ Maintenance & Access</h4>
+            <div class="setting-desc">Control system-level access and behavior.</div>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <label class="toggle-row">
+                <span>Maintenance Mode</span>
+                <input type="checkbox" id="settingMaintenanceMode" class="toggle-switch">
+                <span class="toggle-slider"></span>
+              </label>
+              <div class="form-group" id="maintenanceMsgGroup" style="display:none;">
+                <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Maintenance Message</label>
+                <textarea id="settingMaintenanceMsg" class="setting-textarea" rows="2" placeholder="We're performing scheduled maintenance. Check back soon!"></textarea>
+              </div>
+              <label class="toggle-row">
+                <span>Allow New Registrations</span>
+                <input type="checkbox" id="settingAllowRegistrations" class="toggle-switch" checked>
+                <span class="toggle-slider"></span>
+              </label>
+              <label class="toggle-row">
+                <span>Show Support Inbox to Users</span>
+                <input type="checkbox" id="settingSupportEnabled" class="toggle-switch" checked>
+                <span class="toggle-slider"></span>
+              </label>
             </div>
-            <div class="table-card" style="margin-top:1rem; max-height:400px; overflow-y:auto;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Exercise Name</th>
-                    <th style="width:100px;">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="exercisesTableBody">
-                  <tr><td colspan="2" class="empty-state">Loading...</td></tr>
-                </tbody>
-              </table>
+          </div>
+
+          <!-- AI Coach -->
+          <div class="setting-card">
+            <h4>🤖 AI Coach Settings</h4>
+            <div class="setting-desc">Customize the AI Coach's behavior for all users.</div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Default AI System Prompt</label>
+              <textarea id="settingAiPrompt" class="setting-textarea" rows="4" placeholder="You are a professional gym coach. Provide exercise form tips, suggest progressive overload, and track user goals..."></textarea>
             </div>
-            <div style="margin-top:1rem; text-align:right;">
-              <button class="btn primary" id="btnSaveExercises">Save All Changes</button>
+            <label class="toggle-row">
+              <span>Enable AI Coach for Users</span>
+              <input type="checkbox" id="settingAiEnabled" class="toggle-switch" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Default Workout Settings -->
+          <div class="setting-card">
+            <h4>🏋️ Workout Defaults</h4>
+            <div class="setting-desc">Set default values for new workout plans.</div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Default Rest Timer (seconds)</label>
+              <input type="number" id="settingDefaultRest" class="setting-input" placeholder="90" min="0" max="600">
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Default Weight Unit</label>
+              <select id="settingDefaultUnit" class="setting-select">
+                <option value="kg">Kilograms (kg)</option>
+                <option value="lb">Pounds (lb)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Max Sets Per Exercise</label>
+              <input type="number" id="settingMaxSets" class="setting-input" placeholder="10" min="1" max="50">
             </div>
           </div>
         </div>
@@ -199,7 +372,68 @@
 
     </main>
   </div>
-  
+
+  <!-- ══════════ ADD/EDIT EXERCISE MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="exerciseAddModal">
+    <div class="admin-modal">
+      <h3 id="exerciseModalTitle">Add Exercise</h3>
+      <input type="hidden" id="exerciseEditIndex" value="-1">
+      <div class="form-group">
+        <label>Exercise Name *</label>
+        <input type="text" id="exModalName" class="setting-input" placeholder="e.g. Incline Dumbbell Press">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="exModalType" class="setting-select">
+            <option value="">— Select —</option>
+            <option value="push">Push</option>
+            <option value="pull">Pull</option>
+            <option value="legs">Legs</option>
+            <option value="core">Core</option>
+            <option value="cardio">Cardio</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Body Part</label>
+          <select id="exModalBodyPart" class="setting-select">
+            <option value="">— Select —</option>
+            <option value="chest">Chest</option>
+            <option value="back">Back</option>
+            <option value="shoulders">Shoulders</option>
+            <option value="biceps">Biceps</option>
+            <option value="triceps">Triceps</option>
+            <option value="quads">Quads</option>
+            <option value="hamstrings">Hamstrings</option>
+            <option value="glutes">Glutes</option>
+            <option value="calves">Calves</option>
+            <option value="core">Core</option>
+            <option value="forearms">Forearms</option>
+            <option value="full body">Full Body</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Aliases (comma-separated)</label>
+        <input type="text" id="exModalAliases" class="setting-input" placeholder="e.g. incline db press, incline chest press">
+      </div>
+      <div class="form-group">
+        <label>Video URL (optional)</label>
+        <input type="text" id="exModalVideo" class="setting-input" placeholder="https://youtube.com/...">
+      </div>
+      <div class="form-group">
+        <label>Icon Image (optional)</label>
+        <input type="file" id="exModalIcon" accept="image/*" class="setting-input" style="font-size:12px;">
+        <div id="exModalIconPreview" style="margin-top:8px;"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btnCancelExercise">Cancel</button>
+        <button class="btn primary" id="btnConfirmExercise">Add Exercise</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>

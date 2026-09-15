@@ -23,8 +23,8 @@
   <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.png">
   <link rel="apple-touch-startup-image" href="assets/icons/icon-512.png">
 
-  <link rel="stylesheet" href="assets/app.css?v=18.8">
-  <link rel="stylesheet" href="assets/custom.css?v=18.8">
+  <link rel="stylesheet" href="assets/app.css?v=18.10">
+  <link rel="stylesheet" href="assets/custom.css?v=18.10">
 </head>
 
 <body>
@@ -513,6 +513,14 @@
             <div class="form-grid">
               <label>Project name<input id="projectName" placeholder="e.g. 6-Day PPL x2"></label>
               <label>Goal<input id="projectGoal" placeholder="e.g. Hypertrophy, lean bulk"></label>
+              <label>Intensity Band
+                <select id="projectIntensityBand">
+                  <option value="">None</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </label>
               <label class="span-2">Description<input id="projectDescription"
                   placeholder="What this block is for"></label>
               <label class="span-2">Notes for your coach<textarea id="projectNotes" rows="3"
@@ -765,6 +773,14 @@
                     <option value="lb">lb</option>
                   </select></div>
               </label>
+              <label>Intensity Band
+                <select id="detailIntensityBand">
+                  <option value="">None</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </label>
               <label>Target reps
                 <div class="input-with-select reps-range">
                   <input id="detailRepsMin" type="number" min="0" step="1" placeholder="8" aria-label="Reps range low">
@@ -855,6 +871,14 @@
           <div class="form-grid">
             <label>Name<input id="newProjectName" placeholder="e.g. 5-Day PPL + Upper"></label>
             <label>Goal<input id="newProjectGoal" placeholder="Goal"></label>
+            <label>Intensity Band
+              <select id="newProjectIntensityBand">
+                <option value="">None</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </label>
             <label class="span-2">Start from<select id="newProjectTemplate"></select></label>
           </div>
           <p class="muted small" id="templateHint"></p>
@@ -1179,31 +1203,38 @@
     </div>
   </div>
 
+  <!-- Maintenance Overlay -->
+  <div id="maintenanceOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10, 14, 23, 0.95); backdrop-filter:blur(10px); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+    <div style="font-size:48px; margin-bottom:16px;">🛠️</div>
+    <h2 style="color:var(--text-primary); margin-bottom:12px;">System Maintenance</h2>
+    <p id="maintenanceMessageText" style="color:var(--text-secondary); max-width:400px; line-height:1.5;">We're performing scheduled maintenance. Check back soon!</p>
+  </div>
+
   <!-- PDF export is optional: report.js checks for the library and falls back to
      Markdown/JSON if the CDN is unreachable (e.g. offline). -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <script src="data/templates.js?v=18.8"></script>
-  <script src="data/seed-project.js?v=18.8"></script>
-  <script src="data/exercises.js?v=18.8"></script>
-  <script src="js/ui.js?v=18.8"></script>
-  <script src="js/supabaseClient.js?v=18.8"></script>
-  <script src="js/auth.js?v=18.8"></script>
-  <script src="js/sync.js?v=18.8"></script>
-  <script src="js/mediaStore.js?v=18.8"></script>
-  <script src="js/store.js?v=18.8"></script>
-  <script src="js/ml.js?v=18.8"></script>
-  <script src="js/pipeline.js?v=18.8"></script>
+  <script src="data/templates.js?v=18.10"></script>
+  <script src="data/seed-project.js?v=18.10"></script>
+  <script src="data/exercises.js?v=18.10"></script>
+  <script src="js/ui.js?v=18.10"></script>
+  <script src="js/supabaseClient.js?v=18.10"></script>
+  <script src="js/auth.js?v=18.10"></script>
+  <script src="js/sync.js?v=18.10"></script>
+  <script src="js/mediaStore.js?v=18.10"></script>
+  <script src="js/store.js?v=18.10"></script>
+  <script src="js/ml.js?v=18.10"></script>
+  <script src="js/pipeline.js?v=18.10"></script>
 
-  <script src="js/settings.js?v=18.8"></script>
-  <script src="js/player.js?v=18.8"></script>
-  <script src="js/autocomplete.js?v=18.8"></script>
-  <script src="js/app.js?v=18.8"></script>
-  <script src="js/manage.js?v=18.8"></script>
-  <script src="js/report.js?v=18.8"></script>
-  <script src="js/wearable.js?v=18.8"></script>
-  <script src="js/home.js?v=18.8"></script>
+  <script src="js/settings.js?v=18.10"></script>
+  <script src="js/player.js?v=18.10"></script>
+  <script src="js/autocomplete.js?v=18.10"></script>
+  <script src="js/app.js?v=18.10"></script>
+  <script src="js/manage.js?v=18.10"></script>
+  <script src="js/report.js?v=18.10"></script>
+  <script src="js/wearable.js?v=18.10"></script>
+  <script src="js/home.js?v=18.10"></script>
 
 </body>
 
