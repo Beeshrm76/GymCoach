@@ -61,7 +61,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (err) {
       console.error(err);
-      alert("Failed to load admin data. You might not have permission.");
+      const usersTbody = document.getElementById('usersTableBody');
+      if (usersTbody) usersTbody.innerHTML = `<tr><td colspan="5" class="empty-state error-state">Couldn't load users: ${(err?.message || 'unknown error').replace(/</g, '&lt;')}</td></tr>`;
     }
   }
 
@@ -71,12 +72,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- SUPPORT TICKETS ---
   async function loadTickets() {
+    const tbody = document.getElementById('ticketsTableBody');
     try {
       // Admin loads tickets (RLS enforces they only see tickets from assigned users)
       const { data: tickets, error } = await supabase.from('support_tickets').select('*, profiles:user_id(username)').order('created_at', { ascending: false });
       if (error) throw error;
-      
-      const tbody = document.getElementById('ticketsTableBody');
+
       if (tickets.length === 0) {
         tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No support tickets found from assigned users.</td></tr>`;
         return;
@@ -98,6 +99,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       `}).join('');
     } catch (err) {
       console.error(err);
+      // Never leave the table stuck on "Loading..." — show what went wrong
+      // instead so it's obvious this is an error, not zero tickets.
+      if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="empty-state error-state">Couldn't load tickets: ${(err?.message || 'unknown error').replace(/</g, '&lt;')}</td></tr>`;
     }
   }
 

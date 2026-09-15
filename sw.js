@@ -1,6 +1,6 @@
 /* sw.js — offline cache */
 
-const VERSION = "gymcoach-v18-15";
+const VERSION = "gymcoach-v18-16";
 const CORE = `${VERSION}-core`;
 const RUNTIME = `${VERSION}-runtime`;
 

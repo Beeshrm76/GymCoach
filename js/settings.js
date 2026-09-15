@@ -714,7 +714,7 @@ window.Settings = (() => {
         <div class="empty-state small music-empty-state">
           <span class="empty-music-icon">🎵</span>
           <b>No tracks for ${wCapitalized} yet</b>
-          <p>Extract an MP3 from YouTube above or upload audio files to customize this day's music.</p>
+          <p>Upload audio files to customize this day's music.</p>
         </div>`;
       return;
     }

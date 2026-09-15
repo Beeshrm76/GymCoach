@@ -670,6 +670,16 @@
           if (sharedPath) return sharedPath;
         }
       }
+      // 4. Admin-set default media for this exercise name (uploaded in the Super
+      // Admin exercise library and merged into window.EXERCISE_DB at startup).
+      // This is what lets an admin set a default image/video once and have it
+      // show up for every user who adds a matching exercise, with no local
+      // upload required on their end.
+      if (nameSlug && Array.isArray(window.EXERCISE_DB)) {
+        const dbEntry = window.EXERCISE_DB.find(e => slugFromName(e.name) === nameSlug);
+        const adminUrl = kind === "video" ? dbEntry?.video_file_url : dbEntry?.icon_url;
+        if (adminUrl) return adminUrl;
+      }
     } catch { /* IndexedDB unavailable (private mode) - fall back to the static path */ }
     if (kind === "video") return normalizeVideoPath(ex.video) || videoPathFromName(ex.name) || null;
     if (kind === "image") return normalizeImagePath(ex.image) || imagePathFromName(ex.name) || null;

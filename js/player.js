@@ -143,7 +143,7 @@ window.WorkoutPlayer = (() => {
     if (metaEl && (!audio.duration || audio.duration === 0)) {
       metaEl.textContent = playlist.length
         ? `${playlist.length} track${playlist.length === 1 ? "" : "s"} · ${w.charAt(0).toUpperCase() + w.slice(1)}`
-        : "Tap ⚙️ to add songs or extract from YouTube";
+        : "Tap ⚙️ to add songs";
     }
 
     // Update any track list rows (e.g. in Settings modal)
