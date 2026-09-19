@@ -1,178 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#040711">
+  <meta name="theme-color" content="#1F2937">
   <meta name="description" content="GymCoach — Sign in to your workout account or create a new one.">
   <title>GymCoach — Login</title>
 
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/login.css">
-  <style>
-    .login-checkbox {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 1rem;
-      color: var(--text-secondary);
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .login-checkbox input {
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    .forgot-link {
-      color: var(--accent);
-      font-size: 13px;
-      text-decoration: none;
-      margin-top: 1rem;
-      display: inline-block;
-    }
-
-    .forgot-link:hover {
-      text-decoration: underline;
-    }
-
-    .forgot-form {
-      display: none;
-    }
-
-    .forgot-form.active {
-      display: block;
-    }
-  </style>
 </head>
-
 <body>
 
-  <!-- Animated background orbs -->
+  <!-- Dynamic Global Background -->
   <div class="login-bg" aria-hidden="true">
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
+    
+    <!-- Floating muscular parts with screen blend mode -->
+    <img src="assets/bicep_render_blue.jpg" class="floating-body body-1" alt="">
+    <img src="assets/abs_render_blue.jpg" class="floating-body body-2" alt="">
+    <img src="assets/back_render_blue.jpg" class="floating-body body-3" alt="">
   </div>
 
-  <div class="login-page">
-    <div class="login-card">
+  <div class="login-layout">
+    <!-- Left Side: Bento Showcase -->
+    <div class="login-showcase">
 
-      <!-- Brand -->
-      <div class="login-brand">
-        <div class="login-logo">GC</div>
-        <h1>GymCoach</h1>
-        <p>Sign in to track your workouts</p>
+      <div class="showcase-content">
+        <div class="showcase-header">
+          <div class="login-logo">GC</div>
+          <h2>GymCoach</h2>
+        </div>
+        
+        <h1 class="showcase-title">Own Your <br>Progress.</h1>
+        <p class="showcase-subtitle">The most flexible workout tracker for data-driven athletes.</p>
+
+        <div class="bento-grid">
+          <div class="bento-item glass-panel span-2">
+            <h3>Custom Projects</h3>
+            <p>Build your own workout routines with custom columns for anything from RPE to rest times.</p>
+          </div>
+          <div class="bento-item glass-panel">
+            <h3>Offline First</h3>
+            <p>Your data stays on device. Syncs securely when online.</p>
+          </div>
+          <div class="bento-item glass-panel accent-panel">
+            <h3>AI Coach ✦</h3>
+            <p>Export your full history for intelligent ML insights.</p>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- Tab Switcher -->
-      <div class="login-tabs">
-        <button class="login-tab active" data-tab="login" id="tabLogin">Sign In</button>
-        <button class="login-tab" data-tab="register" id="tabRegister">Create Account</button>
+    <!-- Right Side: Auth Panel -->
+    <div class="login-auth">
+      <div class="auth-container">
+        
+        <div class="auth-mobile-header">
+          <div class="login-logo">GC</div>
+          <h1>GymCoach</h1>
+        </div>
+
+        <!-- Tab Switcher -->
+        <div class="login-tabs">
+          <button class="login-tab active" data-tab="login" id="tabLogin">Sign In</button>
+          <button class="login-tab" data-tab="register" id="tabRegister">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form active" id="loginForm" autocomplete="on">
+          <div class="form-group">
+            <label for="loginUsername">Username or Email</label>
+            <input class="form-input" type="text" id="loginUsername" name="username"
+              placeholder="Enter your username or email" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input class="form-input" type="password" id="loginPassword" name="password" placeholder="Enter your password"
+              required autocomplete="current-password">
+          </div>
+
+          <label class="login-checkbox">
+            <input type="checkbox" id="loginRememberMe" checked> Remember me
+          </label>
+
+          <button type="submit" class="login-btn" id="loginBtn">
+            <span class="spinner"></span>
+            <span class="btn-text">Sign In</span>
+          </button>
+
+          <div style="text-align: center;">
+            <a href="#" class="forgot-link" id="showForgotBtn">Forgot Password?</a>
+          </div>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form class="login-form forgot-form" id="forgotForm" autocomplete="off">
+          <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;text-align:center;">Enter your email to
+            receive a password reset link.</p>
+          <div class="form-group">
+            <label for="forgotEmail">Email</label>
+            <input class="form-input" type="email" id="forgotEmail" name="email" placeholder="you@example.com" required
+              autocomplete="email">
+          </div>
+          <button type="submit" class="login-btn" id="forgotBtn">
+            <span class="spinner"></span>
+            <span class="btn-text">Send Reset Link</span>
+          </button>
+          <div style="text-align: center;">
+            <a href="#" class="forgot-link" id="backToLoginBtn">Back to Login</a>
+          </div>
+        </form>
+
+        <!-- Register Form -->
+        <form class="login-form" id="registerForm" autocomplete="on">
+          <div class="form-group">
+            <label for="regUsername">Username</label>
+            <input class="form-input" type="text" id="regUsername" name="username"
+              placeholder="Choose a username (min 3 chars)" required minlength="3" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="regEmail">Email</label>
+            <input class="form-input" type="email" id="regEmail" name="email" placeholder="you@example.com" required
+              autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="regDisplayName">Display Name (optional)</label>
+            <input class="form-input" type="text" id="regDisplayName" name="displayName"
+              placeholder="How should we greet you?" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="regPassword">Password</label>
+            <input class="form-input" type="password" id="regPassword" name="password" placeholder="At least 6 characters"
+              required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="regConfirmPassword">Confirm Password</label>
+            <input class="form-input" type="password" id="regConfirmPassword" name="confirmPassword"
+              placeholder="Repeat password" required minlength="6" autocomplete="new-password">
+          </div>
+          <button type="submit" class="login-btn" id="registerBtn">
+            <span class="spinner"></span>
+            <span class="btn-text">Create Account</span>
+          </button>
+        </form>
+
+        <!-- Logged In State (Hidden initially) -->
+        <div id="loggedInState" style="display: none; text-align: center; padding: 1rem 0;">
+          <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-weight: normal;" id="loggedInUserMsg">You are
+            already signed in.</h3>
+          <button class="login-btn" onclick="window.location.href='index.html'" style="margin-bottom: 1rem;">
+            <span class="btn-text">Continue to App</span>
+          </button>
+          <button class="login-skip" id="signOutBtn" style="color: var(--accent);">Sign Out</button>
+        </div>
+
+        <!-- Divider -->
+        <div class="login-divider">or</div>
+
+        <!-- Skip / Continue without account -->
+        <button class="login-skip" id="skipBtn">Continue without an account (Offline Mode)</button>
+
+        <p class="login-footer">
+          Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to
+          the cloud.
+        </p>
+
       </div>
-
-      <!-- Login Form -->
-      <form class="login-form active" id="loginForm" autocomplete="on">
-        <div class="form-group">
-          <label for="loginUsername">Username or Email</label>
-          <input class="form-input" type="text" id="loginUsername" name="username"
-            placeholder="Enter your username or email" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <input class="form-input" type="password" id="loginPassword" name="password" placeholder="Enter your password"
-            required autocomplete="current-password">
-        </div>
-
-        <label class="login-checkbox">
-          <input type="checkbox" id="loginRememberMe" checked> Remember me
-        </label>
-
-        <button type="submit" class="login-btn" id="loginBtn">
-          <span class="spinner"></span>
-          <span class="btn-text">Sign In</span>
-        </button>
-
-        <div style="text-align: center;">
-          <a href="#" class="forgot-link" id="showForgotBtn">Forgot Password?</a>
-        </div>
-      </form>
-
-      <!-- Forgot Password Form -->
-      <form class="login-form forgot-form" id="forgotForm" autocomplete="off">
-        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;text-align:center;">Enter your email to
-          receive a password reset link.</p>
-        <div class="form-group">
-          <label for="forgotEmail">Email</label>
-          <input class="form-input" type="email" id="forgotEmail" name="email" placeholder="you@example.com" required
-            autocomplete="email">
-        </div>
-        <button type="submit" class="login-btn" id="forgotBtn">
-          <span class="spinner"></span>
-          <span class="btn-text">Send Reset Link</span>
-        </button>
-        <div style="text-align: center;">
-          <a href="#" class="forgot-link" id="backToLoginBtn">Back to Login</a>
-        </div>
-      </form>
-
-      <!-- Register Form -->
-      <form class="login-form" id="registerForm" autocomplete="on">
-        <div class="form-group">
-          <label for="regUsername">Username</label>
-          <input class="form-input" type="text" id="regUsername" name="username"
-            placeholder="Choose a username (min 3 chars)" required minlength="3" autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label for="regEmail">Email</label>
-          <input class="form-input" type="email" id="regEmail" name="email" placeholder="you@example.com" required
-            autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="regDisplayName">Display Name (optional)</label>
-          <input class="form-input" type="text" id="regDisplayName" name="displayName"
-            placeholder="How should we greet you?" autocomplete="name">
-        </div>
-        <div class="form-group">
-          <label for="regPassword">Password</label>
-          <input class="form-input" type="password" id="regPassword" name="password" placeholder="At least 6 characters"
-            required minlength="6" autocomplete="new-password">
-        </div>
-        <div class="form-group">
-          <label for="regConfirmPassword">Confirm Password</label>
-          <input class="form-input" type="password" id="regConfirmPassword" name="confirmPassword"
-            placeholder="Repeat password" required minlength="6" autocomplete="new-password">
-        </div>
-        <button type="submit" class="login-btn" id="registerBtn">
-          <span class="spinner"></span>
-          <span class="btn-text">Create Account</span>
-        </button>
-      </form>
-
-      <!-- Logged In State (Hidden initially) -->
-      <div id="loggedInState" style="display: none; text-align: center; padding: 1rem 0;">
-        <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-weight: normal;" id="loggedInUserMsg">You are
-          already signed in.</h3>
-        <button class="login-btn" onclick="window.location.href='index.html'" style="margin-bottom: 1rem;">
-          <span class="btn-text">Continue to App</span>
-        </button>
-        <button class="login-skip" id="signOutBtn" style="color: var(--accent);">Sign Out</button>
-      </div>
-
-      <!-- Divider -->
-      <div class="login-divider">or</div>
-
-      <!-- Skip / Continue without account -->
-      <button class="login-skip" id="skipBtn">Continue without an account (Offline Mode)</button>
-
-      <p class="login-footer">
-        Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to
-        the cloud.
-      </p>
-
     </div>
   </div>
 
@@ -239,7 +235,6 @@
 
           let emailToUse = inputVal;
 
-          // If the input doesn't look like an email, assume it's a username
           if (!inputVal.includes('@')) {
             const { data: resolvedEmail, error: rpcError } = await supabase.rpc('resolve_username_to_email', { p_username: inputVal });
             if (rpcError) throw new Error("Could not verify username. " + rpcError.message);
@@ -247,12 +242,6 @@
             emailToUse = resolvedEmail;
           }
 
-          // Before signing in, we set the storage mechanism based on Remember Me
-          // Supabase Auth stores tokens in localStorage by default.
-          // However, we can't easily swap the global client's storage post-creation without re-instantiating.
-          // Wait, supabase-js handles this internally if we configure it, but for our existing global client,
-          // the simplest way is to manually clear localStorage on close if Remember Me is false.
-          // Better yet, we just set a flag in sessionStorage.
           if (!rememberMe) {
             sessionStorage.setItem("gymcoach_no_remember", "true");
           } else {
@@ -324,7 +313,6 @@
 
           if (data?.user && !data?.session) {
             toast("Please check your email to verify your account before logging in.", "success");
-            // Switch back to login tab after 3 seconds
             setTimeout(() => {
               registerForm.classList.remove("active");
               loginForm.classList.add("active");
@@ -380,10 +368,9 @@
       // ── Auto-redirect if already logged in ──────────────────
       (async () => {
         try {
-          if (!supabase) return;  // Supabase didn't load (e.g. offline/Live Server)
+          if (!supabase) return;
           const { data: { session } } = await supabase.auth.getSession();
           if (session && session.user) {
-            // Show logged-in state instead of redirecting immediately
             document.querySelector('.login-tabs').style.display = 'none';
             document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
             document.querySelector('.login-divider').style.display = 'none';
@@ -401,12 +388,10 @@
             });
           }
         } catch (e) {
-          // Supabase unavailable or session invalid — stay on login page
           console.log("Auth check skipped:", e.message || e);
         }
       })();
     })();
   </script>
 </body>
-
 </html>

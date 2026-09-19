@@ -2,9 +2,10 @@
 Thumbs.db
 .vscode/
 
-videos\
-images\
-music\
+videos/
+images/
+music/
+.agent/
 
 # Server
 node_modules/

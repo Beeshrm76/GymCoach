@@ -3819,3 +3819,6 @@ html.no-scroll body {
     z-index: 1;
   }
 }
+/* Typography Overrides */
+body { font-family: 'Inter', 'Barlow', system-ui, sans-serif !important; letter-spacing: -0.01em !important; }
+h1, h2, h3, .big-number { font-family: 'Outfit', 'Barlow Condensed', sans-serif !important; letter-spacing: -0.02em !important; }
