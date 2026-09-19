@@ -165,6 +165,11 @@ window.UI = (() => {
       b.title = layout.sidebarCollapsed ? "Expand sidebar" : "GymCoach · Home";
       b.setAttribute("aria-label", b.title);
     });
+    // Update the music panel toggle button title based on rail state
+    document.querySelectorAll("[data-action='toggle-rail']").forEach(b => {
+      b.title = layout.railCollapsed ? "Expand music player" : "Minimize this panel";
+      b.setAttribute("aria-label", b.title);
+    });
   }
 
   function toggleSidebarCollapse(force) {

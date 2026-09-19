@@ -340,6 +340,7 @@ window.Store = (() => {
       day.intensityBand ??= "";
       day.completionPct ??= 0;
       day.bodyWeight = prof.weight || "";
+      day.bodyHeight = prof.height || "";
       day.bodyWaist = prof.waist || "";
       day.bodyChest = prof.chest || "";
       day.bodyArm = prof.arm || "";

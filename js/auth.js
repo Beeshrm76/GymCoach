@@ -176,17 +176,27 @@ window.Auth = (() => {
     try {
       const { data, error } = await supabase.from('system_settings').select('*');
       if (!error && data) {
-        const logo = data.find(s => s.key === 'app_logo');
-        if (logo && logo.value) {
-          document.querySelectorAll('.brand-logo-img').forEach(img => {
-            img.src = logo.value;
-            img.hidden = false;
-            if (img.nextElementSibling) img.nextElementSibling.hidden = true; // hide brand-dot
+        const nameSetting = data.find(s => s.key === 'app_name');
+        const logoSetting = data.find(s => s.key === 'app_logo');
+        const welcomeSetting = data.find(s => s.key === 'welcome_message');
+        if (window.AppBranding) {
+          window.AppBranding.set({
+            name: nameSetting?.value,
+            logo: logoSetting?.value,
+            welcome: welcomeSetting?.value
           });
         }
         const exSetting = data.find(s => s.key === 'default_exercises');
         if (exSetting && exSetting.value && Array.isArray(exSetting.value) && exSetting.value.length > 0) {
           window.EXERCISE_DB = exSetting.value;
+        }
+        const modelsSetting = data.find(s => s.key === 'ai_provider_models');
+        if (modelsSetting && modelsSetting.value && typeof modelsSetting.value === 'object') {
+          window.CUSTOM_PROVIDER_MODELS = modelsSetting.value;
+          try { localStorage.setItem('gymcoach_provider_models', JSON.stringify(modelsSetting.value)); } catch(e){}
+          if (window.Settings?.updateProviderModels) {
+            window.Settings.updateProviderModels(modelsSetting.value);
+          }
         }
       }
     } catch { }

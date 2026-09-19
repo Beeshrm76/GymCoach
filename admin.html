@@ -8,6 +8,7 @@
   <title>GymCoach — Admin Panel</title>
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/admin.css">
+  <script src="js/branding.js"></script>
 </head>
 <body>
   <div class="admin-bg" aria-hidden="true">
@@ -32,6 +33,7 @@
         <button class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
         <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> Assigned Users</button>
         <button class="nav-item" data-section="support"><span class="nav-icon">📬</span> Support Tickets</button>
+        <button class="nav-item" data-section="models"><span class="nav-icon">⚡</span> AI Models</button>
       </nav>
       <div class="sidebar-footer">
         <button class="nav-item" onclick="window.location.href='index.html'"><span class="nav-icon">←</span> Back to App</button>
@@ -111,12 +113,134 @@
         </div>
       </section>
 
+      <!-- ══════════ AI MODELS MANAGEMENT ══════════ -->
+      <section class="admin-section" id="sectionModels" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>AI Models Management</h1>
+            <p>Update model names and presets for AI providers as new models are released</p>
+          </div>
+        </div>
+
+        <div class="settings-grid" style="grid-template-columns: minmax(0, 650px);">
+          <div class="setting-card">
+            <h4>⚡ AI Provider Models &amp; Presets</h4>
+            <div class="setting-desc">Add or remove model names that appear as quick-select chips in user settings.</div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Select AI Provider</label>
+              <select id="adminModelProvider" class="setting-select">
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="groq">Groq</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="openrouter">OpenRouter</option>
+                <option value="xai">xAI (Grok)</option>
+                <option value="mistral">Mistral AI</option>
+                <option value="perplexity">Perplexity</option>
+                <option value="together">Together AI</option>
+                <option value="cohere">Cohere</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="font-size:12px; color:var(--text-secondary); display:block;">Available Models for Provider</label>
+                <button type="button" class="btn btn-sm" id="btnAdminResetModels" style="font-size:11px; padding:2px 8px;" title="Reset to factory defaults">↺ Reset to Defaults</button>
+              </div>
+              <div id="adminModelTagsContainer" class="model-tags-list"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Add New Model Name</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="adminNewModelInput" class="setting-input" placeholder="e.g. gemini-2.5-flash" style="flex:1;">
+                <button type="button" class="btn btn-sm primary" id="btnAdminAddModel">+ Add</button>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+              <button type="button" class="btn primary" id="btnAdminSaveModels">💾 Save Model Changes</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
-  
+
+  <!-- ══════════ ATHLETE WORKOUT DATA & DTS MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="athleteWorkoutsModal">
+    <div class="admin-modal wide">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0;" id="athleteModalTitle">Athlete Workout &amp; Training Data</h3>
+          <p style="font-size:13px; color:var(--text-secondary); margin:4px 0 0;" id="athleteModalSubtitle">
+            Viewing Daily Training Scores and progression
+          </p>
+        </div>
+        <button type="button" class="btn small-btn" id="btnCloseAthleteModal" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:var(--text-muted);">✕</button>
+      </div>
+
+      <!-- KPI summary row -->
+      <div class="kpi-badge-row">
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiWorkouts">0</div>
+          <div class="lbl">Workouts Logged</div>
+        </div>
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiAvgDts">—</div>
+          <div class="lbl">Avg DTS Score</div>
+        </div>
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiMaxDts">—</div>
+          <div class="lbl">Peak DTS Score</div>
+        </div>
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiSplit">—</div>
+          <div class="lbl">Strength / Cardio</div>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="dts-filter-tabs">
+        <button type="button" class="dts-filter-tab active" data-ath-range="all">All Time</button>
+        <button type="button" class="dts-filter-tab" data-ath-range="90d">90 Days</button>
+        <button type="button" class="dts-filter-tab" data-ath-range="30d">30 Days</button>
+        <button type="button" class="dts-filter-tab" data-ath-range="7d">7 Days</button>
+      </div>
+
+      <!-- Workouts & Scores Table -->
+      <div class="table-card" style="margin-bottom:0; max-height:360px; overflow-y:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>DTS Score</th>
+              <th>Band</th>
+              <th>Strength Vol</th>
+              <th>Cardio Workload</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+          <tbody id="athleteScoresTableBody">
+            <tr><td colspan="6" class="empty-state">Loading athlete data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="button" class="btn primary" id="btnDoneAthleteModal">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/exerciseMetadata.js"></script>
+  <script src="js/dts.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@
   <title>GymCoach — Super Admin Panel</title>
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/admin.css">
+  <script src="js/branding.js"></script>
   <style>
     .brand-crown { font-size: 1.2rem; color: #ffcc00; margin-left: 4px; }
 
@@ -90,6 +91,7 @@
         <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> All Users</button>
         <button class="nav-item" data-section="support"><span class="nav-icon">📬</span> Support Tickets</button>
         <button class="nav-item" data-section="exercises"><span class="nav-icon">🏋️</span> Exercises</button>
+        <button class="nav-item" data-section="scoring"><span class="nav-icon">🎯</span> DTS Scoring Config</button>
         <button class="nav-item" data-section="defaults"><span class="nav-icon">⚙</span> System Settings</button>
       </nav>
       <div class="sidebar-footer">
@@ -277,6 +279,74 @@
         </div>
       </section>
 
+      <!-- ══════════ EXERCISE SCORING CONFIGURATION ══════════ -->
+      <section class="admin-section" id="sectionScoring" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>Exercise Scoring &amp; DTS Configuration</h1>
+            <p>Configure rule-based scoring parameters, bodyweight factors, and multipliers for all exercises</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn primary" id="btnSaveScoringToCloud">💾 Save Overrides to Cloud</button>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
+          <input type="text" id="scoringSearchInput" class="setting-input" placeholder="Search exercises..." style="max-width:240px;">
+          <select id="scoringTypeFilter" class="setting-select" style="max-width:160px;">
+            <option value="">All Types</option>
+            <option value="compound">Compound</option>
+            <option value="isolation">Isolation</option>
+            <option value="bodyweight">Bodyweight</option>
+            <option value="core">Core</option>
+            <option value="cardio">Cardio</option>
+            <option value="stretching">Stretching / Mobility</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="scoringPatternFilter" class="setting-select" style="max-width:160px;">
+            <option value="">All Movement Patterns</option>
+            <option value="squat">Squat</option>
+            <option value="hinge">Hinge</option>
+            <option value="horizontal_push">Horizontal Push</option>
+            <option value="horizontal_pull">Horizontal Pull</option>
+            <option value="vertical_push">Vertical Push</option>
+            <option value="vertical_pull">Vertical Pull</option>
+            <option value="lunge">Lunge</option>
+            <option value="isolation">Isolation</option>
+            <option value="flexion">Flexion</option>
+            <option value="extension">Extension</option>
+            <option value="locomotion">Locomotion</option>
+          </select>
+          <select id="scoringStatusFilter" class="setting-select" style="max-width:140px;">
+            <option value="">All Statuses</option>
+            <option value="AUTO">AUTO</option>
+            <option value="MANUAL">MANUAL</option>
+          </select>
+          <small class="muted" id="scoringFilteredCount" style="margin-left:auto;">0 exercises</small>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Exercise Name</th>
+                <th>Type</th>
+                <th>Movement Pattern</th>
+                <th>Load Type</th>
+                <th>BW Factor</th>
+                <th>Multiplier</th>
+                <th>Status</th>
+                <th style="width:100px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="scoringTableBody">
+              <tr><td colspan="8" class="empty-state">Loading scoring metadata...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- ══════════ SYSTEM SETTINGS ══════════ -->
       <section class="admin-section" id="sectionDefaults" style="display: none;">
         <div class="admin-header">
@@ -315,6 +385,12 @@
               <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Welcome Message</label>
               <input type="text" id="settingWelcomeMsg" class="setting-input" placeholder="Welcome to GymCoach!">
             </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+              <button type="button" class="btn primary" id="btnSaveBranding">🎨 Save Branding</button>
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:8px; line-height:1.4;">
+              Changing the app name (e.g. <b>GymCoachX</b>) instantly rebrands the entire system: Main App, Login Screen, Admin &amp; Super Admin panels, titles, and logos.
+            </p>
           </div>
 
           <!-- Maintenance & Access -->
@@ -357,6 +433,49 @@
               <input type="checkbox" id="settingAiEnabled" class="toggle-switch" checked>
               <span class="toggle-slider"></span>
             </label>
+          </div>
+
+          <!-- AI Provider Models & Presets -->
+          <div class="setting-card">
+            <h4>⚡ AI Models &amp; Presets</h4>
+            <div class="setting-desc">Manage model names available in user settings as new models are released.</div>
+            
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Select AI Provider</label>
+              <select id="settingModelProvider" class="setting-select">
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="groq">Groq</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="openrouter">OpenRouter</option>
+                <option value="xai">xAI (Grok)</option>
+                <option value="mistral">Mistral AI</option>
+                <option value="perplexity">Perplexity</option>
+                <option value="together">Together AI</option>
+                <option value="cohere">Cohere</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="font-size:12px; color:var(--text-secondary); display:block;">Available Models for Provider</label>
+                <button type="button" class="btn btn-sm" id="btnResetProviderModels" style="font-size:11px; padding:2px 8px;" title="Reset this provider's models to factory defaults">↺ Reset to Defaults</button>
+              </div>
+              <div id="modelTagsContainer" class="model-tags-list"></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Add New Model Name</label>
+              <div style="display:flex; gap:8px;">
+                <input type="text" id="newModelInput" class="setting-input" placeholder="e.g. gemini-2.5-flash" style="flex:1;">
+                <button type="button" class="btn btn-sm primary" id="btnAddModel">+ Add</button>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end;">
+              <button type="button" class="btn btn-sm primary" id="btnSaveAiModels">💾 Save Model Presets</button>
+            </div>
           </div>
 
           <!-- Default Workout Settings -->
@@ -441,12 +560,22 @@
         <video id="exModalVideoPreview" controls style="width:100%; height:180px; border-radius:12px; margin-top:12px; background:#111; border:1px solid var(--glass-border);"></video>
       </div>
       <div class="form-group">
+        <label>Video URL (optional — external link, saves Supabase storage)</label>
+        <input type="url" id="exModalVideoUrl" class="setting-input" placeholder="https://youtube.com/watch?v=... or any direct video link">
+        <small class="muted" style="margin-top:4px; display:block;">💡 Use a YouTube or external URL to avoid burning Supabase storage quota.</small>
+      </div>
+      <div class="form-group">
         <label>Icon Image (optional — shown as this exercise's default image)</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input type="file" id="exModalIcon" accept="image/*" class="setting-input" style="font-size:12px; flex:1;">
           <button type="button" class="btn small-btn btn-danger" id="btnRemoveIcon" style="display:none; padding: 0 12px; font-size:12px; height: 36px; border-radius: 8px;">Remove</button>
         </div>
         <div id="exModalIconPreview" style="margin-top:8px;"></div>
+      </div>
+      <div class="form-group">
+        <label>Image URL (optional — external link, saves Supabase storage)</label>
+        <input type="url" id="exModalImageUrl" class="setting-input" placeholder="https://example.com/exercise-image.jpg">
+        <small class="muted" style="margin-top:4px; display:block;">💡 Use an external image URL to avoid burning Supabase storage quota.</small>
       </div>
       <div class="modal-actions">
         <button class="btn" id="btnCancelExercise">Cancel</button>
@@ -455,10 +584,203 @@
     </div>
   </div>
 
+  <!-- ══════════ ASSIGN ADMIN MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="assignAdminModal">
+    <div class="admin-modal" style="max-width:440px;">
+      <h3>Assign Admin to Athlete</h3>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+        Choose which administrator is assigned to coach and view data for this user.
+      </p>
+      <input type="hidden" id="assignUserId" value="">
+      <div class="form-group">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Select Administrator</label>
+        <select id="assignAdminSelect" class="setting-select">
+          <option value="">— Unassigned (None) —</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="btnCancelAssignAdmin">Cancel</button>
+        <button type="button" class="btn primary" id="btnConfirmAssignAdmin">Save Assignment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXERCISE SCORING EDIT MODAL -->
+  <div class="admin-modal-overlay" id="exerciseScoringModal">
+    <div class="admin-modal" style="max-width:520px; max-height:90vh; overflow-y:auto;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="margin:0;">Edit Exercise Scoring Parameters</h3>
+        <button type="button" class="btn small-btn" id="btnCancelScoringModal" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:var(--text-muted);">✕</button>
+      </div>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+        Override automatic classification rules for this exercise.
+      </p>
+
+      <input type="hidden" id="editScoringExerciseId" value="">
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Exercise Name</label>
+        <input type="text" id="editScoringName" class="setting-input" readonly disabled style="opacity:0.8;">
+      </div>
+
+      <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Exercise Type</label>
+          <select id="editScoringType" class="setting-select">
+            <option value="compound">Compound (1.0)</option>
+            <option value="isolation">Isolation (0.7)</option>
+            <option value="bodyweight">Bodyweight (0.85)</option>
+            <option value="core">Core (0.6)</option>
+            <option value="cardio">Cardio (1.0)</option>
+            <option value="plyometric">Plyometric (0.8)</option>
+            <option value="stretching">Stretching / Mobility (0.2)</option>
+            <option value="other">Other (0.5)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Movement Pattern</label>
+          <select id="editScoringPattern" class="setting-select">
+            <option value="squat">Squat</option>
+            <option value="hinge">Hinge</option>
+            <option value="horizontal_push">Horizontal Push</option>
+            <option value="horizontal_pull">Horizontal Pull</option>
+            <option value="vertical_push">Vertical Push</option>
+            <option value="vertical_pull">Vertical Pull</option>
+            <option value="lunge">Lunge</option>
+            <option value="isolation">Isolation</option>
+            <option value="flexion">Flexion</option>
+            <option value="extension">Extension</option>
+            <option value="locomotion">Locomotion</option>
+            <option value="static">Static</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Load Type</label>
+          <select id="editScoringLoadType" class="setting-select">
+            <option value="external">External Load Only</option>
+            <option value="bodyweight">Bodyweight Only</option>
+            <option value="bodyweight_plus_external">Bodyweight + External</option>
+            <option value="none">None (Cardio / Mobility)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Bodyweight Factor</label>
+          <input type="number" id="editScoringBwFactor" class="setting-input" step="0.05" min="0" max="1.5" placeholder="e.g. 1.0 or 0.65">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Scoring Multiplier</label>
+          <input type="number" id="editScoringMultiplier" class="setting-input" step="0.05" min="0" max="2.0" placeholder="e.g. 1.0">
+        </div>
+        <div class="form-group">
+          <label style="font-size:12px; color:var(--text-secondary); margin-bottom:4px; display:block;">Intensity Method</label>
+          <select id="editScoringIntensityMethod" class="setting-select">
+            <option value="estimated_1rm">Estimated 1RM (Epley)</option>
+            <option value="relative_load">Relative Load</option>
+            <option value="bodyweight_volume">Bodyweight Volume</option>
+            <option value="volume_only">Volume Only</option>
+            <option value="duration_based">Duration Based</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="toggle-row">
+          <span>Contribute to Daily Training Score (DTS)</span>
+          <input type="checkbox" id="editScoringEnabled" class="toggle-switch" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="modal-actions" style="display:flex; justify-content:space-between; align-items:center;">
+        <button type="button" class="btn danger btn-sm" id="btnResetScoringAuto">Revert to AUTO</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn" id="btnCancelScoringEdit">Cancel</button>
+          <button type="button" class="btn primary" id="btnSaveScoringEdit">Save Override</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ATHLETE WORKOUT DATA & DTS MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="athleteWorkoutsModal">
+    <div class="admin-modal wide">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+        <div>
+          <h3 style="margin:0;" id="athleteModalTitle">Athlete Workout &amp; Training Data</h3>
+          <p style="font-size:13px; color:var(--text-secondary); margin:4px 0 0;" id="athleteModalSubtitle">
+            Viewing Daily Training Scores and progression
+          </p>
+        </div>
+        <button type="button" class="btn small-btn" id="btnCloseAthleteModal" style="border:none; background:transparent; font-size:18px; cursor:pointer; color:var(--text-muted);">✕</button>
+      </div>
+
+      <!-- KPI summary row -->
+      <div class="kpi-badge-row">
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiWorkouts">0</div>
+          <div class="lbl">Workouts Logged</div>
+        </div>
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiAvgDts">—</div>
+          <div class="lbl">Avg DTS Score</div>
+        </div>
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiMaxDts">—</div>
+          <div class="lbl">Peak DTS Score</div>
+        </div>
+        <div class="kpi-badge-card">
+          <div class="val" id="athKpiSplit">—</div>
+          <div class="lbl">Strength / Cardio</div>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="dts-filter-tabs">
+        <button type="button" class="dts-filter-tab active" data-ath-range="all">All Time</button>
+        <button type="button" class="dts-filter-tab" data-ath-range="90d">90 Days</button>
+        <button type="button" class="dts-filter-tab" data-ath-range="30d">30 Days</button>
+        <button type="button" class="dts-filter-tab" data-ath-range="7d">7 Days</button>
+      </div>
+
+      <!-- Workouts & Scores Table -->
+      <div class="table-card" style="margin-bottom:0; max-height:360px; overflow-y:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>DTS Score</th>
+              <th>Band</th>
+              <th>Strength Vol</th>
+              <th>Cardio Workload</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+          <tbody id="athleteScoresTableBody">
+            <tr><td colspan="6" class="empty-state">Loading athlete data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button type="button" class="btn primary" id="btnDoneAthleteModal">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>
   <script src="data/exercises.js"></script>
+  <script src="js/exerciseMetadata.js"></script>
+  <script src="js/dts.js"></script>
   <script src="js/superadmin.js"></script>
 </body>
 </html>

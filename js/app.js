@@ -178,7 +178,7 @@
 
   // views
 
-  const VIEWS = ["homeView", "todayView", "manageView", "aiView"];
+  const VIEWS = ["homeView", "todayView", "manageView", "statsView", "aiView"];
   function showView(id) {
     VIEWS.forEach(v => { const el = $(v); if (el) el.hidden = v !== id; });
     document.querySelectorAll("[data-view-btn]").forEach(b =>
@@ -208,6 +208,12 @@
     history.replaceState(null, "", "#build");
     showView("manageView");
     window.Manage?.render();
+    UI.toggleDrawer(false);
+  };
+  const showStats = () => {
+    history.replaceState(null, "", "#stats");
+    showView("statsView");
+    window.StatsDashboard?.render();
     UI.toggleDrawer(false);
   };
   // Kept as an alias so any older link, bookmark or data-action still lands
@@ -677,7 +683,10 @@
       // upload required on their end.
       if (nameSlug && Array.isArray(window.EXERCISE_DB)) {
         const dbEntry = window.EXERCISE_DB.find(e => slugFromName(e.name) === nameSlug);
-        const adminUrl = kind === "video" ? dbEntry?.video_file_url : dbEntry?.icon_url;
+        // Uploaded files take priority over URL links
+        const adminUrl = kind === "video"
+          ? (dbEntry?.video_file_url || dbEntry?.video_url)
+          : (dbEntry?.icon_url || dbEntry?.image_url);
         if (adminUrl) return adminUrl;
       }
     } catch { /* IndexedDB unavailable (private mode) - fall back to the static path */ }
@@ -794,7 +803,7 @@
     timerRunning = false;
     timerStartedAt = null;
     const vid = $("detailVideo");
-    if (vid) { vid.pause(); }
+    if (vid) { vid.muted = true; vid.pause(); }
     UI.closeModal("exerciseModal");
     currentExerciseId = null;
   }
@@ -808,10 +817,10 @@
     const [iSrc, vSrc] = await Promise.all([mediaSrc(ex, "image"), mediaSrc(ex, "video")]);
     if (vSrc) {
       vid.src = vSrc;
-      vid.muted = true;              // demo clips are always silent, by design
+      vid.muted = true;              // always start muted; user can unmute
       vid.hidden = false;
       fall.hidden = true;
-      vid.onvolumechange = () => { if (!vid.muted) vid.muted = true; };
+      vid.onvolumechange = null;     // allow user to unmute freely
       img.hidden = true;
       img.classList.remove("as-secondary");
     } else if (iSrc) {
@@ -1722,6 +1731,7 @@
     "show-today": showToday,
     "manage-project": showManage,
     "show-progress": showProgress,
+    "show-stats": showStats,
     "show-ai": showAI,
     "add-exercise": addExercise,
     "create-day": createDay,
@@ -1767,10 +1777,21 @@
        loadUserProfile();
     },
     "close-support": () => UI.closeModal("supportModal"),
-    "close-profile": () => UI.closeModal("userProfileModal")
+    "close-profile": () => UI.closeModal("userProfileModal"),
+    "open-credits": openCredits,
+    "close-credits": () => UI.closeModal("creditsModal")
   };
 
   // --- USER PROFILE LOGIC ---
+
+  function cmToFtIn(cm) {
+    if (!cm || cm <= 0) return "";
+    const totalInches = cm / 2.54;
+    const ft = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    return `(${ft}′${inches}″)`;
+  }
+
   async function loadUserProfile() {
     const user = window.Auth?.getUser();
     if (!user) return;
@@ -1779,9 +1800,29 @@
     $("profileName").value = user.name || user.display_name || "";
     $("profileEmail").value = user.email || "";
     $("profileBio").value = user.bio || "";
+    if ($("profileUnsubscribe")) $("profileUnsubscribe").checked = user.unsubscribed === true;
+    
+    // Height
+    if ($("profileHeightInput")) {
+      const dbCm = user.height_cm;
+      $("profileHeightCm").value = dbCm || "";
+      if (dbCm) {
+        $("profileHeightInput").value = dbCm;
+        $("profileHeightUnit").value = "cm";
+        $("profileHeightUnit").dataset.prevUnit = "cm";
+        $("profileHeightInput").style.display = "block";
+        if ($("profileHeightFtInInputs")) $("profileHeightFtInInputs").style.display = "none";
+        
+        if ($("profileHeightFtIn")) {
+          $("profileHeightFtIn").textContent = cmToFtIn(dbCm);
+        }
+      } else {
+        $("profileHeightInput").value = "";
+      }
+    }
     
     if (user.avatar_url) {
-      $("profileAvatarPreview").innerHTML = `<img src="${esc(user.avatar_url)}" style="width:100%; height:100%; object-fit:cover;">`;
+      $("profileAvatarPreview").innerHTML = `<img src="${esc(user.avatar_url)}" alt="User avatar" style="width:100%; height:100%; object-fit:cover;">`;
     } else {
       $("profileAvatarPreview").innerHTML = `👤`;
     }
@@ -1826,6 +1867,63 @@
     }
   });
 
+  // Live height conversion
+  const updateHeightPreview = () => {
+    const unit = $("profileHeightUnit")?.value || "cm";
+    let cm = NaN;
+    if (unit === "cm") {
+      cm = parseFloat($("profileHeightInput")?.value);
+    } else if (unit === "ftin") {
+      const ft = parseFloat($("profileHeightFt")?.value) || 0;
+      const inc = parseFloat($("profileHeightIn")?.value) || 0;
+      if (ft > 0 || inc > 0) {
+        cm = (ft * 12 + inc) * 2.54;
+      }
+    }
+    
+    if (isNaN(cm) || cm <= 0) {
+      if ($("profileHeightCm")) $("profileHeightCm").value = "";
+      if ($("profileHeightFtIn")) $("profileHeightFtIn").textContent = "";
+      return;
+    }
+    if ($("profileHeightCm")) $("profileHeightCm").value = cm;
+    if ($("profileHeightFtIn")) {
+      $("profileHeightFtIn").textContent = unit === "cm" ? cmToFtIn(cm) : `${cm.toFixed(1)} cm`;
+    }
+  };
+
+  $("profileHeightInput")?.addEventListener("input", updateHeightPreview);
+  $("profileHeightFt")?.addEventListener("input", updateHeightPreview);
+  $("profileHeightIn")?.addEventListener("input", updateHeightPreview);
+  
+  $("profileHeightUnit")?.addEventListener("change", (e) => {
+    const prevUnit = e.target.dataset.prevUnit || "cm";
+    const newUnit = e.target.value;
+    e.target.dataset.prevUnit = newUnit;
+    
+    let cm = parseFloat($("profileHeightCm").value);
+    
+    if (newUnit === "ftin") {
+      $("profileHeightInput").style.display = "none";
+      if ($("profileHeightFtInInputs")) $("profileHeightFtInInputs").style.display = "flex";
+      
+      if (!isNaN(cm) && cm > 0) {
+        const totalInches = cm / 2.54;
+        $("profileHeightFt").value = Math.floor(totalInches / 12);
+        $("profileHeightIn").value = (totalInches % 12).toFixed(1);
+      }
+    } else {
+      $("profileHeightInput").style.display = "block";
+      if ($("profileHeightFtInInputs")) $("profileHeightFtInInputs").style.display = "none";
+      
+      if (!isNaN(cm) && cm > 0) {
+        $("profileHeightInput").value = cm.toFixed(1);
+      }
+    }
+    
+    updateHeightPreview();
+  });
+
   $("userProfileForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const user = window.Auth?.getUser();
@@ -1834,10 +1932,12 @@
     const username = $("profileUsername").value.trim();
     const name = $("profileName").value.trim();
     const bio = $("profileBio").value.trim();
+    const heightCm = parseFloat($("profileHeightCm")?.value) || null;
+    const unsubscribed = $("profileUnsubscribe")?.checked || false;
 
     try {
       const { error } = await window.supabaseClient.from('profiles').update({
-        username, name, bio, display_name: name
+        username, name, bio, display_name: name, height_cm: heightCm, unsubscribed: unsubscribed
       }).eq('id', user.id);
 
       if (error) throw error;
@@ -1846,6 +1946,7 @@
       user.name = name;
       user.display_name = name;
       user.bio = bio;
+      user.height_cm = heightCm;
       localStorage.setItem("gymcoach_session", JSON.stringify(user));
 
       window.Auth.init(); // Re-render sidebar
@@ -1899,8 +2000,110 @@
 
   $("btnDeleteAccount")?.addEventListener("click", async () => {
     if (!await UI.confirm("Delete your account permanently?", "This will remove your account and all associated data. This action is irreversible.", { confirmLabel: "Delete Account" })) return;
-    alert("To completely delete your account, please contact an Admin via the Support Inbox. Account deletion involves removing associated database records safely.");
+    
+    try {
+      UI.toast("Processing account deletion...", "ok");
+      // Call the secure RPC to delete the account
+      const { error } = await window.supabaseClient.rpc('delete_own_account');
+      if (error) throw error;
+      
+      // Cleanup local cache and log out
+      const keys = ["gymcoach_settings_v4", "gymcoach_projects_v4", "gymcoach_active_project_v4", "gymcoach_profile_v4", "gymcoach_csv_archives_v1", "gymcoach_layout_v4"];
+      keys.forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem("gymcoach_session");
+      await window.supabaseClient.auth.signOut();
+      
+      alert("Your account and all associated data have been deleted. Thank you for using GymCoach.");
+      window.location.href = "login.html";
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to delete account: " + err.message, "error");
+    }
   });
+
+  // --- CREDITS PANEL LOGIC ---
+  
+  // YouTube oEmbed channel name extraction (no API key needed)
+  const _ytChannelCache = {};
+  async function getYouTubeChannel(url) {
+    if (_ytChannelCache[url]) return _ytChannelCache[url];
+    try {
+      const resp = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if (!resp.ok) return 'YouTube';
+      const data = await resp.json();
+      const name = data.author_name || 'YouTube';
+      _ytChannelCache[url] = name;
+      return name;
+    } catch { return 'YouTube'; }
+  }
+
+  function isYouTubeUrl(url) {
+    return /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
+  }
+
+  function getHostname(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Unknown'; }
+  }
+
+  async function openCredits() {
+    UI.openModal("creditsModal");
+    const videoList = $("creditsVideoList");
+    const imageList = $("creditsImageList");
+    videoList.innerHTML = '<p class="muted">Loading...</p>';
+    imageList.innerHTML = '<p class="muted">Loading...</p>';
+
+    const db = Array.isArray(window.EXERCISE_DB) ? window.EXERCISE_DB : [];
+
+    // Collect exercises with video URLs
+    const videoEntries = db.filter(ex => ex.video_url).map((ex, i) => ({ sn: i + 1, name: ex.name, url: ex.video_url }));
+    // Collect exercises with image URLs
+    const imageEntries = db.filter(ex => ex.image_url).map((ex, i) => ({ sn: i + 1, name: ex.name, url: ex.image_url }));
+
+    // Render video credits
+    if (videoEntries.length === 0) {
+      videoList.innerHTML = '<p class="muted" style="font-size:13px;">No video URLs provided by the administrator.</p>';
+    } else {
+      // Start rendering rows, resolve YouTube channels in parallel
+      const rows = await Promise.all(videoEntries.map(async (entry) => {
+        const channelName = isYouTubeUrl(entry.url) ? await getYouTubeChannel(entry.url) : getHostname(entry.url);
+        return `<tr>
+          <td style="text-align:center;">${entry.sn}</td>
+          <td>${esc(entry.name)}</td>
+          <td>${esc(channelName)}</td>
+          <td><a href="${esc(entry.url)}" target="_blank" rel="noopener" style="color:var(--accent); word-break:break-all;">${esc(entry.url.length > 50 ? entry.url.slice(0, 50) + '…' : entry.url)}</a></td>
+        </tr>`;
+      }));
+      videoList.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table class="set-table" style="width:100%; font-size:13px;">
+            <thead><tr><th>S.N.</th><th>Exercise</th><th>Channel / Source</th><th>URL</th></tr></thead>
+            <tbody>${rows.join('')}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // Render image credits
+    if (imageEntries.length === 0) {
+      imageList.innerHTML = '<p class="muted" style="font-size:13px;">No image URLs provided by the administrator.</p>';
+    } else {
+      const imgRows = imageEntries.map(entry => {
+        const source = getHostname(entry.url);
+        return `<tr>
+          <td style="text-align:center;">${entry.sn}</td>
+          <td>${esc(entry.name)}</td>
+          <td>${esc(source)}</td>
+          <td><a href="${esc(entry.url)}" target="_blank" rel="noopener" style="color:var(--accent); word-break:break-all;">${esc(entry.url.length > 50 ? entry.url.slice(0, 50) + '…' : entry.url)}</a></td>
+        </tr>`;
+      });
+      imageList.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table class="set-table" style="width:100%; font-size:13px;">
+            <thead><tr><th>S.N.</th><th>Exercise</th><th>Source</th><th>URL</th></tr></thead>
+            <tbody>${imgRows.join('')}</tbody>
+          </table>
+        </div>`;
+    }
+  }
 
   // --- SUPPORT TICKETS LOGIC ---
   async function checkSupportBadge() {
@@ -2066,6 +2269,7 @@
     renderAll();
     renderTimer();
     window.WorkoutPlayer?.init?.();
+    window.StatsDashboard?.init?.();
     MediaStore.applyLogo();
     routeFromHash();
     
@@ -2097,13 +2301,13 @@
         }
       }
       
-      // 2. App Logo
-      const logoUrl = settingsMap['app_logo'];
-      if (logoUrl) {
-        document.querySelectorAll(".brand-logo-img").forEach(img => {
-          img.src = logoUrl; img.hidden = false;
+      // 2. App Branding (App Name, Logo, Welcome Message)
+      if (window.AppBranding) {
+        window.AppBranding.set({
+          name: settingsMap['app_name'],
+          logo: settingsMap['app_logo'],
+          welcome: settingsMap['welcome_message']
         });
-        document.querySelectorAll(".brand-dot").forEach(dot => dot.style.display = "none");
       }
       
       // 3. Merge Default Exercises
@@ -2134,6 +2338,7 @@
       case "#today": showToday(); break;
       case "#build":
       case "#manage": showManage(); break;
+      case "#stats": showStats(); break;
       case "#ai": showAI(); break;
       case "#progress":                 // legacy link - Progress is part of Home now
       case "#home":
@@ -2149,7 +2354,7 @@
   // Public surface used by manage.js and report.js.
   window.GymCoach = {
     project, day, exercise, save,
-    renderAll, renderToday, renderProgress, showHome, showToday, showManage, showProgress, showAI,
+    renderAll, renderToday, renderProgress, showHome, showToday, showManage, showProgress, showStats, showAI,
     renderIntensity, renderArchivedCSVs,
     openDetails, mediaSrc,
     setCurrentDay: id => { currentDayId = id; },

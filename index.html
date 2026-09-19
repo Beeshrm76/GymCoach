@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1F2937">
+  <meta name="theme-color" content="#000000">
   <meta name="description"
     content="GymCoach — build your own workout projects, log every set with custom columns, and export the whole record to an AI coach.">
   <title>GymCoach — Workout Projects</title>
@@ -23,8 +23,9 @@
   <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.png">
   <link rel="apple-touch-startup-image" href="assets/icons/icon-512.png">
 
-  <link rel="stylesheet" href="assets/app.css?v=18.17">
-  <link rel="stylesheet" href="assets/custom.css?v=18.17">
+  <link rel="stylesheet" href="assets/app.css?v=18.19">
+  <link rel="stylesheet" href="assets/custom.css?v=18.19">
+  <script src="js/branding.js"></script>
 </head>
 
 <body>
@@ -93,6 +94,9 @@
               <span class="nav-icon">🛠</span><span class="nav-text"><b>Build</b><small>Edit days, exercises &amp;
                   split</small></span>
             </button>
+            <button class="nav-btn" data-view-btn="statsView" data-action="show-stats">
+              <span class="nav-icon">📈</span><span class="nav-text"><b>Statistics</b><small>DTS &amp; exercise trends</small></span>
+            </button>
             <button class="nav-btn" data-view-btn="aiView" data-action="show-ai">
               <span class="nav-icon">✦</span><span class="nav-text"><b>AI Coach</b><small>Export the full
                   record</small></span>
@@ -100,6 +104,10 @@
             <button class="nav-btn" data-action="open-settings">
               <span class="nav-icon">⚙</span><span class="nav-text"><b>Settings</b><small>Logo, API key,
                   storage</small></span>
+            </button>
+            <button class="nav-btn" data-action="open-credits">
+              <span class="nav-icon">©</span><span class="nav-text"><b>Credits</b><small>Content sources &amp;
+                  attributions</small></span>
             </button>
             <button class="nav-btn" id="installButton" hidden>
               <span class="nav-icon">↓</span><span class="nav-text"><b>Install app</b><small>Use it
@@ -138,6 +146,7 @@
           <button class="tab" data-view-btn="homeView" data-action="show-home">Home</button>
           <button class="tab" data-view-btn="todayView" data-action="show-today">Today</button>
           <button class="tab" data-view-btn="manageView" data-action="manage-project">Build</button>
+          <button class="tab" data-view-btn="statsView" data-action="show-stats">Statistics</button>
           <button class="tab" data-view-btn="aiView" data-action="show-ai">AI Coach</button>
         </nav>
       </header>
@@ -431,9 +440,16 @@
             <aside class="workout-side-panel" aria-label="Session tools">
               <div class="rail-head">
                 <span id="dayFocusShort" class="rail-title">Music</span>
-                <div style="display: flex; gap: 4px; align-items: center;">
+                <div class="rail-head-actions" style="display: flex; gap: 4px; align-items: center;">
                   <button class="icon-btn wpb-settings-link" id="wpbSettingsBtn" type="button" title="Manage Playlist">⚙️</button>
-                  <button class="icon-btn panel-toggle" data-action="toggle-rail" title="Minimize this panel" aria-label="Minimize or expand the session panel">›</button>
+                  <button class="icon-btn panel-toggle" data-action="toggle-rail" title="Minimize this panel" aria-label="Minimize or expand the session panel">
+                    <span class="panel-toggle-expanded" aria-hidden="true">›</span>
+                    <span class="panel-toggle-collapsed" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                      </svg>
+                    </span>
+                  </button>
                 </div>
               </div>
 
@@ -557,17 +573,40 @@
             </label>
           </div>
 
-          <div class="form-group">
-            <label>Username<input type="text" id="profileUsername" class="input-text" required></label>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Username<input type="text" id="profileUsername" class="input-text" required></label>
           </div>
-          <div class="form-group">
-            <label>Full Name<input type="text" id="profileName" class="input-text"></label>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Full Name<input type="text" id="profileName" class="input-text"></label>
           </div>
-          <div class="form-group">
-            <label>Email Address<input type="email" id="profileEmail" class="input-text" disabled title="Contact support to change email"></label>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Email Address<input type="email" id="profileEmail" class="input-text" disabled title="Contact support to change email"></label>
+            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; font-size: 13px; margin-top: 4px; color: var(--text-secondary);">
+              <input type="checkbox" id="profileUnsubscribe"> Unsubscribe from emails
+            </label>
           </div>
-          <div class="form-group">
-            <label>Bio<textarea id="profileBio" class="input-text" rows="3" placeholder="Tell us about your fitness journey..."></textarea></label>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Bio<textarea id="profileBio" class="input-text" rows="3" placeholder="Tell us about your fitness journey..."></textarea></label>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Height
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="number" id="profileHeightInput" class="input-text" min="0" step="0.1" placeholder="175" style="flex:1;">
+                <div id="profileHeightFtInInputs" style="display: none; gap: 4px; align-items: center; flex: 1;">
+                  <input type="number" id="profileHeightFt" class="input-text" min="0" step="1" placeholder="5" style="width: 60px;">
+                  <span class="muted" style="font-size:14px;">ft</span>
+                  <input type="number" id="profileHeightIn" class="input-text" min="0" max="11.9" step="0.1" placeholder="9" style="width: 60px;">
+                  <span class="muted" style="font-size:14px;">in</span>
+                </div>
+                <select id="profileHeightUnit" class="input-text" style="width: auto; padding: 0 8px;">
+                  <option value="cm">cm</option>
+                  <option value="ftin">ft/in</option>
+                </select>
+                <input type="hidden" id="profileHeightCm">
+                <span class="muted" id="profileHeightFtIn" style="white-space:nowrap; font-size:12px; margin-left: auto;"></span>
+              </div>
+            </label>
           </div>
 
           <div class="card" style="margin-top:1rem; padding: 10px; text-align: center; background: rgba(0,0,0,0.2);">
@@ -663,6 +702,95 @@
               is one row per recorded value, so custom set columns survive intact.</p>
           </div>
 
+
+        </section>
+
+        <!-- STATISTICS DASHBOARD -->
+        <section id="statsView" class="view stats-view" hidden aria-label="Statistics Dashboard">
+          
+          <!-- Top KPI Summary Cards -->
+          <div class="stats-kpi-grid">
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">📈</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Average DTS</span>
+                <b class="kpi-val" id="kpiAvgDts">—</b>
+                <small class="muted">Training load magnitude</small>
+              </div>
+            </div>
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">⚡</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Highest DTS</span>
+                <b class="kpi-val" id="kpiMaxDts">—</b>
+                <small class="muted">Peak session recorded</small>
+              </div>
+            </div>
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">🏋️</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Active Workouts</span>
+                <b class="kpi-val" id="kpiWorkoutsCount">0</b>
+                <small class="muted">Sessions in range</small>
+              </div>
+            </div>
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">⚖️</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Workload Split</span>
+                <b class="kpi-val" id="kpiStrengthCardioRatio">—</b>
+                <small class="muted">Strength vs Cardio</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Training Score (DTS) Trend Card -->
+          <div class="panel stats-chart-card">
+            <div class="panel-head stats-chart-head">
+              <div>
+                <h2>Daily Training Score (DTS) Trend</h2>
+                <p class="muted">0–100 training workload combining strength, bodyweight, and cardio. Click any point to view explainable breakdown.</p>
+              </div>
+              <div class="stats-range-controls">
+                <button class="range-btn" data-stats-range="7d">7 Days</button>
+                <button class="range-btn active" data-stats-range="30d">30 Days</button>
+                <button class="range-btn" data-stats-range="90d">90 Days</button>
+                <button class="range-btn" data-stats-range="all">All</button>
+              </div>
+            </div>
+
+            <div class="stats-dts-chart-wrap" id="dtsChartContainer">
+              <!-- Rendered by js/stats.js -->
+            </div>
+
+            <div class="dts-scale-legend">
+              <span class="legend-pill" style="border-left:3px solid #64748b;">0: No Training</span>
+              <span class="legend-pill" style="border-left:3px solid #00f2fe;">1–39: Low</span>
+              <span class="legend-pill" style="border-left:3px solid #38ef7d;">40–59: Reference / Moderate</span>
+              <span class="legend-pill" style="border-left:3px solid #f5af19;">60–79: High</span>
+              <span class="legend-pill" style="border-left:3px solid #ff416c;">80–100: Very High</span>
+            </div>
+          </div>
+
+          <!-- Non-Editable Exercise-Specific Trend Section -->
+          <div class="panel stats-exercise-section">
+            <div class="panel-head stats-exercise-head">
+              <div>
+                <h2>Exercise Performance Trends</h2>
+                <p class="muted">Non-editable analytical progression charts for individual movements.</p>
+              </div>
+              <div class="stats-exercise-picker-wrap">
+                <label for="statsExercisePicker" class="muted small">Select Exercise:</label>
+                <select id="statsExercisePicker" class="stats-select" aria-label="Select Exercise to view trends">
+                  <!-- Populated by js/stats.js -->
+                </select>
+              </div>
+            </div>
+
+            <div id="exerciseTrendsContainer">
+              <!-- Rendered by js/stats.js (4 non-editable trend charts) -->
+            </div>
+          </div>
 
         </section>
 
@@ -843,6 +971,32 @@
             </div>
             <button type="submit" class="btn primary" style="width:100%; margin-top:1rem;">Submit Ticket</button>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits Modal -->
+  <div class="modal" id="creditsModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-credits"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 700px;">
+      <div class="modal-header">
+        <div><b>© Content Credits</b></div>
+        <button class="icon-btn" data-action="close-credits" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single" style="max-height: 70vh; overflow-y: auto;">
+        <p class="muted" style="margin-bottom: 1rem; font-size: 13px;">
+          Credits for exercise media provided by the administrator. YouTube channel names are auto-detected from video URLs.
+        </p>
+        
+        <h3 style="margin-bottom: 0.5rem;">🎬 Video Credits</h3>
+        <div id="creditsVideoList" style="margin-bottom: 1.5rem;">
+          <p class="muted">Loading...</p>
+        </div>
+
+        <h3 style="margin-bottom: 0.5rem;">🖼 Image Credits</h3>
+        <div id="creditsImageList">
+          <p class="muted">Loading...</p>
         </div>
       </div>
     </div>
@@ -1196,6 +1350,94 @@
     </div>
   </div>
 
+  <!-- DTS SCORE BREAKDOWN MODAL -->
+  <div class="modal" id="dtsBreakdownModal" aria-hidden="true" style="display:none;">
+    <div class="modal-backdrop" data-close-dts-modal></div>
+    <div class="modal-card wide dts-modal-card" role="dialog" aria-modal="true" aria-labelledby="dtsModalTitle">
+      <div class="modal-header">
+        <div>
+          <b id="dtsModalTitle">Daily Training Score Breakdown</b>
+          <span id="modalDtsDate">—</span>
+        </div>
+        <button class="icon-btn" id="btnCloseDtsModal" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single dts-breakdown-body">
+        <!-- Big Score Display -->
+        <div class="dts-score-hero">
+          <div class="dts-score-circle">
+            <span class="score-number" id="modalDtsScore">0</span>
+            <span class="score-max">/ 100</span>
+          </div>
+          <div class="dts-score-meta">
+            <div class="dts-band-badge"><span id="modalDtsBand" class="role-badge">Moderate</span></div>
+            <div class="dts-components-row">
+              <div class="comp-item">
+                <span class="comp-label">Strength Component</span>
+                <b class="comp-val" id="modalStrengthScore">0</b>
+              </div>
+              <div class="comp-plus">+</div>
+              <div class="comp-item">
+                <span class="comp-label">Cardio Contribution</span>
+                <b class="comp-val" id="modalCardioScore">+0</b>
+              </div>
+            </div>
+            <p class="muted small" style="margin-top:6px;">DTS is a relative training-load score combining weighted volume, bodyweight, and duration-based cardio.</p>
+          </div>
+        </div>
+
+        <!-- Two Columns: Resistance vs Cardio -->
+        <div class="dts-details-grid">
+          <!-- Strength Column -->
+          <div class="dts-detail-box">
+            <h4>🏋️ Resistance Training Details</h4>
+            <div class="dts-kv-list">
+              <div class="dts-kv"><span>Today's Strength Workload</span><b id="modalStrengthWorkload">0 kg</b></div>
+              <div class="dts-kv"><span>Active Strength Reference</span><b id="modalStrengthRef">10,000 kg</b></div>
+              <div class="dts-kv"><span>Strength Normalized</span><b id="modalStrengthNorm">0.0x</b></div>
+              <div class="dts-kv"><span>Total Sets / Reps</span><span><b id="modalStrengthSets">0</b> sets · <b id="modalStrengthReps">0</b> reps</span></div>
+            </div>
+            <h5 style="margin:12px 0 6px; font-size:12px; color:var(--text-secondary);">Exercises in this session:</h5>
+            <div class="table-wrap mini-table-wrap">
+              <table class="data-table mini-table">
+                <thead>
+                  <tr><th>Exercise</th><th>Type</th><th>Sets × Reps</th><th>Weighted Volume</th><th>Est. 1RM</th></tr>
+                </thead>
+                <tbody id="modalExercisesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Cardio Column -->
+          <div class="dts-detail-box">
+            <h4>🏃 Cardio &amp; Conditioning Details</h4>
+            <div class="dts-kv-list">
+              <div class="dts-kv"><span>Today's Cardio Workload</span><b id="modalCardioWorkload">0 units</b></div>
+              <div class="dts-kv"><span>Breakdown (units)</span><span>Treadmill: <b id="modalCardioTreadmill">0</b> · Cycling: <b id="modalCardioCycling">0</b> · Other: <b id="modalCardioOther">0</b></span></div>
+              <div class="dts-kv"><span>Active Cardio Reference</span><b id="modalCardioRef">150 units</b></div>
+              <div class="dts-kv"><span>Cardio Normalized</span><b id="modalCardioNorm">0.0x</b></div>
+              <div class="dts-kv"><span>Total Duration</span><b id="modalCardioDuration">0 min</b></div>
+              <div class="dts-kv"><span>Average Speed / Incline</span><span><b id="modalCardioSpeed">—</b> · <b id="modalCardioIncline">0%</b></span></div>
+            </div>
+            <div style="margin-top:16px; padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--glass-border);">
+              <small class="muted" style="display:block; line-height:1.4;">
+                <b>Model &amp; Calibration Reference:</b><br>
+                Scoring Engine: <span id="modalScoringVersion">v1.0</span> · Baseline: <span id="modalRefVersion">Ref v1</span><br>
+                Cardio is bounded at max +25 contribution to keep resistance dominant.
+              </small>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" onclick="StatsDashboard.closeBreakdownModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Maintenance Overlay -->
   <div id="maintenanceOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10, 14, 23, 0.95); backdrop-filter:blur(10px); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
     <div style="font-size:48px; margin-bottom:16px;">🛠️</div>
@@ -1211,16 +1453,19 @@
   <script src="data/templates.js?v=18.16"></script>
   <script src="data/seed-project.js?v=18.16"></script>
   <script src="data/exercises.js?v=18.16"></script>
-  <script src="js/ui.js?v=18.16"></script>
+  <script src="js/ui.js?v=18.19"></script>
   <script src="js/supabaseClient.js?v=18.16"></script>
-  <script src="js/auth.js?v=18.16"></script>
+  <script src="js/auth.js?v=18.19"></script>
   <script src="js/sync.js?v=18.16"></script>
   <script src="js/mediaStore.js?v=18.16"></script>
   <script src="js/store.js?v=18.16"></script>
+  <script src="js/exerciseMetadata.js?v=18.20"></script>
+  <script src="js/dts.js?v=18.20"></script>
+  <script src="js/stats.js?v=18.20"></script>
   <script src="js/ml.js?v=18.16"></script>
   <script src="js/pipeline.js?v=18.16"></script>
 
-  <script src="js/settings.js?v=18.16"></script>
+  <script src="js/settings.js?v=18.19"></script>
   <script src="js/player.js?v=18.16"></script>
   <script src="js/autocomplete.js?v=18.16"></script>
   <script src="js/app.js?v=18.16"></script>

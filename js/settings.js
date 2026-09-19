@@ -175,6 +175,25 @@ window.Settings = (() => {
     }
   };
 
+  // Apply custom provider models configured by admins
+  function applyCustomModels(customModels) {
+    if (!customModels || typeof customModels !== 'object') return;
+    for (const [provider, modelList] of Object.entries(customModels)) {
+      if (PROVIDER_PRESETS[provider] && Array.isArray(modelList)) {
+        PROVIDER_PRESETS[provider].models = [...modelList];
+        if (modelList.length > 0 && !modelList.includes(PROVIDER_PRESETS[provider].defaultModel)) {
+          PROVIDER_PRESETS[provider].defaultModel = modelList[0];
+        }
+      }
+    }
+  }
+
+  // Load cached custom models on startup
+  try {
+    const cachedModels = window.CUSTOM_PROVIDER_MODELS || JSON.parse(localStorage.getItem('gymcoach_provider_models') || 'null');
+    if (cachedModels) applyCustomModels(cachedModels);
+  } catch (e) {}
+
   // Models that take adaptive thinking. Older ones use a fixed token budget instead,
   // so sending `thinking` to them is a 400 - we just omit it.
   // Server-side refusal fallback is only offered on the current flagship models.
@@ -316,11 +335,19 @@ window.Settings = (() => {
     }
     container.hidden = false;
     const currentM = $("settingsModel")?.value || state.model;
+
+    let adminEditLink = '';
+    const user = window.Auth?.getUser?.();
+    if (user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')) {
+      const targetPage = user.role === 'SUPER_ADMIN' ? 'superadmin.html' : 'admin.html';
+      adminEditLink = `<div style="width:100%;margin-top:6px;"><a href="${targetPage}" target="_blank" style="font-size:11px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:4px;">⚡ Edit model presets (${user.role === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'})</a></div>`;
+    }
+
     container.innerHTML = preset.models.map(m => `
       <button type="button" class="model-chip ${m === currentM ? 'active' : ''}" data-model-val="${m}">
         ${m}
       </button>
-    `).join("");
+    `).join("") + adminEditLink;
 
     container.querySelectorAll("[data-model-val]").forEach(btn => {
       btn.onclick = () => {
@@ -886,5 +913,11 @@ window.Settings = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  return { get, set, open, switchTab, renderMusicSettings, callModel, renderStorage, promptInstall, isInstalled, iosLike };
+  return {
+    get, set, open, switchTab, renderMusicSettings, callModel, renderStorage, promptInstall, isInstalled, iosLike,
+    updateProviderModels: (modelsMap) => {
+      applyCustomModels(modelsMap);
+      renderModelChips();
+    }
+  };
 })();

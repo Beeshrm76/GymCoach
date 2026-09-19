@@ -27,6 +27,22 @@ CREATE TABLE IF NOT EXISTS support_tickets (
 
 ALTER TABLE support_tickets ENABLE ROW LEVEL SECURITY;
 
+-- Optional foreign key constraint to public.profiles so PostgREST can resolve joins
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints 
+    WHERE constraint_name = 'support_tickets_profiles_fkey'
+  ) THEN
+    BEGIN
+      ALTER TABLE support_tickets 
+        ADD CONSTRAINT support_tickets_profiles_fkey 
+        FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+    EXCEPTION WHEN OTHERS THEN
+      NULL;
+    END;
+  END IF;
+END $$;
+
 DO $$ BEGIN
   -- Users see and create only their own tickets.
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users manage own tickets' AND tablename = 'support_tickets') THEN
@@ -87,11 +103,15 @@ CREATE TABLE IF NOT EXISTS system_settings (
 ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  -- Anyone signed in can read settings (app name/logo/maintenance banner
-  -- need to be visible to every user, not just admins).
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone signed in can read settings' AND tablename = 'system_settings') THEN
-    CREATE POLICY "Anyone signed in can read settings" ON system_settings
-      FOR SELECT USING (auth.uid() IS NOT NULL);
+  -- Anyone (including unauthenticated visitors on the login page) can read
+  -- system settings (app name, logo, welcome message, maintenance banner).
+  IF EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone signed in can read settings' AND tablename = 'system_settings') THEN
+    DROP POLICY "Anyone signed in can read settings" ON system_settings;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Anyone can read settings' AND tablename = 'system_settings') THEN
+    CREATE POLICY "Anyone can read settings" ON system_settings
+      FOR SELECT USING (true);
   END IF;
 
   -- Only admins/super admins can change settings.

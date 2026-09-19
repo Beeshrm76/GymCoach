@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Legal & Privacy - GymCoach</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --text: #e2e8f0;
+      --accent: #38bdf8;
+      --border: #334155;
+      --panel: #1e293b;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    h1 { color: #fff; margin-bottom: 10px; }
+    h2 { color: var(--accent); margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { color: #cbd5e1; margin-top: 24px; }
+    p { margin: 16px 0; }
+    ul { margin: 16px 0; padding-left: 20px; }
+    li { margin-bottom: 8px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .back-btn:hover { background: #2a3b52; }
+    .nav-links {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .nav-links a {
+      background: var(--panel);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button class="back-btn" onclick="window.history.back();">← Go Back</button>
+    
+    <div class="header">
+      <h1>GymCoach Legal & Privacy</h1>
+      <div class="nav-links">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms of Service</a>
+        <a href="#cookies">Cookie Policy</a>
+        <a href="#credits">Credits & Copyright</a>
+      </div>
+    </div>
+
+    <section id="privacy">
+      <h2>Privacy Policy</h2>
+      <p>Last updated: September 2026</p>
+      
+      <h3>1. Information We Collect</h3>
+      <p>We believe in data minimization. When you create an account, we collect only essential information necessary to provide our services:</p>
+      <ul>
+        <li><strong>Account Data:</strong> Username, email address, and an encrypted password.</li>
+        <li><strong>Profile Data (Optional):</strong> Display name, bio, avatar, and height metrics.</li>
+        <li><strong>Fitness Data:</strong> Workouts, sets, reps, logs, and body weight entries that you actively record.</li>
+      </ul>
+      <p>We do <strong>not</strong> collect background location, tracking cookies for advertising, or data via third-party marketing SDKs. Our application is strictly non-revenue.</p>
+
+      <h3>2. How We Use Your Data</h3>
+      <p>Your data is used solely to provide and improve the GymCoach service. We store your data securely via Supabase and allow you to sync across devices. We will never sell your data to third parties.</p>
+
+      <h3>3. Age Consent for Kids' Data (COPPA / GDPR-K compliance)</h3>
+      <p>GymCoach is not intended for use by children under the age of 13 (or the applicable age of digital consent in your region). We do not knowingly collect personal data from children. If you are a parent or guardian and believe we have collected data from a child, please contact us at the email below to request immediate data deletion.</p>
+
+      <h3>4. Data Deletion & Your Rights</h3>
+      <p>You have full ownership of your data. You may request account deletion directly within the application (via the User Profile settings), which will irreversibly purge your account, workout history, and personal details from our active databases.</p>
+
+      <h3>5. Contact Us</h3>
+      <p>For any privacy-related inquiries or data requests, please contact: <a href="mailto:bibhavsharma76@gmail.com">bibhavsharma76@gmail.com</a></p>
+    </section>
+
+    <section id="terms">
+      <h2>Terms of Service</h2>
+      
+      <h3>1. Acceptance of Terms</h3>
+      <p>By creating an account and using GymCoach, you agree to abide by these Terms of Service. If you do not agree, you may use the app in offline-only mode where no data is transmitted to our servers.</p>
+
+      <h3>2. Non-Revenue & Personal Use</h3>
+      <p>GymCoach is a non-revenue, personalized application built for individual fitness tracking. There are <strong>no hidden fees, subscription costs, or premium paywalls</strong>.</p>
+
+      <h3>3. User Conduct & Copyright Limits</h3>
+      <p>Users are solely responsible for the content they generate, upload, or input into the app (e.g., custom exercises, avatars, notes). As a personalized non-revenue app, users are responsible for their own use of copyrighted content. If you believe your copyrighted material is being infringed upon by a public component of the app, please contact us.</p>
+
+      <h3>4. No Medical Advice</h3>
+      <p>GymCoach provides fitness tracking tools, not medical advice. Any claims or metrics (such as the Daily Training Score) are analytical approximations. Always consult a physician before beginning any strenuous exercise program.</p>
+    </section>
+
+    <section id="cookies">
+      <h2>Cookie Policy</h2>
+      <p>GymCoach uses minimal cookies and local storage to function securely.</p>
+      <ul>
+        <li><strong>Essential Data:</strong> We use local browser storage (<code>localStorage</code> and <code>sessionStorage</code>) to keep you logged in, persist your offline workout data, and store your app preferences (like theme and cookie consent).</li>
+        <li><strong>No Third-Party Trackers:</strong> We do not use Google Analytics, Meta Pixels, or any advertising cookies. Your usage habits remain your own.</li>
+      </ul>
+      <p>You can clear your local storage at any time via your browser settings, though doing so will log you out and remove any unsynced offline workouts.</p>
+    </section>
+
+    <section id="credits">
+      <h2>Branding & Credits</h2>
+      <p>GymCoach utilizes open-source resources and community-driven content. We extend our gratitude to the creators whose assets help make this non-revenue app possible.</p>
+      <ul>
+        <li><strong>Fonts:</strong> System UI fonts are used predominantly. Any custom web fonts (if loaded) are used under their respective open SIL Open Font Licenses.</li>
+        <li><strong>Icons:</strong> Emojis and standard SVG icons.</li>
+      </ul>
+      <p><strong>Brand Name & Copyright:</strong> This is a project-based app, not a business-oriented product. The name is based entirely on the actual functionality of this project. If the brand name poses an issue for any authorized personnel owning specific naming rights (even in their own region), they can contact us at the given email. We will happily resolve any issues which may have been done unintentionally from our side.</p>
+      <p>Please address any copyright or takedown requests by contacting <a href="mailto:bibhavsharma76@gmail.com">bibhavsharma76@gmail.com</a>.</p>
+    </section>
+    
+    <div style="margin-top: 60px; text-align: center; color: #64748b; font-size: 14px;">
+      &copy; 2026 GymCoach. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

@@ -3076,16 +3076,14 @@ select#settingsProvider option {
   border-radius: 20px !important;
   box-shadow: inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.38),
     inset 0 0 20px 0 rgba(255, 255, 255, 0.02),
-    0 20px 50px -10px rgba(0, 0, 0, 0.75),
-    0 0 24px -2px rgba(0, 119, 237, 0.1) !important;
+    0 20px 50px -10px rgba(0, 0, 0, 0.85) !important;
   transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease !important;
 }
 
 .panel:hover {
   border-color: rgba(255, 255, 255, 0.28) !important;
   box-shadow: inset 0 2px 1.5px 0 rgba(255, 255, 255, 0.52),
-    0 26px 60px -10px rgba(0, 0, 0, 0.85),
-    0 0 32px rgba(56, 189, 248, 0.18) !important;
+    0 26px 60px -10px rgba(0, 0, 0, 0.95) !important;
 }
 
 /* Shade 1: Hero Panels — Deep Royal Sapphire & Cyan Liquid Glass */
@@ -3095,8 +3093,7 @@ select#settingsProvider option {
   border: 1px solid rgba(56, 189, 248, 0.32) !important;
   box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.45),
     inset 0 0 32px 0 rgba(0, 119, 237, 0.08),
-    0 22px 52px -8px rgba(0, 0, 0, 0.8),
-    0 0 36px -4px rgba(0, 119, 237, 0.22) !important;
+    0 22px 52px -8px rgba(0, 0, 0, 0.85) !important;
 }
 
 /* Shade 2: Analytics & Chart Cards — Cyber Cobalt & Amethyst Glass */
@@ -3104,8 +3101,7 @@ select#settingsProvider option {
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(15, 23, 42, 0.65) 100%), rgba(11, 16, 34, 0.62) !important;
   border: 1px solid rgba(168, 85, 247, 0.28) !important;
   box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.36),
-    0 20px 48px -8px rgba(0, 0, 0, 0.78),
-    0 0 30px -4px rgba(147, 51, 234, 0.15) !important;
+    0 20px 48px -8px rgba(0, 0, 0, 0.85) !important;
 }
 
 /* Shade 3: Side Tools & Right Rail — Elevated Obsidian Indigo Liquid Glass */
@@ -3116,8 +3112,7 @@ select#settingsProvider option {
   border: 1px solid rgba(255, 255, 255, 0.16) !important;
   border-radius: 20px !important;
   box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.32),
-    0 24px 54px -6px rgba(0, 0, 0, 0.88),
-    0 0 28px rgba(99, 102, 241, 0.14) !important;
+    0 24px 54px -6px rgba(0, 0, 0, 0.9) !important;
 }
 
 .rail-card,
@@ -3127,7 +3122,7 @@ select#settingsProvider option {
   -webkit-backdrop-filter: blur(24px) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 16px !important;
-  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28), 0 14px 32px rgba(0, 0, 0, 0.7) !important;
+  box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.28), 0 14px 32px rgba(0, 0, 0, 0.8) !important;
 }
 
 /* Shade 4: Cardio Strip & Quick Action Panels — Radiant Emerald & Cyan Frost Glass */
@@ -3136,8 +3131,7 @@ select#settingsProvider option {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 50%, rgba(15, 23, 42, 0.65) 100%), rgba(8, 20, 30, 0.62) !important;
   border: 1px solid rgba(52, 211, 153, 0.3) !important;
   box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.38),
-    0 20px 46px -8px rgba(0, 0, 0, 0.78),
-    0 0 28px -4px rgba(16, 185, 129, 0.16) !important;
+    0 20px 46px -8px rgba(0, 0, 0, 0.85) !important;
 }
 
 /* Shade 5: Recovery & Body Physique Panels — Twilight Amethyst Liquid Glass */
@@ -3146,8 +3140,7 @@ select#settingsProvider option {
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(236, 72, 153, 0.06) 50%, rgba(15, 23, 42, 0.65) 100%), rgba(20, 16, 36, 0.62) !important;
   border: 1px solid rgba(192, 132, 252, 0.3) !important;
   box-shadow: inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.38),
-    0 20px 46px -8px rgba(0, 0, 0, 0.78),
-    0 0 28px -4px rgba(168, 85, 247, 0.16) !important;
+    0 20px 46px -8px rgba(0, 0, 0, 0.85) !important;
 }
 
 /* Shade 6: Build Project & Days Management Cards */
@@ -3301,10 +3294,10 @@ select#settingsProvider option {
 
 /* --- Topbar & View Tabs --- */
 .topbar {
-  background: rgba(6, 10, 20, 0.98) !important;
+  background: #000000 !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .tab.active {
@@ -3513,10 +3506,10 @@ select#settingsProvider option {
 
 /* --- Topbar & View Tabs --- */
 .topbar {
-  background: rgba(6, 10, 20, 0.98) !important;
+  background: #000000 !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .tab.active {
@@ -3822,3 +3815,462 @@ html.no-scroll body {
 /* Typography Overrides */
 body { font-family: 'Inter', 'Barlow', system-ui, sans-serif !important; letter-spacing: -0.01em !important; }
 h1, h2, h3, .big-number { font-family: 'Outfit', 'Barlow Condensed', sans-serif !important; letter-spacing: -0.02em !important; }
+
+/* Ensure everything outside glass panels is pitch black */
+html,
+body,
+.app-shell,
+.app-content,
+.views {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+.sidebar {
+  background: #000000 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.topbar {
+  background: #000000 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ============================================================
+   STATISTICS DASHBOARD & DTS SCORING STYLES
+   ============================================================ */
+
+/* --- 1. Statistics View Layout --- */
+#statsView {
+  padding: 24px 28px 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.stats-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+
+.stats-header p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+}
+
+/* --- 2. Range Control Pills --- */
+.stats-range-controls {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+}
+
+.stats-range-controls .range-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stats-range-controls .range-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stats-range-controls .range-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.35);
+}
+
+/* --- 3. KPI Grid --- */
+.stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stats-kpi-card {
+  background: linear-gradient(145deg, rgba(20, 27, 45, 0.75), rgba(12, 16, 28, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.stats-kpi-card .kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.stats-kpi-card .kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stats-kpi-card .kpi-lbl {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.stats-kpi-card .kpi-val {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  font-family: 'Outfit', 'Barlow Condensed', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.stats-kpi-card .kpi-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 6px;
+}
+
+/* --- 4. Chart Cards & Containers --- */
+.stats-chart-card {
+  background: linear-gradient(145deg, rgba(20, 27, 45, 0.75), rgba(12, 16, 28, 0.85));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chart-card-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.chart-card-header p {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.dts-chart-container {
+  width: 100%;
+  position: relative;
+  overflow-x: auto;
+}
+
+.dts-svg {
+  width: 100%;
+  min-width: 500px;
+  height: 260px;
+  display: block;
+}
+
+.dts-data-dot {
+  cursor: pointer;
+  transition: r 0.2s ease, filter 0.2s ease;
+}
+
+.dts-data-dot:hover {
+  r: 7;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.8));
+}
+
+/* --- 5. Non-Editable Exercise Progression Charts Grid --- */
+.exercise-select-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.exercise-select-bar label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.exercise-select-dropdown {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 260px;
+  outline: none;
+  cursor: pointer;
+}
+
+.exercise-select-dropdown option {
+  background: #111827;
+  color: #ffffff;
+}
+
+.exercise-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .exercise-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.exercise-trend-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 16px 18px;
+  position: relative;
+}
+
+.exercise-trend-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-trend-card .trend-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 12px;
+}
+
+.trend-svg {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+/* --- 6. Explainable DTS Breakdown Modal --- */
+.dts-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.dts-modal-card {
+  background: linear-gradient(155deg, #141c2e, #0b101c);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.15);
+}
+
+.dts-score-hero {
+  text-align: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.dts-score-hero .score-number {
+  font-size: 56px;
+  font-weight: 800;
+  font-family: 'Outfit', 'Barlow Condensed', sans-serif;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.dts-score-hero .score-scale {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 500;
+}
+
+.dts-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.dts-detail-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.dts-detail-card .lbl {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.dts-detail-card .val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.dts-detail-card .sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 2px;
+}
+
+.dts-formula-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* --- 7. Status Badges --- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-very-high {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badge-high {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-moderate {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-low {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-rest {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+  border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+.badge-auto {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-manual {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+
+
+/* --- DTS Scale Legend --- */
+.dts-scale-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.legend-pill {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  padding-left: 8px;
+  display: flex;
+  align-items: center;
+}
+

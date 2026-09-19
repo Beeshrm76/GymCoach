@@ -9,6 +9,7 @@
 
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/login.css">
+  <script src="js/branding.js"></script>
 </head>
 <body>
 
@@ -19,9 +20,9 @@
     <div class="orb orb-3"></div>
     
     <!-- Floating muscular parts with screen blend mode -->
-    <img src="assets/bicep_render_blue.jpg" class="floating-body body-1" alt="">
-    <img src="assets/abs_render_blue.jpg" class="floating-body body-2" alt="">
-    <img src="assets/back_render_blue.jpg" class="floating-body body-3" alt="">
+    <img src="assets/bicep_render_blue.jpg" class="floating-body body-1" alt="Decorative bicep render">
+    <img src="assets/abs_render_blue.jpg" class="floating-body body-2" alt="Decorative abs render">
+    <img src="assets/back_render_blue.jpg" class="floating-body body-3" alt="Decorative back render">
   </div>
 
   <div class="login-layout">
@@ -141,6 +142,11 @@
             <input class="form-input" type="password" id="regConfirmPassword" name="confirmPassword"
               placeholder="Repeat password" required minlength="6" autocomplete="new-password">
           </div>
+          
+          <label class="login-checkbox" style="margin-bottom: 1rem; align-items: flex-start; font-size: 13px;">
+            <input type="checkbox" id="regConsent" required style="margin-top: 4px;"> 
+            <span>I agree to the <a href="legal.html#terms" target="_blank">Terms of Service</a> and <a href="legal.html#privacy" target="_blank">Privacy Policy</a>, and I am over the age of 13.</span>
+          </label>
           <button type="submit" class="login-btn" id="registerBtn">
             <span class="spinner"></span>
             <span class="btn-text">Create Account</span>
@@ -167,6 +173,12 @@
           Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to
           the cloud.
         </p>
+        
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 12px; color: var(--text-secondary);">
+          <a href="legal.html#privacy" class="forgot-link" style="font-size: 12px; display: inline; margin: 0 5px;">Privacy Policy</a> &bull; 
+          <a href="legal.html#terms" class="forgot-link" style="font-size: 12px; display: inline; margin: 0 5px;">Terms of Service</a> &bull; 
+          <a href="legal.html#cookies" class="forgot-link" style="font-size: 12px; display: inline; margin: 0 5px;">Cookie Policy</a>
+        </div>
 
       </div>
     </div>
@@ -178,6 +190,7 @@
     (() => {
       const $ = id => document.getElementById(id);
       const supabase = window.supabaseClient;
+      if (window.AppBranding && supabase) window.AppBranding.syncFromCloud(supabase);
 
       // ── Tab switching ───────────────────────────────────────
       const tabs = document.querySelectorAll(".login-tab");
@@ -277,6 +290,11 @@
         const displayName = $("regDisplayName").value.trim();
         const password = $("regPassword").value;
         const confirmPassword = $("regConfirmPassword").value;
+
+        if (!$("regConsent").checked) {
+          toast("You must agree to the Terms of Service and Privacy Policy.");
+          return;
+        }
 
         if (password !== confirmPassword) {
           toast("Passwords do not match.");
