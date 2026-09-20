@@ -22,6 +22,7 @@ window.Auth = (() => {
 
     // Verify with Supabase Auth
     try {
+      if (!supabase) throw new Error("Supabase client unavailable");
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (session && session.user) {
@@ -77,16 +78,18 @@ window.Auth = (() => {
     }
 
     // Subscribe to auth state changes
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        currentUser = null;
-        localStorage.removeItem(SESSION_KEY);
-        // Clear sync data from memory/local if desired, or keep offline
-        renderUserUI();
-      } else if (event === 'SIGNED_IN') {
-        // init will naturally catch this on next load or we could fetch profile here
-      }
-    });
+    if (supabase) {
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          currentUser = null;
+          localStorage.removeItem(SESSION_KEY);
+          // Clear sync data from memory/local if desired, or keep offline
+          renderUserUI();
+        } else if (event === 'SIGNED_IN') {
+          // init will naturally catch this on next load or we could fetch profile here
+        }
+      });
+    }
 
     renderUserUI();
     return currentUser;
