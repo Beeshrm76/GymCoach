@@ -1721,7 +1721,10 @@
   <!-- PDF export is optional: report.js checks for the library and falls back to
      Markdown/JSON if the CDN is unreachable (e.g. offline). -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <!-- Hide AMD define to force UMD to export globally, bypassing Vercel auto-injections -->
+  <script>var _tempDefine = window.define; window.define = undefined;</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+  <script>window.define = _tempDefine;</script>
 
   <script src="data/templates.js?v=18.16"></script>
   <script src="data/seed-project.js?v=18.16"></script>
