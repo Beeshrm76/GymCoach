@@ -442,6 +442,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ── Upload media to Supabase storage ──
   async function uploadMediaFile(file, folder = 'exercise-icons') {
+    const kind = folder === 'exercise-videos' ? 'video' : 'image';
+    if (window.Security?.validateUpload) {
+      const v = await window.Security.validateUpload(file, kind);
+      if (!v.valid) {
+        throw new Error(v.error);
+      }
+    }
     const ext = file.name.split('.').pop().toLowerCase();
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from('app-media').upload(fileName, file, {

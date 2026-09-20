@@ -613,6 +613,164 @@ window.StatsDashboard = (() => {
     if (modal) modal.style.display = "none";
   }
 
+  // -------------------------------------------------------------
+  // 4. BODY WEIGHT CHANGE TREND GRAPH
+  // -------------------------------------------------------------
+  function renderWeightTrendChart() {
+    const container = $("weightTrendChartContainer");
+    if (!container) return;
+
+    const prof = window.Store?.profile() || { current: {}, history: [] };
+    const history = Array.isArray(prof.history) ? [...prof.history] : [];
+    
+    // Check if current is not yet in history
+    if (prof.current?.weight && !history.some(h => h.date === prof.current.date)) {
+      history.unshift({ ...prof.current });
+    }
+
+    const validEntries = history
+      .filter(h => h && h.weight && !isNaN(parseFloat(h.weight)))
+      .map(h => ({
+        date: h.date ? h.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+        weight: parseFloat(h.weight)
+      }));
+
+    // Sort chronologically (oldest first)
+    validEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Deduplicate by date if multiple on same day (take latest)
+    const deduped = [];
+    const seen = new Set();
+    for (let i = validEntries.length - 1; i >= 0; i--) {
+      if (!seen.has(validEntries[i].date)) {
+        seen.add(validEntries[i].date);
+        deduped.unshift(validEntries[i]);
+      }
+    }
+
+    // Update KPI badges
+    const kpiCurrent = $("weightKpiCurrent");
+    const kpiChange = $("weightKpiChange");
+    const kpiMinMax = $("weightKpiMinMax");
+
+    if (!deduped.length) {
+      if (kpiCurrent) kpiCurrent.innerHTML = `Current: <b>—</b>`;
+      if (kpiChange) kpiChange.innerHTML = `Change: <b>—</b>`;
+      if (kpiMinMax) kpiMinMax.innerHTML = `Range: <b>—</b>`;
+
+      container.innerHTML = `
+        <div class="stats-empty-state" style="padding: 30px 20px; text-align: center;">
+          <p class="muted">No body weight logged yet. Save your current weight in Home (Weekly Check) or User Profile to view your trend over time.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const currentW = deduped[deduped.length - 1].weight;
+    const startW = deduped[0].weight;
+    const netChange = currentW - startW;
+    const allWeights = deduped.map(d => d.weight);
+    const minW = Math.min(...allWeights);
+    const maxW = Math.max(...allWeights);
+
+    if (kpiCurrent) kpiCurrent.innerHTML = `Current: <b>${currentW.toFixed(1)} kg</b> <small style="color:var(--text-secondary);">(${(currentW * 2.20462).toFixed(1)} lb)</small>`;
+    if (kpiChange) {
+      const sign = netChange > 0 ? "+" : "";
+      const changeColor = netChange < 0 ? "var(--accent, #00f2fe)" : netChange > 0 ? "#f5af19" : "var(--text-secondary)";
+      kpiChange.innerHTML = `Change: <b style="color:${changeColor};">${sign}${netChange.toFixed(1)} kg</b>`;
+    }
+    if (kpiMinMax) kpiMinMax.innerHTML = `Range: <b>${minW.toFixed(1)} – ${maxW.toFixed(1)} kg</b>`;
+
+    // Render SVG
+    const W = 800;
+    const H = 220;
+    const pad = { top: 25, right: 30, bottom: 35, left: 55 };
+
+    const yMin = Math.floor(minW - 1);
+    const yMax = Math.ceil(maxW + 1);
+    const yRange = (yMax - yMin) || 1;
+
+    const getX = (idx, total) => total <= 1 ? pad.left + (W - pad.left - pad.right) / 2 : pad.left + (idx / (total - 1)) * (W - pad.left - pad.right);
+    const getY = (val) => pad.top + (1 - (val - yMin) / yRange) * (H - pad.top - pad.bottom);
+
+    // Y Grid lines
+    const ySteps = 4;
+    let yLines = "";
+    for (let i = 0; i <= ySteps; i++) {
+      const val = yMin + (i / ySteps) * yRange;
+      const y = getY(val);
+      yLines += `
+        <line x1="${pad.left}" y1="${y}" x2="${W - pad.right}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-dasharray="3 3" />
+        <text x="${pad.left - 10}" y="${y + 4}" font-size="11" fill="var(--text-secondary)" text-anchor="end">${val.toFixed(1)}</text>
+      `;
+    }
+
+    // Points
+    const points = deduped.map((d, i) => ({
+      x: getX(i, deduped.length),
+      y: getY(d.weight),
+      date: d.date,
+      weight: d.weight
+    }));
+
+    let pathD = "";
+    let areaD = "";
+    if (points.length === 1) {
+      pathD = `M ${points[0].x - 20} ${points[0].y} L ${points[0].x + 20} ${points[0].y}`;
+    } else {
+      pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+      const bottomY = H - pad.bottom;
+      areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${bottomY} L ${points[0].x.toFixed(1)} ${bottomY} Z`;
+    }
+
+    const circles = points.map(p => `
+      <circle 
+        cx="${p.x.toFixed(1)}" 
+        cy="${p.y.toFixed(1)}" 
+        r="5" 
+        fill="#38ef7d" 
+        stroke="var(--bg-primary, #0d1117)" 
+        stroke-width="2" 
+        style="cursor: pointer; transition: r 0.15s ease;"
+        class="weight-data-dot"
+        data-date="${p.date}"
+        data-weight="${p.weight}"
+      >
+        <title>${p.date}: ${p.weight} kg (${(p.weight * 2.20462).toFixed(1)} lb)</title>
+      </circle>
+    `).join("");
+
+    // X Labels (sample if too many)
+    const step = Math.max(1, Math.floor(points.length / 6));
+    const xLabels = points.filter((p, i) => i === 0 || i === points.length - 1 || i % step === 0).map(p => `
+      <text x="${p.x.toFixed(1)}" y="${H - 12}" font-size="11" fill="var(--text-secondary)" text-anchor="middle">
+        ${formatDateLabel(p.date)}
+      </text>
+    `).join("");
+
+    container.innerHTML = `
+      <svg class="weight-svg" viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; overflow:visible;">
+        <defs>
+          <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#38ef7d" stop-opacity="0.3" />
+            <stop offset="100%" stop-color="#38ef7d" stop-opacity="0.0" />
+          </linearGradient>
+        </defs>
+        ${yLines}
+        ${areaD ? `<path d="${areaD}" fill="url(#weightGrad)" />` : ''}
+        <path d="${pathD}" fill="none" stroke="#38ef7d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        ${circles}
+        ${xLabels}
+      </svg>
+    `;
+
+    // Add hover micro-interactions
+    container.querySelectorAll(".weight-data-dot").forEach(dot => {
+      dot.addEventListener("mouseenter", () => dot.setAttribute("r", "8"));
+      dot.addEventListener("mouseleave", () => dot.setAttribute("r", "5"));
+    });
+  }
+
   // Initialize and attach event listeners
   function init() {
     // Range buttons
@@ -649,6 +807,7 @@ window.StatsDashboard = (() => {
 
   function render() {
     renderDtsChart();
+    renderWeightTrendChart();
     populateExercisePicker();
   }
 
@@ -656,9 +815,11 @@ window.StatsDashboard = (() => {
     init,
     render,
     renderDtsChart,
+    renderWeightTrendChart,
     renderExerciseTrends,
     openBreakdownModal,
     closeBreakdownModal
   };
 })();
+
 

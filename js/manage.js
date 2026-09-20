@@ -243,9 +243,9 @@ window.Manage = (() => {
     row.className = "manage-exercise-row";
     row.innerHTML = `
       <div class="mini-thumb" data-mini-thumb="${ex.id}"><span>▦</span></div>
-      <input class="field-wide" data-f="name" value="${esc(ex.name)}" placeholder="Name" aria-label="Exercise name">
-      <input data-f="weight" value="${esc(ex.weight || "")}" placeholder="Target" aria-label="Target weight">
-      <input data-f="reps" value="${esc(ex.reps || "")}" placeholder="Reps range" aria-label="Target reps range">
+      <input class="field-wide" data-f="name" value="${esc(ex.name)}" placeholder="Name" aria-label="Exercise name" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <input data-f="weight" value="${esc(ex.weight || "")}" placeholder="Target" aria-label="Target weight" autocomplete="off">
+      <input data-f="reps" value="${esc(ex.reps || "")}" placeholder="Reps range" aria-label="Target reps range" autocomplete="off">
       <span class="set-count" title="Set rows are managed in the details panel">${ex.logs.length} sets</span>
       <div class="manage-ex-buttons">
         <button class="icon-btn" data-ex-details title="Open details (media, RIR, set table)">⋯</button>

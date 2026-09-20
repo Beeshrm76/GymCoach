@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="assets/app.css?v=18.19">
   <link rel="stylesheet" href="assets/custom.css?v=18.19">
   <script src="js/branding.js"></script>
+  <script src="js/security.js?v=18.23"></script>
 </head>
 
 <body>
@@ -85,6 +86,14 @@
 
         <div class="nav-section">
           <div class="nav-label"><span>App</span></div>
+          <div class="sidebar-search-box" style="padding: 0 10px 8px;">
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="search" id="sidebarProfileSearch" placeholder="Search profiles..." 
+                style="width: 100%; padding: 7px 10px 7px 28px; font-size: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-primary); outline: none;"
+                aria-label="Search profiles by name or ID">
+              <span style="position: absolute; left: 8px; font-size: 12px; pointer-events: none; opacity: 0.6;">🔍</span>
+            </div>
+          </div>
           <div class="nav-list">
             <button class="nav-btn" data-view-btn="homeView" data-action="show-home">
               <span class="nav-icon">◔</span><span class="nav-text"><b>Home</b><small>Charts, forecast &amp;
@@ -556,65 +565,180 @@
         <!-- User Profile Modal -->
   <div class="modal" id="userProfileModal" aria-hidden="true">
     <div class="modal-backdrop" data-action="close-profile"></div>
-    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 500px;">
-      <div class="modal-header">
-        <div><b>👤 User Profile</b></div>
-        <button class="icon-btn" data-action="close-profile" aria-label="Close">✕</button>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 520px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 20px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">👤</span>
+          <b style="font-size:16px; letter-spacing:0.2px;">User Profile</b>
+        </div>
+        <button class="icon-btn" data-action="close-profile" aria-label="Close" style="cursor:pointer;">✕</button>
       </div>
-      <div class="modal-body single">
+      <div class="modal-body single" style="padding: 20px; max-height: 80vh; overflow-y: auto;">
         <form id="userProfileForm" class="settings-form">
-          <div style="text-align: center; margin-bottom: 1rem;">
-            <div id="profileAvatarPreview" style="width: 80px; height: 80px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2rem;">
+          <!-- Avatar & Picture Change -->
+          <div style="text-align: center; margin-bottom: 12px;">
+            <div id="profileAvatarPreview" style="width: 86px; height: 86px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2.2rem; border: 2px solid rgba(255,255,255,0.12); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
               👤
             </div>
-            <label class="btn small-btn primary">
+            <label class="btn small-btn primary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; text-transform:none; font-weight:600;">
               <span>Change Picture</span>
               <input type="file" id="profileAvatarUpload" accept="image/*" hidden>
             </label>
           </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Username<input type="text" id="profileUsername" class="input-text" required></label>
-          </div>
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Full Name<input type="text" id="profileName" class="input-text"></label>
-          </div>
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Email Address<input type="email" id="profileEmail" class="input-text" disabled title="Contact support to change email"></label>
-            <label style="display: flex; align-items: center; gap: 6px; font-weight: normal; font-size: 13px; margin-top: 4px; color: var(--text-secondary);">
-              <input type="checkbox" id="profileUnsubscribe"> Unsubscribe from emails
-            </label>
-          </div>
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Bio<textarea id="profileBio" class="input-text" rows="3" placeholder="Tell us about your fitness journey..."></textarea></label>
+          <!-- Profile ID Pill (Prominently Visible) -->
+          <div style="display:flex; justify-content:center; align-items:center; margin-bottom:18px;">
+            <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(0, 242, 254, 0.08); border:1px solid rgba(0, 242, 254, 0.3); padding:6px 14px; border-radius:24px;">
+              <span style="font-size:11px; font-weight:700; color:var(--accent, #00f2fe); letter-spacing:0.8px;">PROFILE ID:</span>
+              <span id="profileDisplayId" style="font-family:var(--mono, monospace); font-weight:700; font-size:13px; color:#ffffff; letter-spacing:1px;">GC-········</span>
+              <button type="button" class="small-btn" id="btnCopyProfileId" style="padding:3px 8px; font-size:11px; margin-left:4px; border-radius:6px; cursor:pointer; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15);" title="Copy Profile ID">
+                📋 Copy
+              </button>
+            </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">Height
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input type="number" id="profileHeightInput" class="input-text" min="0" step="0.1" placeholder="175" style="flex:1;">
-                <div id="profileHeightFtInInputs" style="display: none; gap: 4px; align-items: center; flex: 1;">
-                  <input type="number" id="profileHeightFt" class="input-text" min="0" step="1" placeholder="5" style="width: 60px;">
-                  <span class="muted" style="font-size:14px;">ft</span>
-                  <input type="number" id="profileHeightIn" class="input-text" min="0" max="11.9" step="0.1" placeholder="9" style="width: 60px;">
-                  <span class="muted" style="font-size:14px;">in</span>
+          <!-- Username & Full Name -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+              <span>Username <small class="muted" style="font-weight:normal; text-transform:none;">(Private for login only)</small></span>
+              <input type="text" id="profileUsername" class="input-text" required>
+            </label>
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+              <span>Display / Full Name <small class="muted" style="font-weight:normal; text-transform:none;">(Visible to other members)</small></span>
+              <input type="text" id="profileName" class="input-text" placeholder="e.g. Alex Rivera">
+            </label>
+          </div>
+          
+          <!-- Email Address & Side Unsubscribe Checkbox -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <div style="display:flex !important; justify-content:space-between !important; align-items:center !important; margin-bottom:6px !important;">
+              <span style="font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#ececec;">Email Address</span>
+              <label class="check-inline" style="margin:0 !important; cursor:pointer !important; font-size:12px !important; text-transform:none !important; letter-spacing:normal !important; color:var(--text-secondary) !important; display:inline-flex !important; align-items:center !important; gap:6px !important;">
+                <input type="checkbox" id="profileUnsubscribe" style="width:16px !important; height:16px !important; min-width:16px !important; margin:0 !important; cursor:pointer !important; accent-color:var(--accent);">
+                <span style="text-transform:none !important; letter-spacing:normal !important;">Unsubscribe from emails</span>
+              </label>
+            </div>
+            <input type="email" id="profileEmail" class="input-text" disabled title="Contact support to change email">
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+              <span>Bio</span>
+              <textarea id="profileBio" class="input-text" rows="2" placeholder="Share your fitness goals, training split, or background..."></textarea>
+            </label>
+          </div>
+
+          <!-- Physical Measurements: Height & Weight in 2 columns -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+            <!-- Height -->
+            <div>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+                <span>Height</span>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="profileHeightInput" class="input-text" min="0" step="0.1" placeholder="175" style="flex:1;">
+                  <div id="profileHeightFtInInputs" style="display: none; gap: 4px; align-items: center; flex: 1;">
+                    <input type="number" id="profileHeightFt" class="input-text" min="0" step="1" placeholder="5" style="width: 48px; padding:8px 4px; text-align:center;">
+                    <span class="muted" style="font-size:12px;">ft</span>
+                    <input type="number" id="profileHeightIn" class="input-text" min="0" max="11.9" step="0.1" placeholder="9" style="width: 48px; padding:8px 4px; text-align:center;">
+                    <span class="muted" style="font-size:12px;">in</span>
+                  </div>
+                  <select id="profileHeightUnit" class="input-text" style="width: auto; padding: 0 8px;">
+                    <option value="cm">cm</option>
+                    <option value="ftin">ft/in</option>
+                  </select>
+                  <input type="hidden" id="profileHeightCm">
                 </div>
-                <select id="profileHeightUnit" class="input-text" style="width: auto; padding: 0 8px;">
-                  <option value="cm">cm</option>
-                  <option value="ftin">ft/in</option>
-                </select>
-                <input type="hidden" id="profileHeightCm">
-                <span class="muted" id="profileHeightFtIn" style="white-space:nowrap; font-size:12px; margin-left: auto;"></span>
+                <span class="muted" id="profileHeightFtIn" style="white-space:nowrap; font-size:11px; margin-top:2px;"></span>
+              </label>
+            </div>
+
+            <!-- Weight -->
+            <div>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+                <span>Weight</span>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="profileWeightInput" class="input-text" min="0" step="0.1" placeholder="75" style="flex:1;">
+                  <select id="profileWeightUnit" class="input-text" style="width: auto; padding: 0 8px;">
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                  </select>
+                  <input type="hidden" id="profileWeightKg">
+                </div>
+                <span class="muted" id="profileWeightConverted" style="white-space:nowrap; font-size:11px; margin-top:2px;"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Workout Plan Sharing & Privacy Controls (Modern UI) -->
+          <div class="card" style="margin: 18px 0; padding: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+              <span style="font-size: 16px; color: var(--accent, #00f2fe);">🔗</span>
+              <span style="font-weight: 700; font-size: 14px; color: #ffffff; letter-spacing: 0.2px;">Workout Plan Sharing &amp; Privacy</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Toggle 1: Share Workout Plan -->
+              <div class="share-toggle-card" style="display:flex !important; flex-direction:row !important; align-items:flex-start !important; gap:12px !important; padding:12px 14px !important; background:rgba(0,0,0,0.25) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:10px !important; cursor:pointer !important; transition:all 0.2s ease !important;">
+                <input type="checkbox" id="profileSharePlan" style="width:18px !important; height:18px !important; min-width:18px !important; max-width:18px !important; margin:2px 0 0 0 !important; cursor:pointer !important; accent-color:var(--accent, #00f2fe) !important;">
+                <div style="flex:1 !important; text-transform:none !important; letter-spacing:normal !important;">
+                  <div style="font-weight:600 !important; font-size:13px !important; color:#ffffff !important; text-transform:none !important; letter-spacing:normal !important;">Share My Workout Plan</div>
+                  <div style="font-weight:normal !important; font-size:12px !important; color:var(--text-secondary, #94a3b8) !important; margin-top:2px !important; line-height:1.4 !important; text-transform:none !important; letter-spacing:normal !important;">
+                    Allows other users to find your profile, view your workout split, and use your plan.
+                  </div>
+                </div>
               </div>
-            </label>
+
+              <!-- Toggle 2: Make Performance Visible -->
+              <div class="share-toggle-card" style="display:flex !important; flex-direction:row !important; align-items:flex-start !important; gap:12px !important; padding:12px 14px !important; background:rgba(0,0,0,0.25) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:10px !important; cursor:pointer !important; transition:all 0.2s ease !important;">
+                <input type="checkbox" id="profileSharePerformance" style="width:18px !important; height:18px !important; min-width:18px !important; max-width:18px !important; margin:2px 0 0 0 !important; cursor:pointer !important; accent-color:var(--accent, #00f2fe) !important;">
+                <div style="flex:1 !important; text-transform:none !important; letter-spacing:normal !important;">
+                  <div style="font-weight:600 !important; font-size:13px !important; color:#ffffff !important; text-transform:none !important; letter-spacing:normal !important;">Make Performance Visible (DTS, Weights, Sets &amp; Reps)</div>
+                  <div style="font-weight:normal !important; font-size:12px !important; color:var(--text-secondary, #94a3b8) !important; margin-top:2px !important; line-height:1.4 !important; text-transform:none !important; letter-spacing:normal !important;">
+                    Allows other users to see your Daily Training Score (DTS) and logged exercise weights, sets, and reps in the Performance panel.
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="card" style="margin-top:1rem; padding: 10px; text-align: center; background: rgba(0,0,0,0.2);">
-            <small class="muted">WORKOUT STATS</small>
-            <div id="profileStats" style="font-weight: bold; margin-top: 5px;">Loading...</div>
+          <!-- Upload Workout (Shared Workout) -->
+          <div class="card" style="margin-top: 14px; padding: 16px; background: linear-gradient(135deg, rgba(0, 242, 254, 0.08) 0%, rgba(13, 17, 23, 0.8) 100%); border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">☁️</span>
+                <b style="font-size: 13.5px; color: #ffffff; letter-spacing: 0.2px;">Upload Workout (Shared Workout)</b>
+              </div>
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; background: rgba(0, 242, 254, 0.15); color: var(--accent, #00f2fe); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3);">Cloud Share</span>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <label style="display:flex !important; flex-direction:column !important; gap:5px !important; font-size:12px !important; font-weight:600 !important; text-transform:none !important; letter-spacing:normal !important; color:var(--text-secondary, #94a3b8) !important;">
+                <span>Choose Workout Project to Upload &amp; Share:</span>
+                <select id="profileSharedProjectSelect" class="input-text" style="width:100% !important; padding:8px 10px !important; font-size:13px !important; background:rgba(0,0,0,0.5) !important;">
+                  <!-- Dynamically populated with user's projects -->
+                </select>
+              </label>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06);">
+              <div style="flex: 1; min-width: 180px;">
+                <div id="profileUploadWorkoutPlanName" style="font-size: 12.5px; color: var(--accent, #00f2fe); font-weight: 600;">
+                  Plan: Ready to upload
+                </div>
+                <small id="profileUploadWorkoutStatus" class="muted" style="display: block; font-size: 11px; margin-top: 2px;">
+                  Upload your workout to the cloud so other members can find and use it.
+                </small>
+              </div>
+              <button type="button" class="btn primary" id="btnUploadSharedWorkout" style="padding: 8px 14px; font-size: 12px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0, 242, 254, 0.25);">
+                <span>📤 Upload Workout</span>
+              </button>
+            </div>
           </div>
 
-          <button type="submit" class="btn primary" style="width:100%; margin-top:1rem;">Save Profile Changes</button>
+          <button type="submit" class="btn primary" style="width:100%; margin-top:1.25rem; padding:12px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer;">Save Profile Changes</button>
         </form>
 
         <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
@@ -772,6 +896,25 @@
             </div>
           </div>
 
+          <!-- Body Weight Change Trend Card -->
+          <div class="panel stats-chart-card">
+            <div class="panel-head stats-chart-head">
+              <div>
+                <h2>Body Weight Trend</h2>
+                <p class="muted">Body weight changes tracked over time from your weekly check-ins and profile entries.</p>
+              </div>
+              <div class="weight-kpis-wrap" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span class="legend-pill" id="weightKpiCurrent" style="border-left: 3px solid #00f2fe;">Current: <b>—</b></span>
+                <span class="legend-pill" id="weightKpiChange" style="border-left: 3px solid #38ef7d;">Change: <b>—</b></span>
+                <span class="legend-pill" id="weightKpiMinMax" style="border-left: 3px solid #f5af19;">Range: <b>—</b></span>
+              </div>
+            </div>
+
+            <div class="stats-dts-chart-wrap" id="weightTrendChartContainer" style="min-height: 200px;">
+              <!-- Rendered by js/stats.js -->
+            </div>
+          </div>
+
           <!-- Non-Editable Exercise-Specific Trend Section -->
           <div class="panel stats-exercise-section">
             <div class="panel-head stats-exercise-head">
@@ -840,7 +983,7 @@
 
         <div class="detail-main">
           <div class="exercise-name-editor">
-            <label>Exercise name<input id="detailName"></label>
+            <label>Exercise name<input id="detailName" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></label>
           </div>
 
           <section class="set-timer-card" aria-label="Set timer">
@@ -889,7 +1032,7 @@
             <div class="form-grid">
               <label>Target weight
                 <div class="input-with-select"><input id="detailWeight" type="number" step="0.01"
-                    placeholder="e.g. 60"><select id="detailWeightUnit">
+                    placeholder="e.g. 60" autocomplete="off"><select id="detailWeightUnit">
                     <option value="kg">kg</option>
                     <option value="lb">lb</option>
                   </select></div>
@@ -904,18 +1047,18 @@
               </label>
               <label>Target reps
                 <div class="input-with-select reps-range">
-                  <input id="detailRepsMin" type="number" min="0" step="1" placeholder="8" aria-label="Reps range low">
+                  <input id="detailRepsMin" type="number" min="0" step="1" placeholder="8" aria-label="Reps range low" autocomplete="off">
                   <span class="reps-range-sep">–</span>
                   <input id="detailRepsMax" type="number" min="0" step="1" placeholder="12"
-                    aria-label="Reps range high">
+                    aria-label="Reps range high" autocomplete="off">
                 </div>
               </label>
-              <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1"></label>
-              <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells"></label>
+              <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1" autocomplete="off"></label>
+              <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells" autocomplete="off"></label>
               <label class="span-2">Image path<input id="detailImagePath"
-                  placeholder="e.g. images/bench_press.jpg"></label>
+                  placeholder="e.g. images/bench_press.jpg" autocomplete="off"></label>
               <label class="span-2">Video path<input id="detailVideoPath"
-                  placeholder="e.g. videos/bench_press.mp4"></label>
+                  placeholder="e.g. videos/bench_press.mp4" autocomplete="off"></label>
               <label>Pulley system
                 <select id="detailPulleySystem">
                   <option value="single">Single pulley</option>
@@ -998,6 +1141,135 @@
         <div id="creditsImageList">
           <p class="muted">Loading...</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Search Results Modal -->
+  <div class="modal" id="profileSearchModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-profile-search"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 550px;">
+      <div class="modal-header">
+        <div><b>🔍 Search Profiles</b><span id="profileSearchResultsCount" style="display:block; font-size:12px; color:var(--text-secondary); margin-top:2px;">Type to find other fitness profiles</span></div>
+        <button class="icon-btn" data-action="close-profile-search" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single" style="max-height: 70vh; overflow-y: auto;">
+        <div style="margin-bottom: 12px;">
+          <input type="search" id="profileSearchModalInput" class="input-text" placeholder="Search by name or Profile ID (GC-XXXXXX)..." style="width: 100%;">
+        </div>
+        <div id="profileSearchResultsList" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Results injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other User Profile Modal -->
+  <div class="modal" id="otherProfileModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-other-profile"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 480px;">
+      <div class="modal-header">
+        <div><b>👤 Member Profile</b></div>
+        <button class="icon-btn" data-action="close-other-profile" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single">
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <div id="otherProfileAvatar" style="width: 80px; height: 80px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2.2rem;">
+            👤
+          </div>
+          <h2 id="otherProfileDisplayName" style="margin: 0; font-size: 1.3rem;">Display Name</h2>
+          <div style="margin-top: 4px;">
+            <span id="otherProfileCode" style="font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-secondary);">GC-········</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 12px; margin-bottom: 14px; background: rgba(0,0,0,0.2);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+            <div>
+              <small class="muted" style="font-size: 11px; text-transform: uppercase;">Height</small>
+              <div id="otherProfileHeight" style="font-weight: 600; font-size: 15px; margin-top: 2px;">—</div>
+            </div>
+            <div>
+              <small class="muted" style="font-size: 11px; text-transform: uppercase;">Weight</small>
+              <div id="otherProfileWeight" style="font-weight: 600; font-size: 15px; margin-top: 2px;">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <small class="muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Bio</small>
+          <p id="otherProfileBio" style="margin-top: 4px; font-size: 14px; line-height: 1.4; color: var(--text-primary); white-space: pre-wrap;">No bio provided.</p>
+        </div>
+
+        <div id="otherProfilePlanSection">
+          <button class="btn primary full" id="btnOpenSharedPlan" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>📋 View Shared Workout Plan &amp; Dashboard</span> ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Plan Dashboard Modal -->
+  <div class="modal" id="sharedPlanModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-shared-plan"></div>
+    <div class="modal-card wide" role="dialog" aria-modal="true" style="max-width: 850px; max-height: 88vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div>
+          <b id="sharedPlanHeaderTitle">Shared Plan Dashboard</b>
+          <span id="sharedPlanHeaderAuthor" style="display:block; font-size:12px; color:var(--text-secondary); margin-top:2px;">by User</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn primary" id="btnUseSharedPlan" style="font-weight: 600;">⚡ Use this plan</button>
+          <button class="icon-btn" data-action="close-shared-plan" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- Dashboard Panel Switcher -->
+      <div style="padding: 10px 16px 0; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; gap: 8px;">
+        <button class="tab active" id="tabSharedWorkout" type="button" style="padding: 8px 16px;">🏋️ Workout Plan</button>
+        <button class="tab" id="tabSharedPerformance" type="button" style="padding: 8px 16px;">⚡ Performance</button>
+      </div>
+
+      <!-- Project Switcher (When user has multiple projects) -->
+      <div id="sharedPlanProjectSwitcher" style="display:none; padding: 10px 16px; background: rgba(0, 242, 254, 0.04); border-bottom: 1px solid var(--border); align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Workout Project:</span>
+          <select id="sharedPlanProjectSelect" class="input-text" style="width: auto; min-width: 220px; padding: 6px 10px; font-size: 13px; font-weight: 600;">
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+        <span id="sharedPlanProjectsCountBadge" class="role-badge" style="font-size:11px;">1 Project</span>
+      </div>
+
+      <div class="modal-body single" style="overflow-y: auto; flex: 1; padding: 16px;">
+        <!-- PANEL 1: WORKOUT -->
+        <div id="sharedWorkoutPanel">
+          <div class="card" style="padding: 14px; margin-bottom: 14px; background: rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 id="sharedPlanProjectName" style="margin: 0; font-size: 1.2rem;">Workout Project</h3>
+                <p id="sharedPlanProjectGoal" class="muted small" style="margin: 4px 0 0;">Goal: —</p>
+              </div>
+              <span id="sharedPlanIntensityBand" class="role-badge" style="font-size: 12px;">Moderate</span>
+            </div>
+          </div>
+
+          <div id="sharedWorkoutDaysList" style="display: flex; flex-direction: column; gap: 14px;">
+            <!-- Days and exercises rendered here -->
+          </div>
+        </div>
+
+        <!-- PANEL 2: PERFORMANCE -->
+        <div id="sharedPerformancePanel" style="display: none;">
+          <!-- Injected dynamically: either performance stats or private notice -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn primary" id="btnUseSharedPlanFooter">⚡ Use this plan</button>
+        <div class="spacer"></div>
+        <button class="btn" data-action="close-shared-plan">Close</button>
       </div>
     </div>
   </div>
@@ -1461,17 +1733,18 @@
   <script src="js/store.js?v=18.16"></script>
   <script src="js/exerciseMetadata.js?v=18.20"></script>
   <script src="js/dts.js?v=18.20"></script>
-  <script src="js/stats.js?v=18.20"></script>
-  <script src="js/ml.js?v=18.16"></script>
-  <script src="js/pipeline.js?v=18.16"></script>
+  <script src="js/stats.js?v=18.22"></script>
+  <script src="js/profileShare.js?v=18.22"></script>
+  <script src="js/ml.js?v=18.22"></script>
+  <script src="js/pipeline.js?v=18.22"></script>
 
-  <script src="js/settings.js?v=18.19"></script>
-  <script src="js/player.js?v=18.16"></script>
-  <script src="js/autocomplete.js?v=18.16"></script>
-  <script src="js/app.js?v=18.16"></script>
-  <script src="js/manage.js?v=18.16"></script>
-  <script src="js/report.js?v=18.16"></script>
-  <script src="js/home.js?v=18.16"></script>
+  <script src="js/settings.js?v=18.22"></script>
+  <script src="js/player.js?v=18.22"></script>
+  <script src="js/autocomplete.js?v=18.22"></script>
+  <script src="js/app.js?v=18.22"></script>
+  <script src="js/manage.js?v=18.22"></script>
+  <script src="js/report.js?v=18.22"></script>
+  <script src="js/home.js?v=18.22"></script>
 
 </body>
 

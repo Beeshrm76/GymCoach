@@ -9,6 +9,24 @@
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/admin.css">
   <script src="js/branding.js"></script>
+  <script src="js/security.js?v=18.23"></script>
+  <script>
+    (function() {
+      try {
+        const raw = localStorage.getItem("gymcoach_session");
+        if (!raw) {
+          window.location.replace("index.html");
+          return;
+        }
+        const user = JSON.parse(raw);
+        if (!user || user.role !== 'SUPER_ADMIN') {
+          window.location.replace("index.html");
+        }
+      } catch (e) {
+        window.location.replace("index.html");
+      }
+    })();
+  </script>
   <style>
     .brand-crown { font-size: 1.2rem; color: #ffcc00; margin-left: 4px; }
 

@@ -10,6 +10,7 @@
   <link rel="icon" href="assets/icons/icon-192.png">
   <link rel="stylesheet" href="assets/login.css">
   <script src="js/branding.js"></script>
+  <script src="js/security.js?v=18.23"></script>
 </head>
 <body>
 
@@ -145,7 +146,7 @@
           
           <label class="login-checkbox" style="margin-bottom: 1rem; align-items: flex-start; font-size: 13px;">
             <input type="checkbox" id="regConsent" required style="margin-top: 4px;"> 
-            <span>I agree to the <a href="legal.html#terms" target="_blank">Terms of Service</a> and <a href="legal.html#privacy" target="_blank">Privacy Policy</a>, and I am over the age of 13.</span>
+            <span>I agree to the <a href="legal.html#terms" target="_blank" style="color: #F97316; text-decoration: underline;">Terms of Service</a> and <a href="legal.html#privacy" target="_blank" style="color: #F97316; text-decoration: underline;">Privacy Policy</a>, and I am over the age of 13.</span>
           </label>
           <button type="submit" class="login-btn" id="registerBtn">
             <span class="spinner"></span>
@@ -234,25 +235,69 @@
         }, 4000);
       }
 
+      // Attach CSRF tokens to all forms
+      if (window.Security?.attachCSRF) {
+        Security.attachCSRF(loginForm);
+        Security.attachCSRF(registerForm);
+        Security.attachCSRF(forgotForm);
+      }
+
+      // Check URL for expired/active recovery link
+      (async () => {
+        if (window.location.hash.includes("type=recovery")) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const expiresAt = parseInt(hashParams.get("expires_at"), 10);
+          const now = Math.floor(Date.now() / 1000);
+          // If token expired or older than 15 minutes (900 seconds)
+          if (expiresAt && (expiresAt < now || (now - (expiresAt - 3600)) > 900)) {
+            toast("Password recovery link has expired (15-minute limit). Please request a new one.", "error");
+            history.replaceState(null, "", window.location.pathname);
+            return;
+          }
+
+          history.replaceState(null, "", window.location.pathname);
+          const newPass = prompt("Enter your new password (minimum 6 characters):");
+          if (newPass && newPass.length >= 6) {
+            try {
+              const { error } = await supabase.auth.updateUser({ password: newPass });
+              if (error) throw error;
+              toast("Password updated successfully! Sign in with your new password.", "success");
+              // Terminate all other active sessions
+              await supabase.auth.signOut({ scope: 'others' }).catch(() => {});
+              await Security.logEvent('PASSWORD_CHANGE', { method: 'recovery_link' });
+            } catch (err) {
+              toast("Failed to update password: " + err.message);
+            }
+          }
+        }
+      })();
+
       // ── Login ───────────────────────────────────────────────
       loginForm.addEventListener("submit", async e => {
         e.preventDefault();
         const btn = $("loginBtn");
+
+        const inputVal = $("loginUsername").value.trim();
+        const password = $("loginPassword").value;
+        const rememberMe = $("loginRememberMe").checked;
+
+        // Check account lockout (5 failed attempts -> 5 mins)
+        const lockout = window.Security?.getLockoutStatus(inputVal) || { locked: false };
+        if (lockout.locked) {
+          toast(`Account is locked for security. Please try again in ${lockout.remainingSeconds}s.`, "error");
+          return;
+        }
+
         btn.classList.add("loading");
         btn.disabled = true;
 
         try {
-          const inputVal = $("loginUsername").value.trim();
-          const password = $("loginPassword").value;
-          const rememberMe = $("loginRememberMe").checked;
-
           let emailToUse = inputVal;
 
           if (!inputVal.includes('@')) {
-            const { data: resolvedEmail, error: rpcError } = await supabase.rpc('resolve_username_to_email', { p_username: inputVal });
-            if (rpcError) throw new Error("Could not verify username. " + rpcError.message);
-            if (!resolvedEmail) throw new Error("Username not found.");
-            emailToUse = resolvedEmail;
+            const { data: resolvedEmail } = await supabase.rpc('resolve_username_to_email', { p_username: inputVal });
+            // Prevent user enumeration: use resolved email or dummy if not found
+            emailToUse = resolvedEmail || (inputVal + "@invalid.gymcoach.internal");
           }
 
           if (!rememberMe) {
@@ -266,14 +311,28 @@
             password: password
           });
 
-          if (error) throw error;
+          if (error) {
+            // Record failed attempt
+            const res = await window.Security?.recordLoginAttempt(inputVal, false);
+            if (res?.locked) {
+              toast("Account locked for 5 minutes after 5 failed login attempts. Admins have been notified.", "error");
+            } else {
+              // Generic error to prevent user enumeration
+              toast("Invalid username/email or password.", "error");
+            }
+            return;
+          }
+
+          // Successful login: reset attempts
+          await window.Security?.recordLoginAttempt(inputVal, true);
 
           toast("Signed in successfully!", "success");
           setTimeout(() => {
             window.location.href = "index.html";
           }, 1500);
         } catch (err) {
-          toast(err.message);
+          // Generic error message to prevent user enumeration
+          toast("Invalid username/email or password.");
         } finally {
           btn.classList.remove("loading");
           btn.disabled = false;
@@ -285,11 +344,15 @@
         e.preventDefault();
         const btn = $("registerBtn");
 
-        const username = $("regUsername").value.trim();
+        const rawUsername = $("regUsername").value.trim();
         const email = $("regEmail").value.trim();
-        const displayName = $("regDisplayName").value.trim();
+        const rawDisplayName = $("regDisplayName").value.trim();
         const password = $("regPassword").value;
         const confirmPassword = $("regConfirmPassword").value;
+
+        // Sanitize inputs before storage
+        const username = window.Security?.sanitize(rawUsername) || rawUsername;
+        const displayName = window.Security?.sanitize(rawDisplayName) || rawDisplayName;
 
         if (!$("regConsent").checked) {
           toast("You must agree to the Terms of Service and Privacy Policy.");
@@ -309,10 +372,10 @@
 
           if (rpcError) {
             console.error(rpcError);
-            throw new Error(`Could not verify username: ${rpcError.message}`);
+            throw new Error("Could not verify username availability.");
           }
           if (isAvailable === false) {
-            throw new Error("Username is already in use.");
+            throw new Error("Username is not available. Please choose another.");
           }
 
           const { data, error } = await supabase.auth.signUp({
@@ -349,29 +412,50 @@
         }
       });
 
-      // ── Forgot Password ─────────────────────────────────────
+      // ── Forgot Password (Rate Limited & Enumeration-Safe) ───
       forgotForm.addEventListener("submit", async e => {
         e.preventDefault();
         const btn = $("forgotBtn");
+
+        const now = Date.now();
+        const lastReset = parseInt(localStorage.getItem("gymcoach_last_reset_time") || "0", 10);
+        const resetCount = parseInt(localStorage.getItem("gymcoach_reset_count") || "0", 10);
+
+        // Rate limits: 60s cooldown, max 3 per 15 mins
+        if (now - lastReset < 60000) {
+          const waitSec = Math.ceil((60000 - (now - lastReset)) / 1000);
+          toast(`Please wait ${waitSec}s before requesting another reset link.`, "error");
+          return;
+        }
+
+        if (now - lastReset < 15 * 60 * 1000 && resetCount >= 3) {
+          toast("Password reset limit reached (max 3 per 15 mins). Please try again later.", "error");
+          return;
+        }
+
         btn.classList.add("loading");
         btn.disabled = true;
 
         try {
           const email = $("forgotEmail").value.trim();
-          const { error } = await supabase.auth.resetPasswordForEmail(email, {
+
+          localStorage.setItem("gymcoach_last_reset_time", now.toString());
+          localStorage.setItem("gymcoach_reset_count", (now - lastReset < 15 * 60 * 1000 ? resetCount + 1 : 1).toString());
+
+          await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: window.location.origin + '/login.html'
           });
 
-          if (error) throw error;
-
-          toast("Password reset email sent!", "success");
+          // Always return generic success message (prevents user enumeration)
+          toast("If an account exists with this email, a password reset link has been sent.", "success");
           $("forgotEmail").value = "";
           setTimeout(() => {
             forgotForm.classList.remove("active");
             loginForm.classList.add("active");
           }, 2000);
         } catch (err) {
-          toast(err.message);
+          // Even on error, do not reveal if the email exists
+          toast("If an account exists with this email, a password reset link has been sent.", "success");
         } finally {
           btn.classList.remove("loading");
           btn.disabled = false;
@@ -409,6 +493,23 @@
           console.log("Auth check skipped:", e.message || e);
         }
       })();
+
+      // ── Auto-select text as a whole on focus/click so typing immediately replaces old text ──
+      function autoSelectText(el) {
+        if (!el || el.tagName !== "INPUT") return;
+        if (['checkbox', 'radio', 'button', 'submit', 'file'].includes(el.type)) return;
+        try { el.select(); } catch (_) {}
+      }
+
+      document.addEventListener("focusin", (e) => {
+        setTimeout(() => autoSelectText(e.target), 0);
+      });
+
+      document.addEventListener("mouseup", (e) => {
+        if (e.target && e.target.tagName === "INPUT") {
+          setTimeout(() => autoSelectText(e.target), 10);
+        }
+      });
     })();
   </script>
 </body>

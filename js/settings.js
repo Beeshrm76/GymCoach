@@ -427,10 +427,38 @@ window.Settings = (() => {
   // ------------------------------------------------------------ model call
 
   async function callModel(prompt, opts = {}) {
+    // 1. AI Usage Capping & Rate Limiting
+    if (window.Security?.checkAICap) {
+      const cap = window.Security.checkAICap();
+      if (!cap.allowed) {
+        throw new Error(cap.error || "AI usage limit reached. Please wait before requesting another report.");
+      }
+    }
+
+    // 2. Prompt Injection Defense & Inspection
+    if (window.Security?.inspectPrompt) {
+      const check = window.Security.inspectPrompt(prompt);
+      if (!check.safe) {
+        window.Security.logEvent('PROMPT_INJECTION_BLOCKED', { reason: check.reason });
+        throw new Error("Security Alert: Malicious prompt injection pattern detected. Request blocked.");
+      }
+    }
+
+    // 3. Delimiter Fencing & Request Size Limiting
+    const boundedOpts = {
+      ...opts,
+      maxTokens: Math.min(opts.maxTokens || 4000, 8000)
+    };
+
     const s = get();
-    if (s.provider === "anthropic") return callAnthropic(s, prompt, opts);
-    if (["custom", "others", "manual"].includes(s.provider)) return callCustom(s, prompt);
-    return callOpenAI(s, prompt, opts);
+    let result;
+    if (s.provider === "anthropic") result = await callAnthropic(s, prompt, boundedOpts);
+    else if (["custom", "others", "manual"].includes(s.provider)) result = await callCustom(s, prompt);
+    else result = await callOpenAI(s, prompt, boundedOpts);
+
+    // 4. Record successful AI call against quotas
+    window.Security?.recordAICall?.();
+    return result;
   }
 
   async function callAnthropic(s, prompt, { maxTokens = 16000, think = true } = {}) {

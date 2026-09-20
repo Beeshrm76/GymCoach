@@ -1,6 +1,6 @@
 /* sw.js — offline cache */
 
-const VERSION = "gymcoach-v18-16";
+const VERSION = "gymcoach-v18-23";
 const CORE = `${VERSION}-core`;
 const RUNTIME = `${VERSION}-runtime`;
 
@@ -18,6 +18,7 @@ const FILES = [
   "./data/templates.js",
   "./data/seed-project.js",
   "./data/exercises.js",
+  "./js/security.js",
   "./js/ui.js",
   "./js/mediaStore.js",
   "./js/store.js",

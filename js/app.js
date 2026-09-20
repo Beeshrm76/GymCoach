@@ -877,9 +877,9 @@
                 ${cols.map(c => {
         const isTime = c.key === timeCol?.key;
         const type = /weight/i.test(c.label || "") ? 'type="number" step="0.01" inputmode="decimal"' : /rep/i.test(c.label || "") ? 'type="number" step="1" inputmode="numeric"' : '';
-        return `<td><input ${type} class="${isTime ? "time-cell" : ""}" value="${esc(row.values?.[c.key] ?? "")}" data-cell-row="${rowIndex}" data-cell-key="${esc(c.key)}" ${isTime ? `data-time-row="${rowIndex}"` : ""} placeholder="${esc(c.label)}" aria-label="${esc(c.label)} set ${i + 1}"></td>`;
+        return `<td><input ${type} class="${isTime ? "time-cell" : ""}" value="${esc(row.values?.[c.key] ?? "")}" data-cell-row="${rowIndex}" data-cell-key="${esc(c.key)}" ${isTime ? `data-time-row="${rowIndex}"` : ""} placeholder="${esc(c.label)}" aria-label="${esc(c.label)} set ${i + 1}" autocomplete="off"></td>`;
       }).join("")}
-                <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${esc(row.rir ?? "")}" data-rir-row="${rowIndex}" placeholder="RIR" aria-label="RIR set ${i + 1}"></td>
+                <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${esc(row.rir ?? "")}" data-rir-row="${rowIndex}" placeholder="RIR" aria-label="RIR set ${i + 1}" autocomplete="off"></td>
                 <td class="col-actions">
                   <button class="table-action" data-row-dup="${rowIndex}" title="Duplicate set">⧉</button>
                   <button class="table-action danger" data-row-remove="${rowIndex}" title="Remove set" ${rows.length <= 1 ? "disabled" : ""}>×</button>
@@ -1653,9 +1653,10 @@
       : `<div class="empty">No sets logged yet. Open an exercise and fill in the set table.</div>`;
   }
 
-  function saveProfile() {
+  async function saveProfile() {
+    const w = $("pWeight")?.value.trim() || "";
     Store.saveProfile({
-      weight: $("pWeight")?.value.trim() || "",
+      weight: w,
       waist: $("pWaist")?.value.trim() || "",
       chest: $("pChest")?.value.trim() || "",
       arm: $("pArm")?.value.trim() || ""
@@ -1664,6 +1665,21 @@
     // The body-weight forecast and the "Body-weight trend" signal both read the
     // profile, so Home has to repaint or it shows the pre-save numbers.
     window.Home?.render?.();
+    window.StatsDashboard?.render?.();
+
+    // Auto-update weight in user profile & Supabase
+    const user = window.Auth?.getUser();
+    const numWeight = parseFloat(w);
+    if (user && !isNaN(numWeight) && window.supabaseClient) {
+      user.weight_kg = numWeight;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+      try {
+        await window.supabaseClient.from('profiles').update({ weight_kg: numWeight }).eq('id', user.id);
+      } catch (e) {
+        console.warn("Could not sync weight_kg to profile:", e);
+      }
+    }
+
     UI.toast("Weekly check saved");
   }
 
@@ -1770,19 +1786,71 @@
     "toggle-timer": toggleTimer,
     "stop-timer": stopTimer,
     "reset-timer": resetTimer,
-    "save-profile": () => {},
+    "save-profile": saveProfile,
     "open-user-profile": () => {
        if (!window.Auth || !window.Auth.isLoggedIn()) return;
+       updateProfileIdDisplay();
        UI.openModal("userProfileModal");
        loadUserProfile();
     },
     "close-support": () => UI.closeModal("supportModal"),
     "close-profile": () => UI.closeModal("userProfileModal"),
     "open-credits": openCredits,
-    "close-credits": () => UI.closeModal("creditsModal")
+    "close-credits": () => UI.closeModal("creditsModal"),
+    "close-profile-search": () => UI.closeModal("profileSearchModal"),
+    "close-other-profile": () => UI.closeModal("otherProfileModal"),
+    "close-shared-plan": () => UI.closeModal("sharedPlanModal")
   };
 
   // --- USER PROFILE LOGIC ---
+
+  function getOrGenerateProfileId(user) {
+    if (user?.profile_code) return user.profile_code;
+    if (user?.id) {
+      const hex = String(user.id).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase();
+      return 'GC-' + hex.padEnd(8, '0');
+    }
+    try {
+      const cached = JSON.parse(localStorage.getItem("gymcoach_session") || "{}");
+      if (cached?.profile_code) return cached.profile_code;
+      if (cached?.id) {
+        const hex = String(cached.id).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase();
+        return 'GC-' + hex.padEnd(8, '0');
+      }
+    } catch(e) {}
+
+    let local = localStorage.getItem("gymcoach_profile_code");
+    if (!local) {
+      local = 'GC-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      localStorage.setItem("gymcoach_profile_code", local);
+    }
+    return local;
+  }
+
+  function updateProfileIdDisplay() {
+    const user = window.Auth?.getUser();
+    const profileId = getOrGenerateProfileId(user);
+    if ($("profileDisplayId")) $("profileDisplayId").textContent = profileId;
+    if ($("btnCopyProfileId")) {
+      $("btnCopyProfileId").onclick = () => {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(profileId);
+          UI.toast("Profile ID copied: " + profileId, "ok");
+        } else {
+          prompt("Copy Profile ID:", profileId);
+        }
+      };
+    }
+    if (user && !user.profile_code) {
+      user.profile_code = profileId;
+      try {
+        const cached = JSON.parse(localStorage.getItem("gymcoach_session") || "{}");
+        cached.profile_code = profileId;
+        localStorage.setItem("gymcoach_session", JSON.stringify(cached));
+      } catch(e) {}
+    }
+    return profileId;
+  }
 
   function cmToFtIn(cm) {
     if (!cm || cm <= 0) return "";
@@ -1793,9 +1861,13 @@
   }
 
   async function loadUserProfile() {
+    // Immediately display profile ID so it NEVER displays GC-LOADING
+    const profileId = updateProfileIdDisplay();
+
     const user = window.Auth?.getUser();
     if (!user) return;
-    
+    user.profile_code = profileId;
+
     $("profileUsername").value = user.username || "";
     $("profileName").value = user.name || user.display_name || "";
     $("profileEmail").value = user.email || "";
@@ -1820,6 +1892,72 @@
         $("profileHeightInput").value = "";
       }
     }
+
+    // Weight - auto-fill from current weight (Store or user.weight_kg)
+    if ($("profileWeightInput")) {
+      const currentWeight = user.weight_kg || parseFloat(Store.profile()?.current?.weight) || null;
+      if (currentWeight) {
+        $("profileWeightKg").value = currentWeight;
+        $("profileWeightInput").value = currentWeight;
+        $("profileWeightUnit").value = "kg";
+        $("profileWeightUnit").dataset.prevUnit = "kg";
+        if ($("profileWeightConverted")) {
+          $("profileWeightConverted").textContent = `(${(currentWeight * 2.20462).toFixed(1)} lb)`;
+        }
+      } else {
+        $("profileWeightInput").value = "";
+        $("profileWeightKg").value = "";
+        if ($("profileWeightConverted")) $("profileWeightConverted").textContent = "";
+      }
+    }
+
+    // Sharing settings & Project selector
+    const allUserProjects = window.Store?.all ? window.Store.all() : [];
+    const projectSelect = $("profileSharedProjectSelect");
+    if (projectSelect) {
+      if (allUserProjects.length === 0) {
+        projectSelect.innerHTML = `<option value="">No projects created yet</option>`;
+      } else {
+        projectSelect.innerHTML = `
+          <option value="">All Projects (Default Active)</option>
+          ${allUserProjects.map(pr => `
+            <option value="${esc(pr.id)}" ${user.shared_project_id === pr.id ? 'selected' : ''}>
+              ${esc(pr.name)} (${(pr.days || []).length} days)
+            </option>
+          `).join("")}
+        `;
+      }
+      projectSelect.onchange = updateUploadPlanSummary;
+    }
+
+    function updateUploadPlanSummary() {
+      const selectedId = $("profileSharedProjectSelect")?.value;
+      const allProjects = window.Store?.all ? window.Store.all() : [];
+      let targetProj = null;
+      if (selectedId) {
+        targetProj = allProjects.find(p => p.id === selectedId);
+      } else {
+        const activeId = window.Store?.activeId ? window.Store.activeId() : null;
+        targetProj = allProjects.find(p => p.id === activeId) || allProjects[0];
+      }
+      
+      const planNameEl = $("profileUploadWorkoutPlanName");
+      if (planNameEl) {
+        if (targetProj) {
+          const totalEx = (targetProj.days || []).reduce((sum, d) => sum + (d.exercises || []).length, 0);
+          planNameEl.textContent = `Plan: ${targetProj.name} (${(targetProj.days || []).length} days · ${totalEx} exercises)`;
+        } else {
+          planNameEl.textContent = `Plan: All Projects (${allProjects.length} Projects)`;
+        }
+      }
+    }
+    updateUploadPlanSummary();
+
+    if ($("profileSharePlan")) {
+      $("profileSharePlan").checked = user.share_plan === true;
+    }
+
+    if ($("profileSharePerformance")) $("profileSharePerformance").checked = user.share_performance === true;
     
     if (user.avatar_url) {
       $("profileAvatarPreview").innerHTML = `<img src="${esc(user.avatar_url)}" alt="User avatar" style="width:100%; height:100%; object-fit:cover;">`;
@@ -1827,11 +1965,87 @@
       $("profileAvatarPreview").innerHTML = `👤`;
     }
 
-    // Load stats
-    const p = window.Store?.all ? window.Store.all() : [];
-    const days = p.reduce((n, pr) => n + pr.days.length, 0);
-    $("profileStats").textContent = `${p.length} Projects · ${days} Workout Days`;
+    const statusEl = $("profileUploadWorkoutStatus");
+    if (statusEl) {
+      if (user.share_plan) {
+        statusEl.innerHTML = `<span style="color:var(--accent, #00f2fe); font-weight:600;">✓ Shared on Cloud (Live)</span>`;
+      } else {
+        statusEl.textContent = "Upload your workout to the cloud so other members can find and use it.";
+      }
+    }
   }
+
+  // Upload Shared Workout button
+  $("btnUploadSharedWorkout")?.addEventListener("click", async () => {
+    const user = window.Auth?.getUser();
+    if (!user || !window.Auth.isLoggedIn()) {
+      UI.toast("Please log in to upload and share your workout.", "error");
+      return;
+    }
+
+    const btn = $("btnUploadSharedWorkout");
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span>⏳ Uploading...</span>`;
+
+    try {
+      const allProjects = window.Store?.all ? window.Store.all() : [];
+      if (allProjects.length === 0) {
+        UI.toast("No workout projects found to upload.", "error");
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        return;
+      }
+
+      const selectedProjectId = $("profileSharedProjectSelect")?.value || null;
+
+      // 1. Sync gymcoach_projects_v4 to sync_data in Supabase
+      const { error: syncErr } = await window.supabaseClient
+        .from('sync_data')
+        .upsert({
+          user_id: user.id,
+          storage_key: 'gymcoach_projects_v4',
+          value: allProjects,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, storage_key' });
+
+      if (syncErr) throw syncErr;
+
+      // 2. Update profile with share_plan: true, shared_project_id
+      const { error: profileErr } = await window.supabaseClient
+        .from('profiles')
+        .update({
+          share_plan: true,
+          shared_project_id: selectedProjectId
+        })
+        .eq('id', user.id);
+
+      if (profileErr) throw profileErr;
+
+      // 3. Update local session cache
+      user.share_plan = true;
+      user.shared_project_id = selectedProjectId;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+
+      if ($("profileSharePlan")) $("profileSharePlan").checked = true;
+
+      const statusEl = $("profileUploadWorkoutStatus");
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:var(--accent, #00f2fe); font-weight:600;">✓ Uploaded & Shared (Live on Cloud)</span>`;
+      }
+
+      UI.toast("Workout uploaded and shared successfully! Others can now view it using your Profile ID.", "success");
+    } catch (err) {
+      console.error("Failed to upload shared workout:", err);
+      UI.toast("Upload failed: " + err.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<span>✓ Uploaded</span>`;
+      setTimeout(() => {
+        btn.innerHTML = origHtml;
+      }, 3000);
+    }
+  });
 
   $("profileAvatarUpload")?.addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -1839,6 +2053,16 @@
     
     const user = window.Auth?.getUser();
     if (!user) return;
+
+    // Security check: Validate MIME, magic bytes, and file size
+    if (window.Security?.validateUpload) {
+      const v = await window.Security.validateUpload(file, 'avatar');
+      if (!v.valid) {
+        UI.toast(v.error, "error");
+        e.target.value = '';
+        return;
+      }
+    }
 
     try {
       UI.toast("Uploading avatar...", "ok");
@@ -1924,22 +2148,77 @@
     updateHeightPreview();
   });
 
+  // Live weight conversion
+  const updateWeightPreview = () => {
+    const unit = $("profileWeightUnit")?.value || "kg";
+    const val = parseFloat($("profileWeightInput")?.value);
+    let kg = NaN;
+
+    if (!isNaN(val) && val > 0) {
+      kg = unit === "kg" ? val : (val / 2.20462);
+    }
+
+    if (isNaN(kg) || kg <= 0) {
+      if ($("profileWeightKg")) $("profileWeightKg").value = "";
+      if ($("profileWeightConverted")) $("profileWeightConverted").textContent = "";
+      return;
+    }
+
+    if ($("profileWeightKg")) $("profileWeightKg").value = kg.toFixed(1);
+    if ($("profileWeightConverted")) {
+      $("profileWeightConverted").textContent = unit === "kg" 
+        ? `(${(kg * 2.20462).toFixed(1)} lb)` 
+        : `(${kg.toFixed(1)} kg)`;
+    }
+  };
+
+  $("profileWeightInput")?.addEventListener("input", updateWeightPreview);
+  $("profileWeightUnit")?.addEventListener("change", (e) => {
+    const prevUnit = e.target.dataset.prevUnit || "kg";
+    const newUnit = e.target.value;
+    e.target.dataset.prevUnit = newUnit;
+
+    const kg = parseFloat($("profileWeightKg")?.value);
+    if (!isNaN(kg) && kg > 0) {
+      if (newUnit === "lb") {
+        $("profileWeightInput").value = (kg * 2.20462).toFixed(1);
+      } else {
+        $("profileWeightInput").value = kg.toFixed(1);
+      }
+    }
+    updateWeightPreview();
+  });
+
   $("userProfileForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const user = window.Auth?.getUser();
-    if (!user) return;
+    const rawUsername = $("profileUsername").value.trim();
+    const rawName = $("profileName").value.trim();
+    const rawBio = $("profileBio").value.trim();
 
-    const username = $("profileUsername").value.trim();
-    const name = $("profileName").value.trim();
-    const bio = $("profileBio").value.trim();
+    const username = window.Security?.sanitizeText ? window.Security.sanitizeText(rawUsername, 40) : rawUsername;
+    const name = window.Security?.sanitizeText ? window.Security.sanitizeText(rawName, 60) : rawName;
+    const bio = window.Security?.sanitizeText ? window.Security.sanitizeText(rawBio, 500) : rawBio;
     const heightCm = parseFloat($("profileHeightCm")?.value) || null;
+    const weightKg = parseFloat($("profileWeightKg")?.value) || null;
     const unsubscribed = $("profileUnsubscribe")?.checked || false;
+    const sharePlan = $("profileSharePlan")?.checked || false;
+    const sharePerformance = $("profileSharePerformance")?.checked || false;
+    const sharedProjectId = $("profileSharedProjectSelect")?.value || null;
+    const profileCode = user.profile_code || ('GC-' + (user.id ? user.id.replace(/-/g, '').slice(0, 8).toUpperCase() : '88888888'));
 
     try {
-      const { error } = await window.supabaseClient.from('profiles').update({
-        username, name, bio, display_name: name, height_cm: heightCm, unsubscribed: unsubscribed
-      }).eq('id', user.id);
+      const updateData = {
+        username, name, bio, display_name: name, height_cm: heightCm,
+        unsubscribed: unsubscribed,
+        weight_kg: weightKg,
+        share_plan: sharePlan,
+        share_performance: sharePerformance,
+        profile_code: profileCode,
+        shared_project_id: sharedProjectId
+      };
 
+      const { error } = await window.supabaseClient.from('profiles').update(updateData).eq('id', user.id);
       if (error) throw error;
 
       user.username = username;
@@ -1947,14 +2226,34 @@
       user.display_name = name;
       user.bio = bio;
       user.height_cm = heightCm;
+      user.weight_kg = weightKg;
+      user.unsubscribed = unsubscribed;
+      user.share_plan = sharePlan;
+      user.share_performance = sharePerformance;
+      user.profile_code = profileCode;
+      user.shared_project_id = sharedProjectId;
       localStorage.setItem("gymcoach_session", JSON.stringify(user));
+
+      // Synchronize weight to Store.profile() and Home view
+      if (weightKg) {
+        Store.saveProfile({
+          weight: String(weightKg),
+          waist: $("pWaist")?.value?.trim() || Store.profile().current.waist || "",
+          chest: $("pChest")?.value?.trim() || Store.profile().current.chest || "",
+          arm: $("pArm")?.value?.trim() || Store.profile().current.arm || ""
+        });
+        if ($("pWeight")) $("pWeight").value = String(weightKg);
+        renderProgress();
+        window.Home?.render?.();
+        window.StatsDashboard?.render?.();
+      }
 
       window.Auth.init(); // Re-render sidebar
       UI.toast("Profile saved successfully!", "success");
       UI.closeModal("userProfileModal");
     } catch (err) {
       console.error(err);
-      UI.toast("Failed to update profile", "error");
+      UI.toast("Failed to update profile: " + err.message, "error");
     }
   });
 
@@ -1968,7 +2267,16 @@
     try {
       const { error } = await window.supabaseClient.auth.updateUser({ password: newPass });
       if (error) throw error;
-      UI.toast("Password updated successfully!", "success");
+
+      // Security: Reset/revoke other active sessions upon password change
+      try {
+        await window.supabaseClient.auth.signOut({ scope: 'others' });
+      } catch (scopeErr) {
+        console.warn("Could not sign out other sessions:", scopeErr);
+      }
+
+      window.Security?.logEvent?.('PASSWORD_CHANGED', { user_id: window.Auth?.getUser()?.id });
+      UI.toast("Password updated successfully! Other sessions have been signed out.", "success");
     } catch (err) {
       console.error(err);
       alert("Failed to update password: " + err.message);
@@ -2210,6 +2518,27 @@
     if (e.key === "Escape" && $("exerciseModal").classList.contains("open")) closeDetails();
   });
 
+  // Auto-select text as a whole on focus/click so typing immediately replaces old text
+  function autoSelectInput(el) {
+    if (!el || (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA")) return;
+    if (['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'image', 'color'].includes(el.type)) return;
+    if (el.readOnly || el.disabled) return;
+    try {
+      el.select();
+    } catch (_) {}
+  }
+
+  document.addEventListener("focusin", e => {
+    setTimeout(() => autoSelectInput(e.target), 0);
+  });
+
+  document.addEventListener("mouseup", e => {
+    const el = e.target;
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+      setTimeout(() => autoSelectInput(el), 10);
+    }
+  });
+
   function init() {
     document.querySelectorAll("[data-close-modal]").forEach(b => b.onclick = closeDetails);
     document.querySelectorAll("[data-close-cardio]").forEach(b => b.onclick = () => UI.closeModal("cardioModal"));
@@ -2272,6 +2601,7 @@
     window.StatsDashboard?.init?.();
     MediaStore.applyLogo();
     routeFromHash();
+    updateProfileIdDisplay();
     
     // Check for support notifications
     checkSupportBadge();

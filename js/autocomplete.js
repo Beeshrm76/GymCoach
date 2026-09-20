@@ -157,6 +157,12 @@ window.ExerciseAutocomplete = (() => {
   function attach(input, { onSelect } = {}) {
     if (!input) return;
 
+    // Prevent native browser autocomplete/history dropdown so only the in-built app list is shown
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("spellcheck", "false");
+
     const dropdown = createDropdown();
     let activeIndex = -1;
     let currentResults = [];
@@ -220,7 +226,14 @@ window.ExerciseAutocomplete = (() => {
     });
 
     input.addEventListener("focus", () => {
+      setTimeout(() => { try { input.select(); } catch (_) {} }, 10);
       if (input.value.trim().length >= MIN_CHARS) show(input.value);
+    });
+
+    input.addEventListener("click", () => {
+      if (input.selectionStart === input.selectionEnd) {
+        try { input.select(); } catch (_) {}
+      }
     });
 
     input.addEventListener("blur", () => {

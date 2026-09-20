@@ -382,6 +382,16 @@ html, body {
   cursor: pointer;
 }
 
+.login-checkbox a {
+  color: var(--accent, #F97316) !important;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.login-checkbox a:hover {
+  color: var(--accent-hover, #ea580c) !important;
+}
+
 .forgot-link {
   color: var(--accent);
   font-size: 13px;
