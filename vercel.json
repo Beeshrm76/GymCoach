@@ -41,6 +41,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/login.html",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(tools|tests|data|\\.agent|\\.git)(.*)",
