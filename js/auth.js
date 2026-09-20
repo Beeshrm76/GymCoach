@@ -63,6 +63,13 @@ window.Auth = (() => {
       } else {
         currentUser = null;
         localStorage.removeItem(SESSION_KEY);
+        
+        // Redirect to login page if unauthenticated and hasn't explicitly skipped
+        if (!sessionStorage.getItem("gymcoach_offline_opt_in") && 
+            (window.location.pathname === '/' || window.location.pathname.endsWith('index.html') || window.location.pathname === '')) {
+          window.location.replace("login.html");
+          return;
+        }
       }
     } catch (e) {
       console.error("Supabase auth error:", e);

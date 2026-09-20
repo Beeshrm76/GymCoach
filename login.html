@@ -11,6 +11,12 @@
   <link rel="stylesheet" href="assets/login.css">
   <script src="js/branding.js"></script>
   <script src="js/security.js?v=18.23"></script>
+
+  <!-- Vercel Web Analytics -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
@@ -464,6 +470,7 @@
 
       // ── Skip ────────────────────────────────────────────────
       $("skipBtn").addEventListener("click", () => {
+        sessionStorage.setItem("gymcoach_offline_opt_in", "true");
         window.location.href = "index.html";
       });
 
