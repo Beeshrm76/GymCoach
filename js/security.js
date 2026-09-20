@@ -113,46 +113,55 @@ window.Security = (() => {
   // ── 3. Upload Validation (MIME & Magic Bytes) ───────────────────
 
   async function validateUpload(file, kind = 'image') {
-    if (!file) throw new Error("No file provided.");
+    if (!file) return { valid: false, error: "No file provided." };
 
     // 1. Check File Size
     const limit = SIZE_LIMITS[kind] || SIZE_LIMITS.image;
     if (file.size > limit) {
       const mb = (limit / (1024 * 1024)).toFixed(0);
-      throw new Error(`File size (${(file.size / (1024 * 1024)).toFixed(2)} MB) exceeds the maximum allowed limit of ${mb} MB.`);
+      return { valid: false, error: `File size (${(file.size / (1024 * 1024)).toFixed(2)} MB) exceeds the maximum allowed limit of ${mb} MB.` };
     }
 
     // 2. Reject SVG and Executables
     const lowerName = file.name.toLowerCase();
     const forbiddenExts = ['.svg', '.html', '.htm', '.js', '.php', '.exe', '.sh', '.bat', '.cmd', '.vbs', '.scr'];
     if (forbiddenExts.some(ext => lowerName.endsWith(ext))) {
-      throw new Error("Invalid file type: executable or script-bearing files are strictly prohibited.");
+      return { valid: false, error: "Invalid file type: executable or script-bearing files are strictly prohibited." };
     }
 
     // 3. Inspect Magic Bytes
-    const buffer = await file.slice(0, 32).arrayBuffer();
-    const bytes = new Uint8Array(buffer);
+    try {
+      const buffer = await file.slice(0, 32).arrayBuffer();
+      const bytes = new Uint8Array(buffer);
 
-    if (kind === 'avatar' || kind === 'image') {
-      const isJpeg = bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
-      const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
-      const isWebp = (
-        bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 && // RIFF
-        bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50   // WEBP
-      );
-
-      if (!isJpeg && !isPng && !isWebp) {
-        throw new Error("Invalid image format: file contents do not match genuine JPEG, PNG, or WebP binary signatures.");
+      if (kind === 'avatar' || kind === 'image') {
+        const isJpeg = bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
+        const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+        const isWebp = (
+          bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+          bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+        );
+        if (!isJpeg && !isPng && !isWebp) {
+          return { valid: false, error: "Invalid image format: file contents do not match genuine JPEG, PNG, or WebP binary signatures." };
+        }
+      } else if (kind === 'video') {
+        const isMp4 = bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;
+        if (!isMp4) {
+          return { valid: false, error: "Invalid video format: file contents do not match a genuine MP4 binary signature." };
+        }
       }
-    } else if (kind === 'video') {
-      // MP4: 'ftyp' at offset 4
-      const isMp4 = bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;
-      if (!isMp4) {
-        throw new Error("Invalid video format: file contents do not match a genuine MP4 binary signature.");
-      }
+    } catch (e) {
+      return { valid: false, error: "Could not read file header for validation." };
     }
 
-    return true;
+    return { valid: true, error: null };
+  }
+
+  // ── 3b. Text Sanitization (XSS + length cap) ──────────────────
+
+  function sanitizeText(str, maxLength = 500) {
+    if (typeof str !== 'string') return '';
+    return sanitizeString(str.slice(0, maxLength));
   }
 
   // ── 4. Prompt Injection Defense ─────────────────────────────────
@@ -325,9 +334,13 @@ window.Security = (() => {
       if (!window.supabaseClient) return;
       await window.supabaseClient.from('security_alerts').insert({
         alert_type: 'FAILED_LOGIN_LOCKOUT',
-        severity: 'HIGH',
-        message: `Account locked: ${attempts} consecutive failed login attempts on '${identifier}'. Locked for 5 minutes.`,
-        metadata: { identifier, attempts, timestamp: new Date().toISOString() }
+        identifier: sanitizeText(String(identifier), 200),
+        details: {
+          attempts,
+          severity: 'HIGH',
+          message: `Account locked: ${attempts} consecutive failed login attempts. Locked for 5 minutes.`,
+          timestamp: new Date().toISOString()
+        }
       });
     } catch (e) {
       console.warn("Could not dispatch admin security alert:", e.message);
@@ -338,15 +351,25 @@ window.Security = (() => {
 
   async function logEvent(eventType, details = {}) {
     const user = window.Auth?.getUser();
+
+    // Sanitize detail values to prevent injection via log poisoning
+    const safeDetails = {};
+    for (const [k, v] of Object.entries(details)) {
+      safeDetails[k] = typeof v === 'string' ? sanitizeText(v, 500) : v;
+    }
+
     const event = {
-      event_type: eventType,
+      event_type: sanitizeText(String(eventType), 100),
       user_id: user?.id || null,
-      details: details,
-      user_agent: navigator.userAgent,
-      created_at: new Date().toISOString()
+      ip_hint: '',  // Client cannot reliably determine IP; left for server-side enrichment
+      metadata: {
+        ...safeDetails,
+        user_agent: navigator.userAgent.slice(0, 300),
+        timestamp: new Date().toISOString()
+      }
     };
 
-    console.info(`[Security Event: ${eventType}]`, details);
+    console.info(`[Security Event: ${eventType}]`, safeDetails);
 
     // Save to local cache
     try {
@@ -379,10 +402,12 @@ window.Security = (() => {
     validateCSRFToken,
     attachCSRF,
     sanitize,
+    sanitizeText,
     validateUpload,
     inspectPrompt,
     checkAICap,
     recordAIUsage,
+    recordAICall: recordAIUsage, // Alias used by settings.js
     getLockoutStatus,
     recordLoginAttempt,
     logEvent,

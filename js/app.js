@@ -1179,6 +1179,16 @@
         return;
       }
 
+      // Security Validation
+      if (window.Security?.validateUpload) {
+        const validation = await window.Security.validateUpload(file, kind);
+        if (!validation.valid) {
+          UI.toast(validation.error, "error");
+          return;
+        }
+      }
+
+
       // Derive the expected filename from the exercise name
       const exName = $("detailName")?.value.trim() || ex.name;
       const slug = slugFromName(exName);
@@ -2192,6 +2202,7 @@
   $("userProfileForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const user = window.Auth?.getUser();
+    if (!user) return;
     const rawUsername = $("profileUsername").value.trim();
     const rawName = $("profileName").value.trim();
     const rawBio = $("profileBio").value.trim();
@@ -2487,9 +2498,12 @@
 
   $("supportTicketForm")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const title = $("ticketTitle").value.trim();
-    const body = $("ticketBody").value.trim();
-    if (!title || !body) return;
+    const rawTitle = $("ticketTitle").value.trim();
+    const rawBody = $("ticketBody").value.trim();
+    if (!rawTitle || !rawBody) return;
+    
+    const title = window.Security?.sanitizeText ? window.Security.sanitizeText(rawTitle, 200) : rawTitle;
+    const body = window.Security?.sanitizeText ? window.Security.sanitizeText(rawBody, 2000) : rawBody;
     
     try {
       const { error } = await window.supabaseClient.from('support_tickets').insert({ title, body });

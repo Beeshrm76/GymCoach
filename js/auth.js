@@ -55,8 +55,9 @@ window.Auth = (() => {
         // Ensure user is not suspended
         if (currentUser.status === 'SUSPENDED' || currentUser.status === 'DISABLED') {
            console.warn("User is suspended/disabled.");
-           // Optional: auto logout or show persistent warning
-           // await logout(); return;
+           if (window.UI?.toast) window.UI.toast("Your account has been suspended or disabled.", "error");
+           await logout();
+           return;
         }
 
       } else {
