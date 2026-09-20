@@ -186,11 +186,8 @@
     </div>
   </div>
 
-  <!-- Hide AMD define to force UMD to export globally, bypassing Vercel auto-injections -->
-  <script>var _tempDefine = window.define; window.define = undefined;</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
-  <script>window.define = _tempDefine;</script>
-  <script src="js/supabaseClient.js?v=18.25"></script>
+  <script src="js/vendor/supabase.js?v=18.28"></script>
+  <script src="js/supabaseClient.js?v=18.28"></script>
   <script>
     (() => {
       const $ = id => document.getElementById(id);
@@ -330,10 +327,29 @@
           // Successful login: reset attempts
           await window.Security?.recordLoginAttempt(inputVal, true);
 
+          if (data?.session?.user) {
+            const u = data.session.user;
+            const basicUser = {
+              id: u.id,
+              email: u.email,
+              username: u.user_metadata?.username || '',
+              display_name: u.user_metadata?.display_name || u.user_metadata?.username || u.email,
+              role: u.user_metadata?.role || 'USER',
+              status: 'ACTIVE'
+            };
+            try {
+              const { data: profile } = await supabase.from('profiles').select('*').eq('id', u.id).single();
+              if (profile) Object.assign(basicUser, profile);
+            } catch(_) {}
+            localStorage.setItem("gymcoach_session", JSON.stringify(basicUser));
+            localStorage.setItem("gymcoach_offline_opt_in", "true");
+            sessionStorage.setItem("gymcoach_offline_opt_in", "true");
+          }
+
           toast("Signed in successfully!", "success");
           setTimeout(() => {
             window.location.href = "index.html";
-          }, 1500);
+          }, 1000);
         } catch (err) {
           // Generic error message to prevent user enumeration
           toast("Invalid username/email or password.");
@@ -469,6 +485,7 @@
       // ── Skip ────────────────────────────────────────────────
       $("skipBtn").addEventListener("click", () => {
         sessionStorage.setItem("gymcoach_offline_opt_in", "true");
+        localStorage.setItem("gymcoach_offline_opt_in", "true");
         window.location.href = "index.html";
       });
 
