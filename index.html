@@ -12,6 +12,12 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="assets/icons/icon-192.png">
 
+  <!-- Vercel Web Analytics -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1720,14 +1726,14 @@
   <!-- PDF export is optional: report.js checks for the library and falls back to
      Markdown/JSON if the CDN is unreachable (e.g. offline). -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
   <script src="data/templates.js?v=18.16"></script>
   <script src="data/seed-project.js?v=18.16"></script>
   <script src="data/exercises.js?v=18.16"></script>
-  <script src="js/ui.js?v=18.19"></script>
-  <script src="js/supabaseClient.js?v=18.16"></script>
-  <script src="js/auth.js?v=18.19"></script>
+  <script src="js/ui.js?v=18.25"></script>
+  <script src="js/supabaseClient.js?v=18.25"></script>
+  <script src="js/auth.js?v=18.25"></script>
   <script src="js/sync.js?v=18.16"></script>
   <script src="js/mediaStore.js?v=18.16"></script>
   <script src="js/store.js?v=18.16"></script>
