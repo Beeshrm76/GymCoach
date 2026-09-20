@@ -89,7 +89,7 @@ html, body {
   top: 0;
   bottom: 0;
   left: 0;
-  z-index: 10;
+  z-index: 1000;
 }
 
 .sidebar-brand {
@@ -657,8 +657,30 @@ html, body {
   justify-content: center;
 }
 
+.admin-drawer-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+.admin-drawer-scrim.show {
+  display: block;
+  opacity: 1;
+}
+.no-scroll {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 @media (max-width: 768px) {
-  .mobile-menu-btn { display: flex; }
+  .mobile-menu-btn { 
+    display: flex; 
+    z-index: 1001; 
+  }
 
   .admin-sidebar {
     transform: translateX(-100%);

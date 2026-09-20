@@ -15,6 +15,29 @@ document.addEventListener("DOMContentLoaded", async () => {
   const navItems = document.querySelectorAll(".nav-item[data-section]");
   const sections = document.querySelectorAll(".admin-section");
 
+  // Mobile Sidebar & Swipe Logic
+  const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+  const adminSidebar = document.getElementById("adminSidebar");
+  const adminDrawerScrim = document.getElementById("adminDrawerScrim");
+  
+  function toggleAdminSidebar(force) {
+    if (!adminSidebar) return;
+    const open = force !== undefined ? force : !adminSidebar.classList.contains("open");
+    adminSidebar.classList.toggle("open", open);
+    adminDrawerScrim?.classList.toggle("show", open);
+    if (open) {
+      document.body.classList.add("no-scroll");
+      document.documentElement.classList.add("no-scroll");
+    } else {
+      document.body.classList.remove("no-scroll");
+      document.documentElement.classList.remove("no-scroll");
+    }
+  }
+
+  mobileMenuBtn?.addEventListener("click", () => toggleAdminSidebar());
+  adminDrawerScrim?.addEventListener("click", () => toggleAdminSidebar(false));
+
+  // Close when clicking nav items on mobile
   navItems.forEach(btn => {
     btn.addEventListener("click", () => {
       navItems.forEach(n => n.classList.remove("active"));
@@ -23,8 +46,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       const sectionId = "section" + btn.dataset.section.charAt(0).toUpperCase() + btn.dataset.section.slice(1);
       const target = document.getElementById(sectionId);
       if (target) target.style.display = "block";
+      if (window.innerWidth <= 768) toggleAdminSidebar(false);
     });
   });
+
+  // Swipe to open/close
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const touchEndX = e.changedTouches[0].screenX;
+    if (window.innerWidth > 768) return;
+    const isDrawerOpen = adminSidebar?.classList.contains("open");
+    // Swipe Right to open (only if close to left edge)
+    if (!isDrawerOpen && touchStartX < 30 && touchEndX > touchStartX + 50) {
+      toggleAdminSidebar(true);
+    }
+    // Swipe Left to close
+    if (isDrawerOpen && touchEndX < touchStartX - 50) {
+      toggleAdminSidebar(false);
+    }
+  }, { passive: true });
 
   document.getElementById("adminLogoutBtn")?.addEventListener("click", () => window.Auth.logout());
 

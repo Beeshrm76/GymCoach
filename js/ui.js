@@ -211,6 +211,27 @@ window.UI = (() => {
   // Ensure drawer state is cleaned up if user resizes back to desktop, and
   // re-derive side-collapsed vs drawer-open any time the breakpoint is crossed
   // in either direction (applyLayout() itself decides which applies).
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  
+  document.addEventListener('touchend', e => {
+    const touchEndX = e.changedTouches[0].screenX;
+    if (window.innerWidth > 900) return;
+    const sb = document.getElementById("sidebar");
+    if (!sb) return;
+    
+    const isDrawerOpen = sb.classList.contains("drawer-open");
+    // Swipe Right to open (only if close to left edge)
+    if (!isDrawerOpen && touchStartX < 30 && touchEndX > touchStartX + 50) {
+      toggleDrawer(true);
+    }
+    // Swipe Left to close
+    if (isDrawerOpen && touchEndX < touchStartX - 50) {
+      toggleDrawer(false);
+    }
+  }, { passive: true });
   window.addEventListener('resize', () => {
     if (window.innerWidth > 900) {
       const sb = document.getElementById("sidebar");
