@@ -89,6 +89,7 @@ window.Store = (() => {
     const ex = {
       id: uid("ex"),
       name: "New Exercise",
+      phase: overrides.phase || "main",
       weight: "",
       weightUnit: "kg",
       pulleySystem: "single",
@@ -138,6 +139,19 @@ window.Store = (() => {
       gear: "",
       notes: "",
       date: "",
+      ...overrides
+    };
+  }
+
+  function newWarmupEntry(overrides = {}) {
+    return {
+      id: uid("warmup"),
+      name: "",
+      sets: "",
+      reps: "",
+      duration: "",
+      notes: "",
+      completed: false,
       ...overrides
     };
   }
@@ -361,9 +375,40 @@ window.Store = (() => {
       });
       if (!Array.isArray(day.exercises)) day.exercises = [];
 
+      // Migrate any legacy day.preWorkout and day.postWorkout into day.exercises
+      if (Array.isArray(day.preWorkout) && day.preWorkout.length) {
+        day.preWorkout.forEach(item => {
+          if (item && item.name) {
+            day.exercises.unshift(newExercise({
+              name: item.name,
+              phase: "pre",
+              sets: Math.max(1, Number(item.sets) || 2),
+              reps: item.reps || "10-15",
+              details: { notes: [item.duration, item.notes].filter(Boolean).join(" · ") }
+            }));
+          }
+        });
+        delete day.preWorkout;
+      }
+      if (Array.isArray(day.postWorkout) && day.postWorkout.length) {
+        day.postWorkout.forEach(item => {
+          if (item && item.name) {
+            day.exercises.push(newExercise({
+              name: item.name,
+              phase: "post",
+              sets: Math.max(1, Number(item.sets) || 2),
+              reps: item.reps || "10-15",
+              details: { notes: [item.duration, item.notes].filter(Boolean).join(" · ") }
+            }));
+          }
+        });
+        delete day.postWorkout;
+      }
+
       day.exercises.forEach(ex => {
         ex.id ||= uid("ex");
         ex.name ||= "Exercise";
+        ex.phase = (ex.phase === "pre" || ex.phase === "post") ? ex.phase : "main";
         if (ex.name === "Hanging Knee Raise / Reverse Crunch") {
           ex.name = "Hanging Knee Raise";
         }
@@ -1001,6 +1046,7 @@ window.Store = (() => {
   return {
     uid, clone, slugKey, normalize,
     newCardioEntry,
+    newWarmupEntry,
     localDateKey, weekStartKey, archivedCSVs,
     clearArchivedCSV, saveArchivedCSV, allArchivedCSVs,
     parseWeightNumber, normalizeWeightUnit, weightToKg, kgToWeight,

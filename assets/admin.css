@@ -829,4 +829,182 @@ html, body {
   border-color: var(--accent);
 }
 
+/* ── Exercise Media Management ──────────────────────────────── */
+.admin-media-search-results {
+  display: none;
+  position: absolute;
+  z-index: 50;
+  width: calc(100% - 28px);
+  max-height: 260px;
+  overflow-y: auto;
+  background: #1e293b;
+  border: 1px solid var(--glass-border-hover);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
+  margin-top: 4px
+}
+.admin-media-search-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s ease;
+  border-bottom: 1px solid rgba(255,255,255,.04)
+}
+.admin-media-search-item:last-child {
+  border-bottom: none
+}
+.admin-media-search-item:hover {
+  background: rgba(249,115,22,.12)
+}
+.admin-media-search-item.muted {
+  color: var(--text-muted);
+  cursor: default;
+  font-style: italic
+}
+.admin-media-selected {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,.02)
+}
+.admin-media-exercise-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--accent-secondary)
+}
+.admin-media-preview-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px
+}
+@media (max-width: 600px) {
+  .admin-media-preview-row {
+    grid-template-columns: 1fr
+  }
+}
+.admin-media-preview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px
+}
+.admin-media-preview-card h5 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary)
+}
+.admin-media-preview {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.02);
+  overflow: hidden
+}
+.admin-media-placeholder {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic
+}
+.admin-media-upload-row {
+  display: flex;
+  gap: 8px;
+  align-items: center
+}
+.admin-media-upload-row .btn {
+  font-size: 11px
+}
+.btn.danger,
+.small-btn.danger {
+  color: var(--error);
+  border-color: var(--error)
+}
+.btn.danger:hover,
+.small-btn.danger:hover {
+  background: var(--error-bg)
+}
+.admin-media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 10px
+}
+.admin-media-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 14px;
+  border-radius: var(--radius-xs);
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.05);
+  cursor: pointer;
+  transition: all .15s ease
+}
+.admin-media-list-item:hover {
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.12)
+}
+.admin-media-list-name {
+  font-size: 13px;
+  font-weight: 500
+}
+.admin-media-list-badges {
+  display: flex;
+  gap: 6px
+}
+.media-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap
+}
+.img-badge {
+  background: rgba(59,130,246,.15);
+  color: #60a5fa
+}
+.vid-badge {
+  background: rgba(168,85,247,.15);
+  color: #c084fc
+}
+.form-group {
+  position: relative
+}
+
+/* ── Role Badges ─────────────────────────────────────────────── */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.role-badge.role-super_admin,
+.role-badge.role-superadmin {
+  background: rgba(234, 179, 8, 0.16);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #facc15;
+}
+.role-badge.role-admin {
+  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  color: #818cf8;
+}
+.role-badge.role-user {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+}
 

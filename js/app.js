@@ -8,6 +8,8 @@
   let currentDayId = null;
   let currentExerciseId = null;
   let cardioDraft = [];
+  let preWorkoutDraft = [];
+  let postWorkoutDraft = [];
   let timerSeconds = 0, timerRunning = false, timerId = null, timerStartedAt = null, timerSetIndex = 0, timerSetId = null, timerMode = "idle", timerElapsedGross = 0, timerTargetSeconds = 30, timerBalanceSeconds = 5;
 
   const project = () => Store.active();
@@ -464,6 +466,12 @@
     renderIntensity(d);
     renderCardioSummary(d);
 
+    // Hide pre/post workout strips on rest days
+    const preStrip = $("preWorkoutStrip");
+    const postStrip = $("postWorkoutStrip");
+    if (preStrip) preStrip.hidden = isRest;
+    if (postStrip) postStrip.hidden = isRest;
+
     renderExercises(d);
     renderProjectNav();
     renderDayNav();
@@ -521,15 +529,21 @@
       const started = !done && Store.isExerciseStarted(ex);
       const loggedSets = ex.logs.filter(l => l.completed).length;
 
+      const phaseBadge = ex.phase === "pre"
+        ? `<span class="exercise-phase-badge pre">🔥 Pre-Workout</span>`
+        : ex.phase === "post"
+        ? `<span class="exercise-phase-badge post">🧊 Post-Workout</span>`
+        : "";
+
       const row = document.createElement("div");
       row.className = "exercise-row" + (done ? " completed" : "") + (started ? " started" : "");
       row.dataset.exId = ex.id;
       row.innerHTML = `
         <div class="exercise-thumb" data-thumb="${ex.id}">
-          <div class="thumb-fallback">${getExerciseIcon(ex.name)}</div>
+          <div class="thumb-fallback">${getExerciseIcon(ex.name, ex.phase)}</div>
         </div>
         <div class="exercise-main">
-          <div class="exercise-name">${esc(ex.name)}</div>
+          <div class="exercise-name">${esc(ex.name)}${phaseBadge}</div>
         </div>
         <div class="row-status">
           <button class="check-btn ${done ? "checked" : ""}" data-complete="${ex.id}"
@@ -546,8 +560,13 @@
     });
   }
 
-  function getExerciseIcon(name) {
+  function getExerciseIcon(name, phase) {
+    if (phase === "pre") return "🔥";
+    if (phase === "post") return "🧊";
     const n = (name || "").toLowerCase();
+    if (n.includes("stretch") || n.includes("warm") || n.includes("mobility") || n.includes("hang") || n.includes("roll")) {
+      return "🧘";
+    }
     if (n.includes("pull") || n.includes("row") || n.includes("chin") || n.includes("lat")) {
       return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#0369a1"/><circle cx="18.5" cy="7.5" r="2.2" fill="#ffffff"/><line x1="18" y1="9.5" x2="11.5" y2="15.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="15" y1="12" x2="9" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="18" x2="15" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="4" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/><rect x="14" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/><line x1="11.5" y1="15.5" x2="13.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="15" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="15.5" x2="8.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="20.5" x2="8" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
     } else if (n.includes("push") || n.includes("press") || n.includes("bench")) {
@@ -762,6 +781,7 @@
     renderExerciseMeta(ex);
 
     $("detailName").value = ex.name;
+    if ($("detailPhase")) $("detailPhase").value = ex.phase || "main";
     $("detailWeight").value = numericWeightText(ex.weight);
     $("detailWeightUnit").value = Store.normalizeWeightUnit(ex.weightUnit || "kg");
     $("detailIntensityBand").value = ex.intensityBand || "";
@@ -1064,6 +1084,7 @@
   function saveDetails() {
     const ex = exercise(); if (!ex) return;
     ex.name = $("detailName").value.trim() || "Exercise";
+    if ($("detailPhase")) ex.phase = $("detailPhase").value || "main";
     ex.weight = $("detailWeight").value.trim();
     ex.weightUnit = Store.normalizeWeightUnit($("detailWeightUnit").value);
     ex.intensityBand = $("detailIntensityBand").value;
@@ -1349,6 +1370,120 @@
     UI.toast("Cardio saved");
   }
 
+
+  // ═══════════════ PRE / POST WORKOUT (WARMUP) ═══════════════
+  let activeWarmupPhase = "pre";
+
+  const WARMUP_SUGGESTIONS = {
+    pre: [
+      "Arm Circles", "Jumping Jacks", "Push-Ups", "Dead Hang",
+      "Dynamic Stretching", "Band Pull Apart", "Cat Cow Stretch",
+      "Shoulder Dislocate", "Hip Flexor Stretch", "World's Greatest Stretch",
+      "Jump Rope", "Foam Roll", "Mountain Climber"
+    ],
+    post: [
+      "Hamstring Stretch", "Quad Stretch", "Child's Pose", "Pigeon Stretch",
+      "Dead Hang", "Foam Roll", "90/90 Stretch", "Couch Stretch",
+      "Thoracic Rotation", "Cat Cow Stretch", "Shoulder Dislocate", "Arm Circles"
+    ]
+  };
+
+  function openWarmup(phase = "pre") {
+    const d = day();
+    if (!d) { UI.toast("Select a workout day first", "error"); return; }
+    if (d.type !== "workout") { UI.toast("This is a rest day — switch to Workout in Manage", "error"); return; }
+
+    activeWarmupPhase = phase;
+    const isPre = phase === "pre";
+    const titleEl = $("warmupPickerTitle");
+    const subEl = $("warmupPickerSubtitle");
+    if (titleEl) titleEl.textContent = isPre ? "🔥 Add Pre-Workout Exercise" : "🧊 Add Post-Workout Exercise";
+    if (subEl) subEl.textContent = isPre 
+      ? "Warmup, dynamic stretches & mobility before your workout" 
+      : "Cooldown, static stretches & recovery exercises";
+
+    const input = $("warmupPickerNameInput");
+    if (input) {
+      input.value = "";
+      input.placeholder = isPre ? "e.g. Arm Circles, Dead Hang, Dynamic Stretching..." : "e.g. Hamstring Stretch, Child's Pose, Foam Roll...";
+      if (window.ExerciseAutocomplete) {
+        ExerciseAutocomplete.attach(input, {
+          onSelect: item => {
+            if (item?.name) addWarmupExercise(item.name, activeWarmupPhase);
+          }
+        });
+      }
+    }
+
+    const chipsBox = $("warmupPickerChips");
+    if (chipsBox) {
+      const list = WARMUP_SUGGESTIONS[phase] || [];
+      chipsBox.innerHTML = list.map(name => 
+        `<span class="warmup-chip" data-warmup-pick="${esc(name)}">${esc(name)}</span>`
+      ).join("");
+    }
+
+    UI.openModal("warmupPickerModal");
+    setTimeout(() => $("warmupPickerNameInput")?.focus(), 100);
+  }
+
+  function addWarmupExercise(name, phase = "pre") {
+    const d = day();
+    if (!d || d.type !== "workout") return;
+
+    const trimmed = (name || "").trim() || (phase === "pre" ? "Warmup Exercise" : "Cooldown Exercise");
+    const ex = Store.newExercise({
+      name: trimmed,
+      phase,
+      sets: 2,
+      reps: "10-15"
+    });
+
+    if (phase === "pre") {
+      let lastPreIdx = -1;
+      for (let i = 0; i < d.exercises.length; i++) {
+        if (d.exercises[i].phase === "pre") lastPreIdx = i;
+      }
+      if (lastPreIdx >= 0) {
+        d.exercises.splice(lastPreIdx + 1, 0, ex);
+      } else {
+        d.exercises.unshift(ex);
+      }
+    } else {
+      d.exercises.push(ex);
+    }
+
+    save();
+    renderToday();
+    UI.closeModal("warmupPickerModal");
+    openDetails(ex.id);
+    UI.toast(`Added "${trimmed}" to ${phase === "pre" ? "Pre-Workout" : "Post-Workout"}`);
+  }
+
+  // Wire modal close and action buttons
+  document.addEventListener("click", ev => {
+    const chip = ev.target.closest("[data-warmup-pick]");
+    if (chip) {
+      addWarmupExercise(chip.dataset.warmupPick, activeWarmupPhase);
+      return;
+    }
+    if (ev.target.closest("[data-close-warmup-picker]")) {
+      UI.closeModal("warmupPickerModal");
+      return;
+    }
+    if (ev.target.closest("#warmupPickerAddBtn")) {
+      const input = $("warmupPickerNameInput");
+      const name = input ? input.value : "";
+      addWarmupExercise(name, activeWarmupPhase);
+    }
+  });
+
+  $("warmupPickerNameInput")?.addEventListener("keydown", ev => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      addWarmupExercise(ev.target.value, activeWarmupPhase);
+    }
+  });
 
 
   // The Home export card scopes every pipeline download the same way the AI view
@@ -1773,6 +1908,8 @@
     "open-cardio": openCardio,
     "add-cardio-entry": addCardioEntry,
     "save-cardio": saveCardio,
+    "open-pre-workout": () => openWarmup("pre"),
+    "open-post-workout": () => openWarmup("post"),
     "save-and-update": () => {
       save();
       window.ReportCoach?.render();

@@ -49,11 +49,16 @@
           </div>
         </a>
       </div>
+      <div id="superAdminBadge" style="display:none; margin: 4px 14px 10px; padding: 4px 8px; border-radius: 6px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: #facc15; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 0.05em;">
+        👑 SUPER ADMIN
+      </div>
       <nav class="sidebar-nav">
         <button class="nav-item active" data-section="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
         <button class="nav-item" data-section="users"><span class="nav-icon">👥</span> Assigned Users</button>
         <button class="nav-item" data-section="support"><span class="nav-icon">📬</span> Support Tickets</button>
         <button class="nav-item" data-section="models"><span class="nav-icon">⚡</span> AI Models</button>
+        <button class="nav-item" data-section="media"><span class="nav-icon">🖼️</span> Exercise Media</button>
+        <button class="nav-item" id="navSuperAdminLink" onclick="window.location.href='superadmin.html'" style="display:none; color:#facc15; font-weight:600;"><span class="nav-icon">👑</span> Super Admin Console</button>
       </nav>
       <div class="sidebar-footer">
         <button class="nav-item" onclick="window.location.href='index.html'"><span class="nav-icon">←</span> Back to App</button>
@@ -66,7 +71,11 @@
         <div class="admin-header">
           <div>
             <h1>Dashboard</h1>
-            <p>Overview of your assigned athletes</p>
+            <p id="dashboardSubtitle">Overview of your assigned athletes</p>
+          </div>
+          <div id="superAdminDashboardBanner" style="display:none; align-items:center; gap:8px;">
+            <span style="font-size:12px; background:rgba(234, 179, 8, 0.15); border:1px solid rgba(234, 179, 8, 0.35); padding:6px 12px; border-radius:20px; color:#facc15; font-weight:600;">👑 Super Admin Mode</span>
+            <a href="superadmin.html" class="btn small-btn" style="text-decoration:none;">Open Full Console →</a>
           </div>
         </div>
         <div class="stats-grid" id="statsGrid">
@@ -86,8 +95,12 @@
       <section class="admin-section" id="sectionUsers" style="display: none;">
         <div class="admin-header">
           <div>
-            <h1>Assigned Users</h1>
-            <p>View workout data and progress for your athletes</p>
+            <h1 id="usersSectionTitle">Assigned Users</h1>
+            <p id="usersSectionDesc">View workout data and progress for your athletes</p>
+          </div>
+          <div id="superAdminUserActions" style="display:none; align-items:center; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="btn primary" id="btnAdminOpenAssignRole">🛡️ + Assign Admin Role</button>
+            <button type="button" class="btn" id="btnAdminToggleAllUsers" style="font-size:12px;">Show All Users</button>
           </div>
         </div>
         <div class="table-card">
@@ -97,12 +110,13 @@
                 <th>Username</th>
                 <th>Email</th>
                 <th>Display Name</th>
+                <th>Role</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
-              <tr><td colspan="5" class="empty-state">Loading...</td></tr>
+              <tr><td colspan="6" class="empty-state">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -187,6 +201,100 @@
         </div>
       </section>
 
+      <!-- ══════════ EXERCISE MEDIA MANAGEMENT ══════════ -->
+      <section class="admin-section" id="sectionMedia" style="display: none;">
+        <div class="admin-header">
+          <div>
+            <h1>Exercise Media</h1>
+            <p>Upload and manage images & videos for exercises. Media will be available to all users.</p>
+          </div>
+        </div>
+
+        <div class="settings-grid" style="grid-template-columns: minmax(0, 700px);">
+          <div class="setting-card">
+            <h4>🖼️ Upload Exercise Media</h4>
+            <div class="setting-desc">Search for an exercise, then upload an image or video for it. These serve as default media for all users.</div>
+
+            <div style="display:grid; grid-template-columns: 1fr 140px 160px; gap:10px; margin-bottom:14px; align-items:end;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Search Exercise</label>
+                <input type="text" id="adminMediaSearch" class="setting-input" placeholder="Type exercise name..." autocomplete="off">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Exercise Type</label>
+                <select id="adminMediaFilterType" class="setting-select">
+                  <option value="">All Types</option>
+                  <option value="push">Push</option>
+                  <option value="pull">Pull</option>
+                  <option value="legs">Legs</option>
+                  <option value="core">Core</option>
+                  <option value="cardio">Cardio</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Muscle Group</label>
+                <select id="adminMediaFilterBody" class="setting-select">
+                  <option value="">All Muscle Groups</option>
+                  <option value="chest">Chest</option>
+                  <option value="back">Back</option>
+                  <option value="shoulders">Shoulders</option>
+                  <option value="biceps">Biceps</option>
+                  <option value="triceps">Triceps</option>
+                  <option value="quads">Quads</option>
+                  <option value="hamstrings">Hamstrings</option>
+                  <option value="glutes">Glutes</option>
+                  <option value="calves">Calves</option>
+                  <option value="core">Core</option>
+                  <option value="forearms">Forearms</option>
+                  <option value="full body">Full Body</option>
+                </select>
+              </div>
+            </div>
+            <div id="adminMediaSearchResults" class="admin-media-search-results"></div>
+
+            <div id="adminMediaSelectedExercise" class="admin-media-selected" style="display:none;">
+              <div class="admin-media-exercise-name" id="adminMediaExName"></div>
+
+              <div class="admin-media-preview-row">
+                <div class="admin-media-preview-card">
+                  <h5>📷 Image</h5>
+                  <div class="admin-media-preview" id="adminMediaImagePreview">
+                    <span class="admin-media-placeholder">No image</span>
+                  </div>
+                  <div class="admin-media-upload-row">
+                    <label class="btn small-btn" for="adminMediaImageInput">Choose Image</label>
+                    <input type="file" id="adminMediaImageInput" accept="image/*" hidden>
+                    <button class="btn small-btn danger" id="adminMediaImageRemove" style="display:none;">Remove</button>
+                  </div>
+                </div>
+
+                <div class="admin-media-preview-card">
+                  <h5>🎬 Video</h5>
+                  <div class="admin-media-preview" id="adminMediaVideoPreview">
+                    <span class="admin-media-placeholder">No video</span>
+                  </div>
+                  <div class="admin-media-upload-row">
+                    <label class="btn small-btn" for="adminMediaVideoInput">Choose Video</label>
+                    <input type="file" id="adminMediaVideoInput" accept="video/*" hidden>
+                    <button class="btn small-btn danger" id="adminMediaVideoRemove" style="display:none;">Remove</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recently updated media list -->
+          <div class="setting-card">
+            <h4>📂 Exercises with Media</h4>
+            <div class="setting-desc">Exercises that currently have images or videos uploaded.</div>
+            <div id="adminMediaList" class="admin-media-list">
+              <span style="color:var(--text-muted); font-size:12px;">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -256,10 +364,50 @@
     </div>
   </div>
 
+  <!-- ══════════ ASSIGN USER ROLE MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="assignRoleModal">
+    <div class="admin-modal" style="max-width:460px;">
+      <h3 id="assignRoleModalTitle">Assign User Role</h3>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;" id="assignRoleModalDesc">
+        Change account permissions and roles. Super Admins can promote users to Admin or assign roles here.
+      </p>
+
+      <div class="form-group" id="assignRoleUserSelectGroup" style="margin-bottom:14px;">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Select User</label>
+        <select id="assignRoleUserSelect" class="setting-select">
+          <option value="">— Select a user —</option>
+        </select>
+      </div>
+
+      <input type="hidden" id="assignRoleUserId" value="">
+
+      <div id="assignRoleUserInfo" style="display:none; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:8px; margin-bottom:14px;">
+        <div style="font-weight:600; font-size:13px;" id="assignRoleTargetUsername">Username</div>
+        <div style="font-size:12px; color:var(--text-secondary);" id="assignRoleTargetEmail">email@example.com</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Account Role</label>
+        <select id="assignRoleSelect" class="setting-select">
+          <option value="ADMIN">ADMIN — Administrator &amp; Coach</option>
+          <option value="USER">USER — Standard Athlete</option>
+          <option value="SUPER_ADMIN">SUPER_ADMIN — Full System Super Administrator</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" id="btnCancelAssignRole">Cancel</button>
+        <button type="button" class="btn primary" id="btnConfirmAssignRole">Save Role</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/vendor/supabase.js?v=18.28"></script>
   <script src="js/supabaseClient.js?v=18.28"></script>
   <script src="js/auth.js?v=18.28"></script>
   <script src="js/exerciseMetadata.js"></script>
+  <script src="data/exercises.js"></script>
+  <script src="js/mediaStore.js"></script>
   <script src="js/dts.js"></script>
   <script src="js/admin.js"></script>
 </body>

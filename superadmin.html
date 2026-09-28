@@ -250,17 +250,17 @@
         <!-- Search & Filter Bar -->
         <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
           <input type="text" id="exerciseSearch" placeholder="Search exercises..." class="setting-input" style="max-width:300px;">
-          <select id="exerciseFilterType" class="setting-select" style="max-width:180px;">
-            <option value="">All Types</option>
+          <select id="exerciseFilterType" class="setting-select" style="max-width:200px;">
+            <option value="">All Exercise Types</option>
             <option value="push">Push</option>
             <option value="pull">Pull</option>
             <option value="legs">Legs</option>
             <option value="core">Core</option>
             <option value="cardio">Cardio</option>
-            <option value="other">Other</option>
+            <option value="other">Other / Mobility</option>
           </select>
-          <select id="exerciseFilterBody" class="setting-select" style="max-width:180px;">
-            <option value="">All Body Parts</option>
+          <select id="exerciseFilterBody" class="setting-select" style="max-width:210px;">
+            <option value="">All Muscle Groups</option>
             <option value="chest">Chest</option>
             <option value="back">Back</option>
             <option value="shoulders">Shoulders</option>
@@ -270,7 +270,7 @@
             <option value="hamstrings">Hamstrings</option>
             <option value="glutes">Glutes</option>
             <option value="calves">Calves</option>
-            <option value="core">Core</option>
+            <option value="core">Core / Abs</option>
             <option value="forearms">Forearms</option>
             <option value="full body">Full Body</option>
           </select>
@@ -600,6 +600,44 @@
       <div class="modal-actions">
         <button class="btn" id="btnCancelExercise">Cancel</button>
         <button class="btn primary" id="btnConfirmExercise">Add Exercise</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ASSIGN USER ROLE MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="assignRoleModal">
+    <div class="admin-modal" style="max-width:460px;">
+      <h3 id="assignRoleModalTitle">Assign User Role</h3>
+      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;" id="assignRoleModalDesc">
+        Change the account permissions and role for this user.
+      </p>
+
+      <div class="form-group" id="assignRoleUserSelectGroup" style="margin-bottom:14px;">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Select User</label>
+        <select id="assignRoleUserSelect" class="setting-select">
+          <option value="">— Select a user —</option>
+        </select>
+      </div>
+
+      <input type="hidden" id="assignRoleUserId" value="">
+
+      <div id="assignRoleUserInfo" style="display:none; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:8px; margin-bottom:14px;">
+        <div style="font-weight:600; font-size:13px;" id="assignRoleTargetUsername">Username</div>
+        <div style="font-size:12px; color:var(--text-secondary);" id="assignRoleTargetEmail">email@example.com</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Account Role</label>
+        <select id="assignRoleSelect" class="setting-select">
+          <option value="ADMIN">ADMIN — Administrator &amp; Coach</option>
+          <option value="USER">USER — Standard Athlete</option>
+          <option value="SUPER_ADMIN">SUPER_ADMIN — Full System Super Administrator</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" id="btnCancelAssignRole">Cancel</button>
+        <button type="button" class="btn primary" id="btnConfirmAssignRole">Save Role</button>
       </div>
     </div>
   </div>

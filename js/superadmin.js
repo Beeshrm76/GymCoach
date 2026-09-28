@@ -97,39 +97,91 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ════════════════════════════════════════════════════════════════
 
   let cachedAdmins = [];
+  let cachedUsers = [];
+
+  // Set user role (RPC set_user_role first, direct update fallback)
+  async function setUserRole(userId, newRole) {
+    if (!userId) throw new Error("No user specified");
+    const roleUpper = (newRole || '').toUpperCase().trim();
+    if (!['USER', 'ADMIN', 'SUPER_ADMIN'].includes(roleUpper)) {
+      throw new Error("Invalid role: " + newRole);
+    }
+
+    // 1. Try RPC set_user_role first (bypasses client RLS via SECURITY DEFINER)
+    try {
+      const { data, error: rpcErr } = await supabase.rpc('set_user_role', {
+        target_user_id: userId,
+        new_role: roleUpper
+      });
+      if (!rpcErr && (data?.success || data === true)) {
+        return { success: true };
+      }
+      if (rpcErr && rpcErr.message && !rpcErr.message.includes('function') && !rpcErr.message.includes('does not exist')) {
+        throw rpcErr;
+      }
+    } catch (e) {
+      if (e?.message && !e.message.includes('function') && !e.message.includes('not found') && !e.message.includes('does not exist')) {
+        throw e;
+      }
+    }
+
+    // 2. Direct profiles table update fallback
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: roleUpper, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (error) throw error;
+    return { success: true };
+  }
 
   async function loadData() {
     try {
       const { data: users, error } = await supabase.from('profiles').select('*');
       if (error) throw error;
 
-      const admins = users.filter(u => u.role === 'ADMIN');
-      const standardUsers = users.filter(u => u.role === 'USER');
+      cachedUsers = users || [];
+      const admins = cachedUsers.filter(u => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
+      const standardUsers = cachedUsers.filter(u => u.role !== 'ADMIN' && u.role !== 'SUPER_ADMIN');
       cachedAdmins = admins;
 
-      $('statTotalUsers').textContent = users.length;
+      $('statTotalUsers').textContent = cachedUsers.length;
       $('statAdmins').textContent = admins.length;
+
+      const currentUserId = window.Auth?.getUser()?.id;
 
       // Admins table
       const adminsTbody = $('adminsTableBody');
       adminsTbody.innerHTML = admins.length === 0
         ? `<tr><td colspan="5" class="empty-state">No admins found.</td></tr>`
-        : admins.map(a => `
+        : admins.map(a => {
+            const isSelf = a.id === currentUserId;
+            const isSuper = a.role === 'SUPER_ADMIN';
+            return `
           <tr>
             <td>
               <b>${esc(a.username)}</b>
               <br><small style="font-family:monospace;color:var(--accent);cursor:pointer;" title="Click to copy Admin UUID" onclick="navigator.clipboard.writeText('${a.id}');toast('Admin ID copied to clipboard!')">📋 ${a.id.slice(0, 8)}... <span style="text-decoration:underline;">copy ID</span></small>
             </td>
             <td>${esc(a.email)}</td>
-            <td><span class="role-badge role-${a.role.toLowerCase()}">${a.role}</span></td>
-            <td>${esc(a.status)}</td>
-            <td><button class="btn small-btn" onclick="suspendUser('${a.id}')">Suspend</button></td>
-          </tr>`).join('');
+            <td><span class="role-badge role-${(a.role || 'admin').toLowerCase()}">${esc(a.role)}</span></td>
+            <td>${esc(a.status || 'ACTIVE')}</td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                ${!isSelf ? `
+                  <button class="btn small-btn primary" onclick="changeRolePrompt('${a.id}', '${a.role}', '${esc(a.username)}', '${esc(a.email)}')">Change Role</button>
+                  ${!isSuper ? `<button class="btn small-btn danger" onclick="demoteAdmin('${a.id}', '${esc(a.username)}')">Demote to User</button>` : ''}
+                  <button class="btn small-btn" onclick="suspendUser('${a.id}')">${a.status === 'SUSPENDED' ? 'Activate' : 'Suspend'}</button>
+                ` : `<small class="muted" style="font-weight:600;">(Current Account)</small>`}
+              </div>
+            </td>
+          </tr>`;
+          }).join('');
 
       // Users table
       const usersTbody = $('usersTableBody');
       usersTbody.innerHTML = standardUsers.length === 0
-        ? `<tr><td colspan="5" class="empty-state">No users found.</td></tr>`
+        ? `<tr><td colspan="5" class="empty-state">No standard users found.</td></tr>`
         : standardUsers.map(u => {
             const assignedAdmin = admins.find(a => a.id === u.admin_id);
             const adminLabel = assignedAdmin ? `@${assignedAdmin.username}` : (u.admin_id ? u.admin_id.slice(0,8)+'...' : 'None');
@@ -137,11 +189,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           <tr>
             <td>${esc(u.username)}</td>
             <td>${esc(u.email)}</td>
-            <td><span class="role-badge role-${u.role.toLowerCase()}">${u.role}</span></td>
+            <td><span class="role-badge role-${(u.role || 'user').toLowerCase()}">${esc(u.role)}</span></td>
             <td><span style="font-weight:${assignedAdmin ? '600' : 'normal'};color:${assignedAdmin ? 'var(--accent)' : 'inherit'};">${esc(adminLabel)}</span></td>
             <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn small-btn" onclick="assignAdminPrompt('${u.id}', '${u.admin_id || ''}')">Assign</button>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn small-btn primary" onclick="changeRolePrompt('${u.id}', '${u.role}', '${esc(u.username)}', '${esc(u.email)}')">Assign Role</button>
+                <button class="btn small-btn" onclick="assignAdminPrompt('${u.id}', '${u.admin_id || ''}')">Assign Coach</button>
                 <button class="btn small-btn" onclick="viewUserWorkouts('${u.id}', '${esc(u.username)}')">View Data</button>
               </div>
             </td>
@@ -149,16 +202,103 @@ document.addEventListener("DOMContentLoaded", async () => {
           }).join('');
     } catch (err) {
       console.error(err);
-      toast("Failed to load admin data.", "error");
+      toast("Failed to load admin data: " + (err?.message || err), "error");
     }
   }
 
   window.suspendUser = async (id) => {
-    if (!confirm("Suspend this user?")) return;
-    const { error } = await supabase.from('profiles').update({ status: 'SUSPENDED' }).eq('id', id);
+    const u = cachedUsers.find(x => x.id === id);
+    const newStatus = u?.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
+    if (!confirm(`${newStatus === 'SUSPENDED' ? 'Suspend' : 'Activate'} user @${u?.username || id}?`)) return;
+    const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', id);
     if (error) toast(error.message, "error");
-    else loadData();
+    else {
+      toast(`User ${newStatus.toLowerCase()} successfully.`);
+      loadData();
+    }
   };
+
+  window.demoteAdmin = async (id, username) => {
+    if (!confirm(`Demote @${username} from Admin back to standard User?`)) return;
+    try {
+      await setUserRole(id, 'USER');
+      toast(`@${username} demoted to standard User role.`);
+      loadData();
+    } catch (err) {
+      toast("Failed to demote admin: " + (err.message || err), "error");
+    }
+  };
+
+  window.changeRolePrompt = (userId, currentRole = 'USER', username = '', email = '') => {
+    const u = cachedUsers.find(x => x.id === userId) || {};
+    const un = username || u.username || 'User';
+    const em = email || u.email || '';
+
+    $('assignRoleUserId').value = userId;
+    $('assignRoleSelect').value = currentRole || 'USER';
+    $('assignRoleUserSelectGroup').style.display = 'none';
+    $('assignRoleUserInfo').style.display = 'block';
+    $('assignRoleTargetUsername').textContent = '@' + un;
+    $('assignRoleTargetEmail').textContent = em;
+    $('assignRoleModalTitle').textContent = `Assign Role for @${un}`;
+    $('assignRoleModalDesc').textContent = 'Select the account role and permissions for this user.';
+    $('assignRoleModal')?.classList.add('open');
+  };
+
+  window.openCreateAdminModal = () => {
+    $('assignRoleUserId').value = '';
+    $('assignRoleSelect').value = 'ADMIN';
+    $('assignRoleUserInfo').style.display = 'none';
+    $('assignRoleUserSelectGroup').style.display = 'block';
+    $('assignRoleModalTitle').textContent = 'Assign Admin Role';
+    $('assignRoleModalDesc').textContent = 'Select a registered user to promote them to Administrator / Coach.';
+
+    const sel = $('assignRoleUserSelect');
+    if (sel) {
+      const nonAdmins = cachedUsers.filter(u => u.role !== 'ADMIN' && u.role !== 'SUPER_ADMIN');
+      if (nonAdmins.length === 0) {
+        sel.innerHTML = `<option value="">No standard users found to promote</option>`;
+      } else {
+        sel.innerHTML = `<option value="">— Select a user to promote —</option>` +
+          nonAdmins.map(u => `<option value="${u.id}">${esc(u.username)} (${esc(u.email)})</option>`).join('');
+      }
+    }
+    $('assignRoleModal')?.classList.add('open');
+  };
+
+  $('btnCreateAdmin')?.addEventListener('click', openCreateAdminModal);
+
+  $('btnCancelAssignRole')?.addEventListener('click', () => {
+    $('assignRoleModal')?.classList.remove('open');
+  });
+
+  $('btnConfirmAssignRole')?.addEventListener('click', async () => {
+    const isDropdown = $('assignRoleUserSelectGroup')?.style.display !== 'none';
+    const userId = isDropdown ? $('assignRoleUserSelect')?.value : $('assignRoleUserId')?.value;
+    const newRole = $('assignRoleSelect')?.value;
+
+    if (!userId) {
+      toast("Please select a user.", "error");
+      return;
+    }
+
+    const btn = $('btnConfirmAssignRole');
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    try {
+      await setUserRole(userId, newRole);
+      toast(`User role updated to ${newRole} successfully!`);
+      $('assignRoleModal')?.classList.remove('open');
+      loadData();
+    } catch (err) {
+      console.error(err);
+      toast("Failed to update role: " + (err.message || err), "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save Role";
+    }
+  });
 
   window.assignAdminPrompt = (userId, currentAdminId = '') => {
     $('assignUserId').value = userId;
@@ -183,7 +323,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const { error } = await supabase.from('profiles').update({ admin_id: adminId }).eq('id', userId);
       if (error) throw error;
-      toast("Admin assigned successfully!");
+      toast("Admin coach assigned successfully!");
       $('assignAdminModal')?.classList.remove('open');
       loadData();
     } catch (err) {
@@ -194,15 +334,115 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  $("btnCreateAdmin")?.addEventListener("click", () => {
-    alert("To create an admin, register a normal user via the UI, then assign the ADMIN role via the profiles table.");
-  });
-
   // ════════════════════════════════════════════════════════════════
   // EXERCISES MANAGER (Phase 2)
   // ════════════════════════════════════════════════════════════════
 
   let defaultExercises = [];
+
+  // ── Exercise category/muscle-group inference & normalization ──
+  function normalizeKey(str) {
+    return (str || '').toLowerCase().replace(/[-_]/g, ' ').trim();
+  }
+
+  function inferExerciseType(ex) {
+    if (ex?.type && ex.type !== '—') return normalizeKey(ex.type);
+    const name = (ex?.name || ex?.exercise_name || '').toLowerCase();
+    const aliases = (ex?.aliases || []).join(' ').toLowerCase();
+    const text = `${name} ${aliases}`;
+
+    if (window.EXERCISE_DB && Array.isArray(window.EXERCISE_DB)) {
+      const match = window.EXERCISE_DB.find(e => 
+        e.name.toLowerCase() === name || 
+        (e.aliases && e.aliases.some(a => a.toLowerCase() === name))
+      );
+      if (match?.type) return normalizeKey(match.type);
+    }
+
+    if (/(treadmill|running|cycling|bike|elliptical|rower|rowing|stairmaster|jump rope|jump|jumping jack|high knee|butt kick|cardio|sprint|swim|hiit)/i.test(text)) {
+      return "cardio";
+    }
+    if (/(crunch|sit[- ]?up|plank|leg raise|knee raise|dead bug|bird dog|pallof|woodchop|twist|flutter|ab |abs |core)/i.test(text)) {
+      return "core";
+    }
+    if (/(squat|leg press|hack squat|lunge|split squat|leg ext|leg curl|calf|calves|nordic|rdl|romanian deadlift|good morning|hip thrust|glute|donkey kick|abduction|adduction)/i.test(text)) {
+      return "legs";
+    }
+    if (/(bench press|chest press|push[- ]?up|pec fly|dips?|shoulder press|overhead press|ohp|military press|lateral raise|front raise|tricep|skull crusher|pushdown|kickback|jm press|tate press)/i.test(text)) {
+      return "push";
+    }
+    if (/(pull[- ]?up|chin[- ]?up|pulldown|row|curl|shrug|face pull|dead hang|wrist curl|rear delt)/i.test(text)) {
+      return "pull";
+    }
+    return "other";
+  }
+
+  function inferExerciseBodyPart(ex) {
+    if (ex?.body_part && ex.body_part !== '—') return normalizeKey(ex.body_part);
+    const name = (ex?.name || ex?.exercise_name || '').toLowerCase();
+    const aliases = (ex?.aliases || []).join(' ').toLowerCase();
+    const text = `${name} ${aliases}`;
+
+    if (window.EXERCISE_DB && Array.isArray(window.EXERCISE_DB)) {
+      const match = window.EXERCISE_DB.find(e => 
+        e.name.toLowerCase() === name || 
+        (e.aliases && e.aliases.some(a => a.toLowerCase() === name))
+      );
+      if (match?.body_part) return normalizeKey(match.body_part);
+    }
+
+    if (/(bench press|chest|pec fly|pec deck|push[- ]?up|dip|svend|floor press)/i.test(text)) return "chest";
+    if (/(pull[- ]?up|chin[- ]?up|lat pulldown|cable row|barbell row|pendlay|t-bar|dumbbell row|inverted row|hyperextension|rack pull|shrug|face pull)/i.test(text)) return "back";
+    if (/(overhead press|shoulder press|lateral raise|front raise|arnold|lu raise|rear delt|band pull apart|arm circle)/i.test(text)) return "shoulders";
+    if (/(bicep|curl|preacher|spider curl|bayesian)/i.test(text)) return "biceps";
+    if (/(tricep|pushdown|skull crusher|jm press|tate press)/i.test(text)) return "triceps";
+    if (/(wrist curl|farmer|dead hang|gripper|plate pinch|forearm)/i.test(text)) return "forearms";
+    if (/(squat|leg press|hack squat|leg ext|lunge|split squat|step up|sissy)/i.test(text)) return "quads";
+    if (/(deadlift|rdl|romanian deadlift|leg curl|nordic|glute ham|good morning)/i.test(text)) return "hamstrings";
+    if (/(hip thrust|glute bridge|kickback|donkey kick|fire hydrant|abduction|adduction|frog pump|hip circle)/i.test(text)) return "glutes";
+    if (/(calf|calves|tibialis)/i.test(text)) return "calves";
+    if (/(crunch|sit[- ]?up|plank|leg raise|knee raise|ab wheel|v-up|dead bug|bird dog|pallof|woodchop|twist|flutter|core)/i.test(text)) return "core";
+
+    return "full body";
+  }
+
+  function matchesFilter(actual, selected) {
+    if (!selected) return true;
+    const a = normalizeKey(actual);
+    const s = normalizeKey(selected);
+    if (!a) return false;
+    if (a === s) return true;
+
+    // Synonyms & flexible category mappings
+    if (s === "quads" && (a === "quadriceps" || a === "quad" || a === "legs front")) return true;
+    if (s === "hamstrings" && (a === "hamstring" || a === "hams" || a === "legs back")) return true;
+    if (s === "calves" && (a === "calf")) return true;
+    if (s === "core" && (a === "abs" || a === "abdominals" || a === "obliques")) return true;
+    if (s === "full body" && (a === "full body" || a === "fullbody" || a === "compound" || a === "general")) return true;
+    if (s === "legs" && (a === "legs" || a === "quads" || a === "hamstrings" || a === "glutes" || a === "calves" || a === "lower body")) return true;
+    if (s === "push" && (a === "push" || a === "chest" || a === "triceps")) return true;
+    if (s === "pull" && (a === "pull" || a === "back" || a === "biceps")) return true;
+    return false;
+  }
+
+  function enrichExercises(list) {
+    if (!Array.isArray(list)) return;
+    const dbMap = new Map();
+    (window.EXERCISE_DB || []).forEach(e => {
+      if (e.name) dbMap.set(e.name.toLowerCase().trim(), e);
+      (e.aliases || []).forEach(a => dbMap.set(a.toLowerCase().trim(), e));
+    });
+
+    list.forEach(ex => {
+      const match = dbMap.get((ex.name || '').toLowerCase().trim());
+      if (!ex.type || ex.type === '—') {
+        ex.type = match?.type || inferExerciseType(ex);
+      }
+      if (!ex.body_part || ex.body_part === '—') {
+        ex.body_part = match?.body_part || inferExerciseBodyPart(ex);
+      }
+    });
+  }
 
   // ── Load exercises from system_settings ──
   async function loadExercises() {
@@ -214,15 +454,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("Failed to load exercises:", err);
       defaultExercises = window.EXERCISE_DB || [];
     }
+    enrichExercises(defaultExercises);
     renderExercises();
     if ($('statExercises')) $('statExercises').textContent = defaultExercises.length;
   }
 
   // ── Exercise name → default path helpers ──
-  // Ported from js/app.js so the admin's Edit Exercise modal behaves exactly
-  // like each user's per-exercise Details panel: typing a name live-fills
-  // Image Path / Video Path with the same "images/<slug>.jpg" /
-  // "videos/<slug>.mp4" convention, and never clobbers a manually-typed path.
   function slugFromName(name) {
     if (!name) return "";
     return name.trim().toLowerCase()
@@ -253,13 +490,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (isAutoGeneratedPath(iInd.textContent, "image")) iInd.textContent = iPath || "None";
   }
   $("exModalName")?.addEventListener("input", () => {
-    updateExercisePathFieldsFromName($("exModalName").value.trim());
+    const val = $("exModalName").value.trim();
+    updateExercisePathFieldsFromName(val);
+    if (val && (!$('exModalType').value || !$('exModalBodyPart').value)) {
+      const t = inferExerciseType({ name: val });
+      const b = inferExerciseBodyPart({ name: val });
+      if (!$('exModalType').value && t) $('exModalType').value = normalizeKey(t);
+      if (!$('exModalBodyPart').value && b) $('exModalBodyPart').value = normalizeKey(b);
+    }
   });
 
 
   // ── Render exercises table with search & filter ──
   function renderExercises() {
     const tbody = $('exercisesTableBody');
+    if (!tbody) return;
+
+    enrichExercises(defaultExercises);
+
     const searchTerm = ($('exerciseSearch')?.value || '').toLowerCase().trim();
     const filterType = $('exerciseFilterType')?.value || '';
     const filterBody = $('exerciseFilterBody')?.value || '';
@@ -267,17 +515,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     let filtered = defaultExercises;
     if (searchTerm) {
       filtered = filtered.filter(ex => {
-        const text = [ex.name, ...(ex.aliases || [])].join(' ').toLowerCase();
+        const text = [ex.name, ...(ex.aliases || []), ex.type || '', ex.body_part || ''].join(' ').toLowerCase();
         return text.includes(searchTerm);
       });
     }
-    if (filterType) filtered = filtered.filter(ex => (ex.type || '') === filterType);
-    if (filterBody) filtered = filtered.filter(ex => (ex.body_part || '') === filterBody);
+    if (filterType) {
+      filtered = filtered.filter(ex => {
+        const t = ex.type || inferExerciseType(ex);
+        return matchesFilter(t, filterType);
+      });
+    }
+    if (filterBody) {
+      filtered = filtered.filter(ex => {
+        const b = ex.body_part || inferExerciseBodyPart(ex);
+        return matchesFilter(b, filterBody);
+      });
+    }
 
     if ($('exerciseCount')) $('exerciseCount').textContent = `${filtered.length} of ${defaultExercises.length} exercises`;
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${searchTerm || filterType || filterBody ? 'No matching exercises.' : 'No exercises in library.'}</td></tr>`;
+      let emptyMsg = 'No exercises in library.';
+      if (searchTerm || filterType || filterBody) {
+        const parts = [];
+        if (searchTerm) parts.push(`"${searchTerm}"`);
+        if (filterType) parts.push(`type "${filterType}"`);
+        if (filterBody) parts.push(`muscle group "${filterBody}"`);
+        emptyMsg = `No matching exercises found for ${parts.join(', ')}.`;
+      }
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${esc(emptyMsg)}</td></tr>`;
       return;
     }
 
@@ -289,6 +555,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       const videoParts = [ex.video_file_url ? '✓ File' : '', ex.video_url ? '✓ URL' : ''].filter(Boolean);
       const imageParts = [ex.icon_url ? '✓ File' : '', ex.image_url ? '✓ URL' : ''].filter(Boolean);
       const mediaStatus = [...videoParts.map(v => '🎬 ' + v), ...imageParts.map(i => '🖼 ' + i)].join(', ') || '—';
+
+      const rawType = ex.type || inferExerciseType(ex);
+      const rawBody = ex.body_part || inferExerciseBodyPart(ex);
+      const displayType = rawType ? rawType.charAt(0).toUpperCase() + rawType.slice(1) : '—';
+      const displayBody = rawBody ? (rawBody === 'full body' ? 'Full Body' : rawBody.charAt(0).toUpperCase() + rawBody.slice(1)) : '—';
+
       return `
         <tr class="clickable-row" onclick="if(!event.target.closest('button') && !event.target.closest('input')) editExercise(${origIdx})" style="cursor:pointer;">
           <td style="width:90px;">
@@ -298,8 +570,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
           </td>
           <td><strong>${esc(ex.name)}</strong>${ex.aliases?.length ? `<br><small style="color:var(--text-muted)">${esc(ex.aliases.join(', '))}</small>` : ''}</td>
-          <td><span class="role-badge" style="background:var(--bg-input);font-size:11px;">${esc(ex.type || '—')}</span></td>
-          <td>${esc(ex.body_part || '—')}</td>
+          <td><span class="role-badge" style="background:var(--bg-input);font-size:11px;font-weight:600;text-transform:capitalize;">${esc(displayType)}</span></td>
+          <td style="font-weight:500;">${esc(displayBody)}</td>
           <td>${mediaStatus}</td>
           <td>
             <button class="btn small-btn" onclick="editExercise(${origIdx})">Edit</button>
@@ -323,8 +595,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const ex = defaultExercises[editIdx];
       $('exerciseModalTitle').textContent = 'Edit Exercise';
       $('exModalName').value = ex.name || '';
-      $('exModalType').value = ex.type || '';
-      $('exModalBodyPart').value = ex.body_part || '';
+      $('exModalType').value = normalizeKey(ex.type || inferExerciseType(ex));
+      $('exModalBodyPart').value = normalizeKey(ex.body_part || inferExerciseBodyPart(ex));
       $('exModalAliases').value = (ex.aliases || []).join(', ');
       $('btnConfirmExercise').textContent = 'Save Changes';
       // Show existing icon preview
@@ -425,8 +697,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const name = ($('exModalName')?.value || '').trim();
     if (!name) return toast("Exercise name is required.", "error");
 
-    const type = $('exModalType')?.value || '';
-    const body_part = $('exModalBodyPart')?.value || '';
+    const type = $('exModalType')?.value || inferExerciseType({ name, aliases });
+    const body_part = $('exModalBodyPart')?.value || inferExerciseBodyPart({ name, aliases });
     const aliases = ($('exModalAliases')?.value || '').split(',').map(s => s.trim()).filter(Boolean);
     const editIdx = parseInt($('exerciseEditIndex')?.value ?? '-1', 10);
     const slug = slugFromName(name);

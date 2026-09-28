@@ -57,6 +57,113 @@ window.ReportCoach = (() => {
     };
   }
 
+  // ------------------------------------------------------------- DTS Report Helper
+
+  function computeDtsReportData(d) {
+    if (!window.DTS) return null;
+
+    const allProjects = Store.all ? Store.all() : [Store.active()];
+    const today = Store.todayKey ? Store.todayKey() : new Date().toISOString().slice(0, 10);
+    const userProfile = Store.profile ? Store.profile()?.current : {};
+    const userWeight = Number(userProfile?.weight) || 75;
+
+    // Aggregate all historical logs by date
+    const historyByDate = {};
+    allProjects.forEach(p => {
+      (p.days || []).forEach(day => {
+        (day.exercises || []).forEach(ex => {
+          (ex.logs || []).forEach(log => {
+            if (!log.date) return;
+            const dk = log.date.slice(0, 10);
+            if (!historyByDate[dk]) historyByDate[dk] = { exercises: [], cardio: [] };
+            let exEntry = historyByDate[dk].exercises.find(e => e.name === ex.name);
+            if (!exEntry) {
+              exEntry = { name: ex.name, logs: [] };
+              historyByDate[dk].exercises.push(exEntry);
+            }
+            exEntry.logs.push(log);
+          });
+        });
+        (day.cardio || []).forEach(c => {
+          const dk = c.date ? c.date.slice(0, 10) : "";
+          if (!dk) return;
+          if (!historyByDate[dk]) historyByDate[dk] = { exercises: [], cardio: [] };
+          historyByDate[dk].cardio.push(c);
+        });
+      });
+    });
+
+    const dates = Object.keys(historyByDate).sort();
+    const prevDates = dates.filter(k => k < today);
+    const isFirstWeek = prevDates.length === 0;
+
+    let currentScore = null;
+    try {
+      currentScore = window.DTS.calculateDailyScore({
+        exercises: d ? d.exercises : [],
+        cardio: d ? (d.cardio || []) : [],
+        userBodyWeightKg: userWeight,
+        getExerciseMetaFn: window.ExerciseMetadata?.get
+      });
+    } catch (e) {
+      console.warn("DTS current score calculation failed:", e);
+    }
+
+    const last3Scores = [];
+    const recentPrevDates = [...prevDates].reverse().slice(0, 3);
+    recentPrevDates.forEach(dk => {
+      try {
+        const sc = window.DTS.calculateDailyScore({
+          exercises: historyByDate[dk].exercises,
+          cardio: historyByDate[dk].cardio,
+          userBodyWeightKg: userWeight,
+          getExerciseMetaFn: window.ExerciseMetadata?.get
+        });
+        last3Scores.push({
+          date: dk,
+          dts: sc.dts,
+          band: sc.band,
+          strengthComponent: sc.strengthComponent || 0,
+          cardioContribution: sc.cardioContribution || 0,
+          strengthWorkload: sc.strengthWorkload || 0,
+          cardioWorkload: sc.cardioWorkload || 0
+        });
+      } catch (err) {
+        console.warn("DTS historical score calculation failed for", dk, err);
+      }
+    });
+
+    const ref = window.DTS.REFERENCE_CONFIG || {};
+    const cfg = window.DTS.DTS_CONFIG || {};
+
+    return {
+      isFirstWeek,
+      currentScore: currentScore ? {
+        dts: currentScore.dts,
+        band: currentScore.band,
+        strengthComponent: currentScore.strengthComponent || 0,
+        cardioContribution: currentScore.cardioContribution || 0,
+        strengthWorkload: currentScore.strengthWorkload || 0,
+        cardioWorkload: currentScore.cardioWorkload || 0,
+        strengthNormalized: currentScore.strengthNormalized || 0,
+        cardioNormalized: currentScore.cardioNormalized || 0
+      } : null,
+      last3Scores,
+      scoringDetails: {
+        version: ref.scoringVersion || "1.0",
+        referenceVersion: ref.referenceVersion || 1,
+        strengthReference: ref.strengthReference || 10000,
+        cardioReference: ref.cardioReference || 150,
+        kStrength: ref.k_strength || 2.0,
+        kCardio: ref.k_cardio || 2.0,
+        cardioMaxContribution: cfg.cardioMaxContribution || 25,
+        formula: "Bounded Sigmoid Normalization: Score = 100 / (1 + exp(-2 * (Normalized_Load - 1)))",
+        weights: "80% Resistance Training (max 80 pts) + 20% Cardio / Conditioning (max +25 pts)",
+        ewmaInfo: "30-day EWMA (alpha=0.15) personal baseline blending begins after 5 qualifying workouts"
+      }
+    };
+  }
+
   function daySnapshot(d, index) {
     const prog = Store.dayProgress(d);
     return {
@@ -70,6 +177,7 @@ window.ReportCoach = (() => {
       muscles: d.muscles,
       restNotes: d.restNotes,
       intensity: intensityBand(Store.dayIntensity ? Store.dayIntensity(d) : 0),
+      dts: d.type === "workout" ? computeDtsReportData(d) : null,
       cardio: (d.cardio || []).map(entry => ({
         type: dash(entry.type),
         duration: dash(entry.duration),
@@ -95,10 +203,38 @@ window.ReportCoach = (() => {
     const recordedTotal = ex.logs.reduce((s, l) =>
       s + (window.DataPipeline?.clockSeconds(tCol ? l.values?.[tCol.key] : "") || 0), 0);
 
+    // Previous week / previous session performance
+    const prevRows = Store.previousSessionRows ? Store.previousSessionRows(ex) : [];
+    let previousWeekPerformance = "not counted";
+    if (prevRows.length) {
+      const prevDate = prevRows[0]?.date ? Store.dateKey(prevRows[0].date) : "";
+      const setsData = prevRows.map((r, sIdx) => {
+        const wtVal = r.values?.weight ?? r.weightRaw ?? "";
+        const repsVal = r.values?.reps ?? "";
+        const rirVal = r.rir ?? "";
+        const timeVal = r.values?.time ?? "";
+        const isDone = !!r.completed;
+        const parts = [];
+        if (wtVal) parts.push(`${wtVal} ${unit}`);
+        if (repsVal) parts.push(`${repsVal} reps`);
+        if (timeVal) parts.push(`time: ${timeVal}`);
+        if (rirVal) parts.push(`RIR: ${rirVal}`);
+        return `Set ${sIdx + 1}: ${parts.join(" × ") || "logged"}${isDone ? " [done]" : ""}`;
+      });
+      previousWeekPerformance = {
+        date: prevDate,
+        setsCompleted: prevRows.filter(r => r.completed).length,
+        totalSets: prevRows.length,
+        sets: setsData
+      };
+    }
+
     return {
       order: index + 1,
       id: ex.id,
       name: ex.name,
+      phase: ex.phase || "main",
+      previousWeekPerformance,
       target: {
         weight: dash(ex.weight),
         weightUnit: dash(ex.weightUnit),
@@ -238,8 +374,48 @@ window.ReportCoach = (() => {
         }
         L.push("");
 
+        // DTS score section
+        if (d.dts) {
+          L.push("  Daily Training Score (DTS):");
+          if (d.dts.isFirstWeek) {
+            L.push("    DTS History: not counted (first week of training)");
+            L.push("    Previous DTS scores: not counted");
+            if (d.dts.currentScore && d.dts.currentScore.dts > 0) {
+              L.push(`    Current Day DTS: ${d.dts.currentScore.dts}/100 (${d.dts.currentScore.band}) [Strength: ${d.dts.currentScore.strengthComponent} + Cardio: ${d.dts.currentScore.cardioContribution}]`);
+            } else {
+              L.push("    Current Day DTS: not counted");
+            }
+            L.push("    DTS scoring details: Calibration baseline accumulating (first week)");
+          } else {
+            if (d.dts.currentScore) {
+              L.push(`    Current Day DTS: ${d.dts.currentScore.dts}/100 (${d.dts.currentScore.band})`);
+              L.push(`      - Strength Component: ${d.dts.currentScore.strengthComponent}/80 (Workload: ${Math.round(d.dts.currentScore.strengthWorkload).toLocaleString()} kg, ${d.dts.currentScore.strengthNormalized}x reference)`);
+              L.push(`      - Cardio Contribution: +${d.dts.currentScore.cardioContribution}/25 (Workload: ${Math.round(d.dts.currentScore.cardioWorkload)} units, ${d.dts.currentScore.cardioNormalized}x reference)`);
+            } else {
+              L.push("    Current Day DTS: not counted");
+            }
+            if (d.dts.last3Scores && d.dts.last3Scores.length) {
+              L.push("    Last 3 DTS Scores:");
+              d.dts.last3Scores.forEach((s, sIdx) => {
+                L.push(`      ${sIdx + 1}. Date ${s.date}: DTS ${s.dts}/100 (${s.band}) [Strength: ${s.strengthComponent}, Cardio: +${s.cardioContribution}]`);
+              });
+            } else {
+              L.push("    Last 3 DTS Scores: none available yet");
+            }
+            L.push("    DTS Scoring Engine Details:");
+            L.push(`      - Version: v${d.dts.scoringDetails.version} (Calibration Ref v${d.dts.scoringDetails.referenceVersion})`);
+            L.push(`      - Active Strength Reference: ${d.dts.scoringDetails.strengthReference.toLocaleString()} kg weighted volume (4 exercises × 3 sets × 10 reps @ moderate load)`);
+            L.push(`      - Active Cardio Reference: ${d.dts.scoringDetails.cardioReference} workload units (25 min @ 5 km/h on 2% incline)`);
+            L.push(`      - Transfer Formula: ${d.dts.scoringDetails.formula}`);
+            L.push(`      - Weights & Contribution: ${d.dts.scoringDetails.weights}`);
+            L.push(`      - Baseline Calibration: ${d.dts.scoringDetails.ewmaInfo}`);
+          }
+          L.push("");
+        }
+
         d.exercises.forEach(ex => {
-          L.push(`  ${ex.order}. ${ex.name}${ex.completed ? "  [COMPLETED]" : ""}`);
+          const phaseTag = ex.phase === "pre" ? " [PRE-WORKOUT]" : ex.phase === "post" ? " [POST-WORKOUT]" : "";
+          L.push(`  ${ex.order}. ${ex.name}${phaseTag}${ex.completed ? "  [COMPLETED]" : ""}`);
           L.push(`     Exercise intensity: ${ex.intensity}`);
           L.push(`     Target: weight=${dash(ex.target.weight)} ${dash(ex.target.weightUnit)} | pulley=${dash(ex.target.pulleySystem)} (ratio ${ex.target.pulleyRatio}:1) | effective=${dash(ex.target.effectiveWeightKg)} kg | reps=${dash(ex.target.reps)} | sets=${ex.target.sets}`);
           L.push(`     Rest: planned=${secondsText(ex.rest.plannedSec)} | extra=${secondsText(ex.rest.extraSec)} | balance=${secondsText(ex.rest.balanceSec)} | default=${secondsText(ex.rest.defaultDelaySec)} | total after balancing=${secondsText(ex.rest.totalSec)}`);
@@ -248,6 +424,17 @@ window.ReportCoach = (() => {
           if (ex.details.cues.length) L.push(`     Cues: ${ex.details.cues.join(" | ")}`);
           L.push(`     Media attached: image=${ex.media.image ? "yes" : "no"}, video=${ex.media.video ? "yes" : "no"}`);
           L.push(`     Set columns: ${ex.setColumns.map(c => c.label).join(" | ")}`);
+
+          // Previous week performance
+          if (!ex.previousWeekPerformance || ex.previousWeekPerformance === "not counted") {
+            L.push("     Previous week performance: not counted");
+          } else {
+            L.push(`     Previous week performance (Session: ${ex.previousWeekPerformance.date}, ${ex.previousWeekPerformance.setsCompleted}/${ex.previousWeekPerformance.totalSets} completed):`);
+            ex.previousWeekPerformance.sets.forEach(sRow => {
+              L.push(`       ${sRow}`);
+            });
+          }
+
           L.push(`     Logged sets (${ex.setsCompleted}/${ex.target.sets || ex.sets.length} marked done):`);
           ex.sets.forEach(row => {
             const vals = Object.entries(row.values)
@@ -318,12 +505,56 @@ window.ReportCoach = (() => {
           M.push(`**Cardio:** not counted`, "");
         }
 
+        // DTS score in markdown
+        if (d.dts) {
+          M.push(`**Daily Training Score (DTS)**`, "");
+          if (d.dts.isFirstWeek) {
+            M.push(`- **DTS History:** not counted (first week of training)`);
+            M.push(`- **Previous DTS scores:** not counted`);
+            if (d.dts.currentScore && d.dts.currentScore.dts > 0) {
+              M.push(`- **Current Day DTS:** ${d.dts.currentScore.dts}/100 (${d.dts.currentScore.band}) [Strength: ${d.dts.currentScore.strengthComponent} + Cardio: ${d.dts.currentScore.cardioContribution}]`);
+            } else {
+              M.push(`- **Current Day DTS:** not counted`);
+            }
+            M.push(`- **DTS Scoring details:** Baseline accumulating (first week)`);
+          } else {
+            if (d.dts.currentScore) {
+              M.push(`- **Current Day DTS:** **${d.dts.currentScore.dts}/100** (${d.dts.currentScore.band}) · Strength: ${d.dts.currentScore.strengthComponent}/80 · Cardio: +${d.dts.currentScore.cardioContribution}/25`);
+            } else {
+              M.push(`- **Current Day DTS:** not counted`);
+            }
+            if (d.dts.last3Scores && d.dts.last3Scores.length) {
+              M.push(`- **Last 3 DTS Scores:**`);
+              d.dts.last3Scores.forEach(s => {
+                M.push(`  - **${s.date}:** DTS ${s.dts}/100 (${s.band}) [Strength: ${s.strengthComponent}, Cardio: +${s.cardioContribution}]`);
+              });
+            }
+            M.push(`- **DTS Scoring Engine Details:**`);
+            M.push(`  - Version: v${d.dts.scoringDetails.version} (Calibration Ref v${d.dts.scoringDetails.referenceVersion})`);
+            M.push(`  - Active References: Strength ${d.dts.scoringDetails.strengthReference.toLocaleString()} kg · Cardio ${d.dts.scoringDetails.cardioReference} units`);
+            M.push(`  - Formula: ${d.dts.scoringDetails.formula}`);
+            M.push(`  - Weights: ${d.dts.scoringDetails.weights}`);
+          }
+          M.push("");
+        }
+
         d.exercises.forEach(ex => {
-          M.push(`#### ${ex.order}. ${ex.name}${ex.completed ? " ✅" : ""}`, "");
+          const phaseTag = ex.phase === "pre" ? " 🔥 [PRE-WORKOUT]" : ex.phase === "post" ? " 🧊 [POST-WORKOUT]" : "";
+          M.push(`#### ${ex.order}. ${ex.name}${phaseTag}${ex.completed ? " ✅" : ""}`, "");
           M.push(`Intensity: **${ex.intensity}** · Target: **${dash(ex.target.weight)}** × **${dash(ex.target.reps)}** × **${ex.target.sets} sets** · `
             + `RIR ${dash(ex.details.targetRIR)} · rest ${dash(ex.details.rest)} · tempo ${dash(ex.details.tempo)} · ${dash(ex.details.equipment)}`, "");
           if (ex.details.notes) M.push(`> ${ex.details.notes}`, "");
           if (ex.details.cues.length) M.push(`Cues: ${ex.details.cues.map(c => `\`${c}\``).join(" · ")}`, "");
+
+          if (!ex.previousWeekPerformance || ex.previousWeekPerformance === "not counted") {
+            M.push(`- **Previous week performance:** not counted`, "");
+          } else {
+            M.push(`- **Previous week performance (${ex.previousWeekPerformance.date} · ${ex.previousWeekPerformance.setsCompleted}/${ex.previousWeekPerformance.totalSets} completed):**`);
+            ex.previousWeekPerformance.sets.forEach(sRow => {
+              M.push(`  - ${sRow}`);
+            });
+            M.push("");
+          }
 
           const labels = ex.setColumns.map(c => c.label);
           M.push(`| Set | ${labels.join(" | ")} | Note | Done | Workout time |`);

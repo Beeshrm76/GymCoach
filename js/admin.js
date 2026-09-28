@@ -71,43 +71,236 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("adminLogoutBtn")?.addEventListener("click", () => window.Auth.logout());
 
-  // Load data (RLS will enforce they only see assigned users)
+  // Check if current user is Super Admin
+  const currentUser = window.Auth.getUser() || {};
+  const isSuperAdmin = currentUser.role === 'SUPER_ADMIN';
+
+  let cachedProfiles = [];
+  let showAllUsers = isSuperAdmin; // Default to showing all users if Super Admin
+
+  // Configure Super Admin UI elements if applicable
+  if (isSuperAdmin) {
+    const badge = document.getElementById("superAdminBadge");
+    if (badge) badge.style.display = "block";
+
+    const consoleLink = document.getElementById("navSuperAdminLink");
+    if (consoleLink) consoleLink.style.display = "flex";
+
+    const banner = document.getElementById("superAdminDashboardBanner");
+    if (banner) banner.style.display = "flex";
+
+    const actions = document.getElementById("superAdminUserActions");
+    if (actions) actions.style.display = "flex";
+
+    const title = document.getElementById("usersSectionTitle");
+    if (title) title.textContent = "All Athletes & Roles";
+
+    const desc = document.getElementById("usersSectionDesc");
+    if (desc) desc.textContent = "View athlete progress and assign Admin / Coach roles";
+  }
+
+  // Load data
   async function loadData() {
     try {
-      const { data: users, error } = await supabase
-         .from('profiles')
-         .select('*')
-         .eq('role', 'USER'); // RLS automatically filters to assigned users
-      
+      let query;
+      if (isSuperAdmin && showAllUsers) {
+        // Super Admin viewing all registered profiles
+        query = supabase.from('profiles').select('*').order('created_at', { ascending: false });
+      } else {
+        // Coach viewing assigned users only
+        query = supabase.from('profiles').select('*').eq('role', 'USER');
+      }
+
+      const { data: users, error } = await query;
       if (error) throw error;
 
-      document.getElementById('statTotalUsers').textContent = users.length;
-      document.getElementById('statActiveUsers').textContent = users.filter(u => u.status === 'ACTIVE').length;
+      cachedProfiles = users || [];
+
+      document.getElementById('statTotalUsers').textContent = cachedProfiles.length;
+      document.getElementById('statActiveUsers').textContent = cachedProfiles.filter(u => u.status === 'ACTIVE').length;
 
       // Render Users
       const usersTbody = document.getElementById('usersTableBody');
-      if (users.length === 0) {
-        usersTbody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned users found.</td></tr>`;
+      if (!usersTbody) return;
+
+      if (cachedProfiles.length === 0) {
+        usersTbody.innerHTML = `<tr><td colspan="6" class="empty-state">${isSuperAdmin ? 'No users found in database.' : 'No assigned users found.'}</td></tr>`;
       } else {
-        usersTbody.innerHTML = users.map(u => `
-          <tr>
-            <td>${u.username}</td>
-            <td>${u.email}</td>
-            <td>${u.display_name || '—'}</td>
-            <td>${u.status}</td>
-            <td>
-               <button class="btn small-btn" onclick="viewUserWorkouts('${u.id}', '${(u.username || '').replace(/'/g, "\\'")}')">View Data</button>
-            </td>
-          </tr>
-        `).join('');
+        usersTbody.innerHTML = cachedProfiles.map(u => {
+          const roleUpper = (u.role || 'USER').toUpperCase();
+          const roleClass = roleUpper === 'SUPER_ADMIN' ? 'role-super_admin' : (roleUpper === 'ADMIN' ? 'role-admin' : 'role-user');
+          const cleanUser = (u.username || '').replace(/'/g, "\\'");
+          const cleanEmail = (u.email || '').replace(/'/g, "\\'");
+
+          const actionsHtml = isSuperAdmin ? `
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn small-btn primary" onclick="changeRolePrompt('${u.id}', '${roleUpper}', '${cleanUser}', '${cleanEmail}')">Change Role</button>
+              <button class="btn small-btn" onclick="viewUserWorkouts('${u.id}', '${cleanUser}')">View Data</button>
+            </div>
+          ` : `
+            <button class="btn small-btn" onclick="viewUserWorkouts('${u.id}', '${cleanUser}')">View Data</button>
+          `;
+
+          return `
+            <tr>
+              <td><strong>${esc(u.username || '—')}</strong></td>
+              <td>${esc(u.email || '—')}</td>
+              <td>${esc(u.display_name || '—')}</td>
+              <td><span class="role-badge ${roleClass}">${esc(roleUpper)}</span></td>
+              <td><span style="font-size:12px; font-weight:600; color:${u.status === 'ACTIVE' ? 'var(--success)' : 'var(--error)'};">${esc(u.status || 'ACTIVE')}</span></td>
+              <td>${actionsHtml}</td>
+            </tr>
+          `;
+        }).join('');
       }
 
     } catch (err) {
-      console.error(err);
+      console.error("Error loading profiles:", err);
       const usersTbody = document.getElementById('usersTableBody');
-      if (usersTbody) usersTbody.innerHTML = `<tr><td colspan="5" class="empty-state error-state">Couldn't load users: ${(err?.message || 'unknown error').replace(/</g, '&lt;')}</td></tr>`;
+      if (usersTbody) usersTbody.innerHTML = `<tr><td colspan="6" class="empty-state error-state">Couldn't load users: ${(err?.message || 'unknown error').replace(/</g, '&lt;')}</td></tr>`;
     }
   }
+
+  // ── Role Assignment Logic (For Super Admins) ──
+  async function setUserRole(userId, newRole) {
+    if (!userId) throw new Error("No user specified");
+    const roleUpper = (newRole || '').toUpperCase().trim();
+    if (!['USER', 'ADMIN', 'SUPER_ADMIN'].includes(roleUpper)) {
+      throw new Error("Invalid role: " + newRole);
+    }
+
+    // 1. Try secure RPC set_user_role first (bypasses client RLS via SECURITY DEFINER)
+    try {
+      const { data, error: rpcErr } = await supabase.rpc('set_user_role', {
+        target_user_id: userId,
+        new_role: roleUpper
+      });
+      if (!rpcErr && data && data.success) {
+        return data;
+      }
+      if (rpcErr) {
+        console.warn("RPC set_user_role error, falling back to direct update:", rpcErr);
+      }
+    } catch (rpcEx) {
+      console.warn("RPC invocation failed, trying direct table update:", rpcEx);
+    }
+
+    // 2. Direct Supabase table update fallback
+    const { data: updateData, error: updateErr } = await supabase
+      .from('profiles')
+      .update({ role: roleUpper, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select();
+
+    if (updateErr) {
+      throw new Error(updateErr.message || "Failed to update profile role");
+    }
+    return updateData;
+  }
+
+  function populateUserSelectDropdown() {
+    const sel = document.getElementById('assignRoleUserSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select a user —</option>' + 
+      cachedProfiles.map(u => `<option value="${u.id}">${esc(u.username || 'User')} (${esc(u.email || 'no email')}) [${esc(u.role || 'USER')}]</option>`).join('');
+  }
+
+  window.changeRolePrompt = (userId, currentRole = 'USER', username = '', email = '') => {
+    const modal = document.getElementById('assignRoleModal');
+    if (!modal) return;
+
+    document.getElementById('assignRoleModalTitle').textContent = `Change Role for @${username || 'User'}`;
+    document.getElementById('assignRoleUserId').value = userId;
+
+    // Hide dropdown, show user info
+    const selectGrp = document.getElementById('assignRoleUserSelectGroup');
+    if (selectGrp) selectGrp.style.display = 'none';
+
+    const info = document.getElementById('assignRoleUserInfo');
+    if (info) info.style.display = 'block';
+
+    const unEl = document.getElementById('assignRoleTargetUsername');
+    if (unEl) unEl.textContent = `@${username || 'User'}`;
+
+    const emEl = document.getElementById('assignRoleTargetEmail');
+    if (emEl) emEl.textContent = email || 'No email registered';
+
+    const roleSel = document.getElementById('assignRoleSelect');
+    if (roleSel) roleSel.value = (currentRole || 'USER').toUpperCase();
+
+    modal.classList.add('open');
+  };
+
+  document.getElementById('btnAdminOpenAssignRole')?.addEventListener('click', () => {
+    const modal = document.getElementById('assignRoleModal');
+    if (!modal) return;
+
+    document.getElementById('assignRoleModalTitle').textContent = "Assign User Role";
+    document.getElementById('assignRoleUserId').value = "";
+
+    const selectGrp = document.getElementById('assignRoleUserSelectGroup');
+    if (selectGrp) selectGrp.style.display = 'block';
+
+    const info = document.getElementById('assignRoleUserInfo');
+    if (info) info.style.display = 'none';
+
+    populateUserSelectDropdown();
+
+    const roleSel = document.getElementById('assignRoleSelect');
+    if (roleSel) roleSel.value = 'ADMIN';
+
+    modal.classList.add('open');
+  });
+
+  document.getElementById('btnCancelAssignRole')?.addEventListener('click', () => {
+    document.getElementById('assignRoleModal')?.classList.remove('open');
+  });
+
+  document.getElementById('btnConfirmAssignRole')?.addEventListener('click', async () => {
+    const hiddenId = document.getElementById('assignRoleUserId')?.value;
+    const selectId = document.getElementById('assignRoleUserSelect')?.value;
+    const userId = hiddenId || selectId;
+    const newRole = document.getElementById('assignRoleSelect')?.value;
+
+    if (!userId) {
+      toast("Please select a user first.", "error");
+      return;
+    }
+
+    if (userId === currentUser.id && newRole !== 'SUPER_ADMIN') {
+      if (!confirm("Warning: You are about to demote your own Super Admin account. Are you sure you want to proceed?")) {
+        return;
+      }
+    }
+
+    const btn = document.getElementById('btnConfirmAssignRole');
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    try {
+      await setUserRole(userId, newRole);
+      toast(`User role updated to ${newRole} successfully!`);
+      document.getElementById('assignRoleModal')?.classList.remove('open');
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      toast("Failed to update role: " + (err.message || err), "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save Role";
+    }
+  });
+
+  document.getElementById('btnAdminToggleAllUsers')?.addEventListener('click', async () => {
+    showAllUsers = !showAllUsers;
+    const btn = document.getElementById('btnAdminToggleAllUsers');
+    if (btn) btn.textContent = showAllUsers ? "Show My Athletes Only" : "Show All Users";
+    const desc = document.getElementById('usersSectionDesc');
+    if (desc) {
+      desc.textContent = showAllUsers ? "Showing all registered users across the system" : "Showing only athletes assigned to your coach account";
+    }
+    await loadData();
+  });
 
   // ── Athlete Workouts & DTS Viewer ─────────────────────────
   let activeAthleteScores = [];
@@ -535,7 +728,269 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // ── Exercise Media Management ──────────────────────────────
+  let selectedMediaSlug = null;
+
+  function slugFromName(name) {
+    if (!name) return "";
+    return name.trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, "");
+  }
+
+  const searchInput = document.getElementById("adminMediaSearch");
+  const searchResults = document.getElementById("adminMediaSearchResults");
+  const filterTypeEl = document.getElementById("adminMediaFilterType");
+  const filterBodyEl = document.getElementById("adminMediaFilterBody");
+
+  function normalizeVal(str) {
+    return (str || '').toLowerCase().replace(/[-_]/g, ' ').trim();
+  }
+
+  function matchesMediaFilter(actual, selected) {
+    if (!selected) return true;
+    const a = normalizeVal(actual);
+    const s = normalizeVal(selected);
+    if (!a) return false;
+    if (a === s) return true;
+    if (s === "quads" && (a === "quadriceps" || a === "quad" || a === "legs front")) return true;
+    if (s === "hamstrings" && (a === "hamstring" || a === "hams" || a === "legs back")) return true;
+    if (s === "calves" && (a === "calf")) return true;
+    if (s === "core" && (a === "abs" || a === "abdominals" || a === "obliques")) return true;
+    if (s === "full body" && (a === "full body" || a === "fullbody" || a === "compound" || a === "general")) return true;
+    if (s === "legs" && (a === "legs" || a === "quads" || a === "hamstrings" || a === "glutes" || a === "calves" || a === "lower body")) return true;
+    if (s === "push" && (a === "push" || a === "chest" || a === "triceps")) return true;
+    if (s === "pull" && (a === "pull" || a === "back" || a === "biceps")) return true;
+    return false;
+  }
+
+  function searchExercises(query, typeFilter = "", bodyFilter = "") {
+    if (!window.EXERCISE_DB) return [];
+    const q = (query || "").toLowerCase().trim();
+    return window.EXERCISE_DB.filter(ex => {
+      if (typeFilter && !matchesMediaFilter(ex.type, typeFilter)) return false;
+      if (bodyFilter && !matchesMediaFilter(ex.body_part, bodyFilter)) return false;
+      if (q) {
+        const text = [ex.name, ...(ex.aliases || [])].join(" ").toLowerCase();
+        return text.includes(q);
+      }
+      return true;
+    }).slice(0, 24);
+  }
+
+  function updateSearchResults() {
+    const val = searchInput?.value.trim() || "";
+    const typeF = filterTypeEl?.value || "";
+    const bodyF = filterBodyEl?.value || "";
+
+    if (!val && !typeF && !bodyF) {
+      if (searchResults) {
+        searchResults.innerHTML = "";
+        searchResults.style.display = "none";
+      }
+      return;
+    }
+
+    const results = searchExercises(val, typeF, bodyF);
+    if (!results.length) {
+      searchResults.innerHTML = `<div class="admin-media-search-item muted">No exercises found</div>`;
+      searchResults.style.display = "block";
+      return;
+    }
+
+    searchResults.innerHTML = results.map(ex => {
+      const typeBadge = ex.type ? `<span style="font-size:10px; opacity:0.75; background:rgba(255,255,255,0.08); padding:1px 6px; border-radius:4px; margin-left:6px; text-transform:capitalize;">${esc(ex.type)}</span>` : '';
+      const bodyBadge = ex.body_part ? `<span style="font-size:10px; opacity:0.6; margin-left:4px; text-transform:capitalize;">(${esc(ex.body_part)})</span>` : '';
+      return `<div class="admin-media-search-item" data-ex-name="${esc(ex.name)}">${esc(ex.name)}${typeBadge}${bodyBadge}</div>`;
+    }).join("");
+    searchResults.style.display = "block";
+
+    searchResults.querySelectorAll(".admin-media-search-item[data-ex-name]").forEach(item => {
+      item.onclick = () => {
+        selectExercise(item.dataset.exName);
+        searchResults.style.display = "none";
+        if (searchInput) searchInput.value = item.dataset.exName;
+      };
+    });
+  }
+
+  searchInput?.addEventListener("input", updateSearchResults);
+  filterTypeEl?.addEventListener("change", updateSearchResults);
+  filterBodyEl?.addEventListener("change", updateSearchResults);
+
+  // Close search dropdown when clicking outside
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#adminMediaSearch") && !e.target.closest("#adminMediaSearchResults")) {
+      if (searchResults) searchResults.style.display = "none";
+    }
+  });
+
+  async function selectExercise(name) {
+    const slug = slugFromName(name);
+    selectedMediaSlug = slug;
+
+    const panel = document.getElementById("adminMediaSelectedExercise");
+    const nameEl = document.getElementById("adminMediaExName");
+    if (!panel || !nameEl) return;
+
+    nameEl.textContent = name;
+    panel.style.display = "block";
+    await refreshMediaPreviews();
+  }
+
+  async function refreshMediaPreviews() {
+    if (!selectedMediaSlug || !window.MediaStore) return;
+
+    // Image preview
+    const imgPreview = document.getElementById("adminMediaImagePreview");
+    const imgRemove = document.getElementById("adminMediaImageRemove");
+    const imgUrl = await MediaStore.getMediaBySlugURL(selectedMediaSlug, "image");
+    if (imgUrl) {
+      imgPreview.innerHTML = `<img src="${imgUrl}" alt="Exercise image" style="max-width:100%; max-height:180px; border-radius:8px;">`;
+      imgRemove.style.display = "";
+    } else {
+      imgPreview.innerHTML = `<span class="admin-media-placeholder">No image</span>`;
+      imgRemove.style.display = "none";
+    }
+
+    // Video preview
+    const vidPreview = document.getElementById("adminMediaVideoPreview");
+    const vidRemove = document.getElementById("adminMediaVideoRemove");
+    const vidUrl = await MediaStore.getMediaBySlugURL(selectedMediaSlug, "video");
+    if (vidUrl) {
+      vidPreview.innerHTML = `<video src="${vidUrl}" controls muted style="max-width:100%; max-height:180px; border-radius:8px;"></video>`;
+      vidRemove.style.display = "";
+    } else {
+      vidPreview.innerHTML = `<span class="admin-media-placeholder">No video</span>`;
+      vidRemove.style.display = "none";
+    }
+  }
+
+  // Image upload
+  document.getElementById("adminMediaImageInput")?.addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedMediaSlug) return;
+    if (!file.type.startsWith("image/")) {
+      toast("Please select an image file.", "error");
+      return;
+    }
+    try {
+      await MediaStore.saveMediaBySlug(selectedMediaSlug, "image", file);
+      toast("Image uploaded successfully!");
+      await refreshMediaPreviews();
+      loadMediaList();
+    } catch (err) {
+      toast("Failed to save image: " + err.message, "error");
+    }
+  });
+
+  // Video upload
+  document.getElementById("adminMediaVideoInput")?.addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedMediaSlug) return;
+    if (!file.type.startsWith("video/")) {
+      toast("Please select a video file.", "error");
+      return;
+    }
+    try {
+      await MediaStore.saveMediaBySlug(selectedMediaSlug, "video", file);
+      toast("Video uploaded successfully!");
+      await refreshMediaPreviews();
+      loadMediaList();
+    } catch (err) {
+      toast("Failed to save video: " + err.message, "error");
+    }
+  });
+
+  // Image remove
+  document.getElementById("adminMediaImageRemove")?.addEventListener("click", async () => {
+    if (!selectedMediaSlug) return;
+    if (!confirm("Remove the image for this exercise?")) return;
+    try {
+      await MediaStore.deleteMediaBySlug(selectedMediaSlug, "image");
+      toast("Image removed.");
+      await refreshMediaPreviews();
+      loadMediaList();
+    } catch (err) {
+      toast("Failed to remove image: " + err.message, "error");
+    }
+  });
+
+  // Video remove
+  document.getElementById("adminMediaVideoRemove")?.addEventListener("click", async () => {
+    if (!selectedMediaSlug) return;
+    if (!confirm("Remove the video for this exercise?")) return;
+    try {
+      await MediaStore.deleteMediaBySlug(selectedMediaSlug, "video");
+      toast("Video removed.");
+      await refreshMediaPreviews();
+      loadMediaList();
+    } catch (err) {
+      toast("Failed to remove video: " + err.message, "error");
+    }
+  });
+
+  // List exercises with media
+  async function loadMediaList() {
+    const list = document.getElementById("adminMediaList");
+    if (!list || !window.MediaStore) {
+      if (list) list.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">MediaStore not available.</span>`;
+      return;
+    }
+    try {
+      const keys = await MediaStore.listKeys();
+      const slugEntries = keys.filter(k => String(k).startsWith("slug::"));
+      // Group by exercise slug
+      const map = {};
+      slugEntries.forEach(k => {
+        const parts = String(k).split("::");
+        const slug = parts[1];
+        const kind = parts[2];
+        if (!map[slug]) map[slug] = { slug, image: false, video: false };
+        if (kind === "image") map[slug].image = true;
+        if (kind === "video") map[slug].video = true;
+      });
+
+      const entries = Object.values(map);
+      if (!entries.length) {
+        list.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">No exercise media uploaded yet.</span>`;
+        return;
+      }
+
+      // Find the human-readable name from EXERCISE_DB
+      function nameForSlug(slug) {
+        if (!window.EXERCISE_DB) return slug;
+        const entry = window.EXERCISE_DB.find(ex => slugFromName(ex.name) === slug);
+        return entry ? entry.name : slug.replace(/_/g, " ");
+      }
+
+      list.innerHTML = entries.map(e => `
+        <div class="admin-media-list-item" data-media-slug="${esc(e.slug)}">
+          <span class="admin-media-list-name">${esc(nameForSlug(e.slug))}</span>
+          <span class="admin-media-list-badges">
+            ${e.image ? '<span class="media-badge img-badge">📷 Image</span>' : ''}
+            ${e.video ? '<span class="media-badge vid-badge">🎬 Video</span>' : ''}
+          </span>
+        </div>
+      `).join("");
+
+      list.querySelectorAll("[data-media-slug]").forEach(item => {
+        item.onclick = () => {
+          const slug = item.dataset.mediaSlug;
+          const name = item.querySelector(".admin-media-list-name")?.textContent || slug;
+          searchInput.value = name;
+          selectExercise(name);
+        };
+      });
+    } catch (err) {
+      list.innerHTML = `<span style="color:var(--text-muted); font-size:12px;">Failed to load: ${esc(err.message)}</span>`;
+    }
+  }
+
   loadData();
   loadTickets();
   loadAiModels();
+  loadMediaList();
 });

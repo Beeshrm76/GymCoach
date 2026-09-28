@@ -432,7 +432,35 @@
                 </div>
               </div>
 
+              <!-- PRE-WORKOUT -->
+              <div class="warmup-strip panel pre-workout-strip" id="preWorkoutStrip">
+                <div class="warmup-strip-head">
+                  <div class="warmup-strip-info">
+                    <span class="warmup-strip-icon">🔥</span>
+                    <div>
+                      <h3>Pre-Workout</h3>
+                      <p class="muted small">Warmup, stretching, mobility — prepare your body</p>
+                    </div>
+                  </div>
+                  <button class="btn primary" data-action="open-pre-workout">+ Add Pre-Workout</button>
+                </div>
+              </div>
+
               <div id="exerciseList" class="exercise-list"></div>
+
+              <!-- POST-WORKOUT -->
+              <div class="warmup-strip panel post-workout-strip" id="postWorkoutStrip">
+                <div class="warmup-strip-head">
+                  <div class="warmup-strip-info">
+                    <span class="warmup-strip-icon">🧊</span>
+                    <div>
+                      <h3>Post-Workout</h3>
+                      <p class="muted small">Cooldown, stretching, recovery exercises</p>
+                    </div>
+                  </div>
+                  <button class="btn primary" data-action="open-post-workout">+ Add Post-Workout</button>
+                </div>
+              </div>
 
               <div class="cardio-strip panel">
                 <div class="cardio-strip-head">
@@ -1031,6 +1059,13 @@
           <details class="detail-more" open>
             <summary>Plan details</summary>
             <div class="form-grid">
+              <label>Workout Phase
+                <select id="detailPhase">
+                  <option value="main">Main Workout</option>
+                  <option value="pre">🔥 Pre-Workout</option>
+                  <option value="post">🧊 Post-Workout</option>
+                </select>
+              </label>
               <label>Target weight
                 <div class="input-with-select"><input id="detailWeight" type="number" step="0.01"
                     placeholder="e.g. 60" autocomplete="off"><select id="detailWeightUnit">
@@ -1338,6 +1373,38 @@
         <div class="spacer"></div>
         <button class="btn" data-close-cardio>Close</button>
         <button class="btn primary" data-action="save-cardio">Save cardio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <!-- WARMUP / COOLDOWN PICKER MODAL -->
+  <div class="modal" id="warmupPickerModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-warmup-picker></div>
+    <div class="modal-card warmup-modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><b id="warmupPickerTitle">🔥 Add Pre-Workout Exercise</b><span id="warmupPickerSubtitle">Warmup &amp; mobility exercises before your workout</span></div>
+        <button class="icon-btn" data-close-warmup-picker aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single">
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Exercise Name</label>
+          <div style="display: flex; gap: 8px;">
+            <input id="warmupPickerNameInput" placeholder="e.g. Arm Circles, Dead Hang, Dynamic Stretching..." autocomplete="off" style="flex: 1;">
+            <button class="btn primary" id="warmupPickerAddBtn" type="button">+ Add</button>
+          </div>
+        </div>
+
+        <label style="font-size: 11px; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 8px;">
+          ⚡ Quick Suggestions (tap to add instantly):
+        </label>
+        <div class="warmup-suggestions" id="warmupPickerChips"></div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-warmup-picker>Close</button>
       </div>
     </div>
   </div>
