@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 2. Direct Supabase table update fallback
     const { data: updateData, error: updateErr } = await supabase
       .from('profiles')
-      .update({ role: roleUpper, updated_at: new Date().toISOString() })
+      .update({ role: roleUpper })
       .eq('id', userId)
       .select();
 

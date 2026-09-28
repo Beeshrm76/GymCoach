@@ -4,6 +4,17 @@
 -- Allows Super Admins to assign and update user roles (USER, ADMIN, SUPER_ADMIN).
 -- ============================================================
 
+-- 0. Ensure updated_at column exists on profiles table (safe migration)
+-- ------------------------------------------------------------
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'profiles' AND column_name = 'updated_at'
+  ) THEN
+    ALTER TABLE public.profiles ADD COLUMN updated_at TIMESTAMPTZ DEFAULT now();
+  END IF;
+END $$;
+
 -- 1. Ensure profiles table RLS allows Super Admins to update user roles
 -- ------------------------------------------------------------
 DO $$ BEGIN
@@ -58,7 +69,7 @@ BEGIN
 
   -- 4. Update the role
   UPDATE public.profiles
-  SET role = new_role, updated_at = now()
+  SET role = new_role
   WHERE id = target_user_id;
 
   RETURN jsonb_build_object(
