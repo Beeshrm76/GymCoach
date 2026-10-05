@@ -14,6 +14,7 @@ window.Security = (() => {
   const SIZE_LIMITS = {
     avatar: 2 * 1024 * 1024,      // 2 MB
     image: 5 * 1024 * 1024,       // 5 MB
+    gif: 15 * 1024 * 1024,        // 15 MB
     video: 25 * 1024 * 1024,      // 25 MB
     payload: 256 * 1024           // 256 KB
   };
@@ -44,6 +45,7 @@ window.Security = (() => {
   const MAGIC_BYTES = {
     jpeg: [0xFF, 0xD8, 0xFF],
     png: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
+    gif: [0x47, 0x49, 0x46, 0x38], // "GIF8"
     webp_riff: [0x52, 0x49, 0x46, 0x46], // "RIFF"
     webp_marker: [0x57, 0x45, 0x42, 0x50], // "WEBP" at offset 8
     mp4_ftyp: [0x66, 0x74, 0x79, 0x70] // "ftyp" at offset 4
@@ -134,15 +136,21 @@ window.Security = (() => {
       const buffer = await file.slice(0, 32).arrayBuffer();
       const bytes = new Uint8Array(buffer);
 
-      if (kind === 'avatar' || kind === 'image') {
+      const isGif = bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38 && (bytes[4] === 0x37 || bytes[4] === 0x39) && bytes[5] === 0x61;
+
+      if (kind === 'gif') {
+        if (!isGif) {
+          return { valid: false, error: "Invalid GIF format: file contents do not match a genuine GIF binary signature." };
+        }
+      } else if (kind === 'avatar' || kind === 'image') {
         const isJpeg = bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF;
         const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
         const isWebp = (
           bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
           bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
         );
-        if (!isJpeg && !isPng && !isWebp) {
-          return { valid: false, error: "Invalid image format: file contents do not match genuine JPEG, PNG, or WebP binary signatures." };
+        if (!isJpeg && !isPng && !isWebp && !isGif) {
+          return { valid: false, error: "Invalid image format: file contents do not match genuine JPEG, PNG, GIF, or WebP binary signatures." };
         }
       } else if (kind === 'video') {
         const isMp4 = bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70;

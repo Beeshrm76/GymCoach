@@ -422,7 +422,6 @@ window.ReportCoach = (() => {
           L.push(`     Target RIR=${dash(ex.details.targetRIR)} | rest=${dash(ex.details.rest)} | tempo=${dash(ex.details.tempo)} | equipment=${dash(ex.details.equipment)}`);
           if (ex.details.notes) L.push(`     Notes: ${ex.details.notes}`);
           if (ex.details.cues.length) L.push(`     Cues: ${ex.details.cues.join(" | ")}`);
-          L.push(`     Media attached: image=${ex.media.image ? "yes" : "no"}, video=${ex.media.video ? "yes" : "no"}`);
           L.push(`     Set columns: ${ex.setColumns.map(c => c.label).join(" | ")}`);
 
           // Previous week performance

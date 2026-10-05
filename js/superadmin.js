@@ -553,8 +553,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? `<img src="${esc(ex.icon_url || ex.image_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`
         : `<div style="font-size:32px; opacity:0.5; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">🖼️</div>`;
       const videoParts = [ex.video_file_url ? '✓ File' : '', ex.video_url ? '✓ URL' : ''].filter(Boolean);
+      const gifParts = [ex.gif_url ? '✓ GIF' : ''].filter(Boolean);
       const imageParts = [ex.icon_url ? '✓ File' : '', ex.image_url ? '✓ URL' : ''].filter(Boolean);
-      const mediaStatus = [...videoParts.map(v => '🎬 ' + v), ...imageParts.map(i => '🖼 ' + i)].join(', ') || '—';
+      const mediaStatus = [
+        ...videoParts.map(v => '🎬 ' + v),
+        ...gifParts.map(g => '🎞️ ' + g),
+        ...imageParts.map(i => '🖼 ' + i)
+      ].join(', ') || '—';
 
       const rawType = ex.type || inferExerciseType(ex);
       const rawBody = ex.body_part || inferExerciseBodyPart(ex);
@@ -586,11 +591,175 @@ document.addEventListener("DOMContentLoaded", async () => {
   $('exerciseFilterType')?.addEventListener('change', renderExercises);
   $('exerciseFilterBody')?.addEventListener('change', renderExercises);
 
+  // ── Video URL Extraction Helper ──
+  function extractVideoInfo(url) {
+    if (!url || typeof url !== 'string') return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // YouTube matches (watch?v=, youtu.be/, shorts/, embed/, etc.)
+    const ytMatch = trimmed.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+      const videoId = ytMatch[1];
+      return {
+        type: 'youtube',
+        id: videoId,
+        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&enablejsapi=1`,
+        url: trimmed
+      };
+    }
+
+    // Vimeo
+    const vimeoMatch = trimmed.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)([0-9]+)/i);
+    if (vimeoMatch && vimeoMatch[1]) {
+      return {
+        type: 'vimeo',
+        id: vimeoMatch[1],
+        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
+        url: trimmed
+      };
+    }
+
+    // Direct video file
+    if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(trimmed) ||
+        trimmed.includes('/storage/v1/object/public/app-media/exercise-videos') ||
+        trimmed.startsWith('blob:') || trimmed.startsWith('data:video')) {
+      return {
+        type: 'direct',
+        url: trimmed
+      };
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+      return {
+        type: 'direct',
+        url: trimmed
+      };
+    }
+
+    return null;
+  }
+
+  // ── Dynamic Video Extraction & Preview Handler ──
+  function updateVideoPreview() {
+    const file = $('exModalVideoFile')?.files?.[0];
+    const url = ($('exModalVideoUrl')?.value || '').trim();
+    const status = $('exModalVideoUrlStatus');
+    const wrap = $('exModalVideoPreviewWrap');
+    const iframe = $('exModalVideoIframe');
+    const vid = $('exModalVideoPreview');
+
+    // 1. Uploaded file preview has priority if selected
+    if (file) {
+      if (wrap) wrap.style.display = 'block';
+      if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+      if (vid) { vid.src = URL.createObjectURL(file); vid.style.display = 'block'; }
+      if (status) status.innerHTML = '';
+      $('btnRemoveVideo').style.display = 'block';
+      return;
+    }
+
+    // 2. Extract and preview video from URL
+    if (url) {
+      const info = extractVideoInfo(url);
+      if (info && (info.type === 'youtube' || info.type === 'vimeo')) {
+        if (wrap) wrap.style.display = 'block';
+        if (vid) { vid.style.display = 'none'; vid.pause(); vid.src = ''; }
+        if (iframe) {
+          iframe.src = info.embedUrl;
+          iframe.style.display = 'block';
+        }
+        if (status) {
+          status.innerHTML = `<span style="color:var(--accent, #00f2fe);">✓ Extracted ${info.type === 'youtube' ? 'YouTube' : 'Vimeo'} Video (ID: <code>${esc(info.id)}</code>)</span>`;
+        }
+        return;
+      } else if (info && info.type === 'direct') {
+        if (wrap) wrap.style.display = 'block';
+        if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+        if (vid) {
+          vid.src = info.url;
+          vid.style.display = 'block';
+        }
+        if (status) {
+          status.innerHTML = `<span style="color:#10b981;">✓ Direct video URL detected</span>`;
+        }
+        return;
+      } else {
+        if (status) {
+          status.innerHTML = `<span style="color:#f59e0b;">⚠️ Video could not be extracted from URL. Please check the URL format.</span>`;
+        }
+      }
+    } else {
+      if (status) status.innerHTML = '';
+    }
+
+    // 3. Saved existing video file
+    const editIdx = parseInt($('exerciseEditIndex')?.value ?? '-1', 10);
+    const existing = editIdx >= 0 ? defaultExercises[editIdx] : null;
+    if (!window._removeExistingVideo && (existing?.video_file_url || existing?.video_path)) {
+      if (wrap) wrap.style.display = 'block';
+      if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+      if (vid) { vid.src = existing.video_file_url || esc(existing.video_path); vid.style.display = 'block'; }
+      $('btnRemoveVideo').style.display = 'block';
+      return;
+    }
+
+    // No video to preview
+    if (wrap) wrap.style.display = 'none';
+    if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+    if (vid) { vid.style.display = 'none'; vid.pause(); vid.src = ''; }
+  }
+
+  // ── Dynamic Custom GIF Preview Handler ──
+  function updateGifPreview() {
+    const file = $('exModalGifFile')?.files?.[0];
+    const url = ($('exModalGifUrl')?.value || '').trim();
+    const wrap = $('exModalGifPreviewWrap');
+    const img = $('exModalGifPreview');
+    const status = $('exModalGifFileStatus');
+    const removeBtn = $('btnRemoveGif');
+
+    if (file) {
+      if (wrap) wrap.style.display = 'block';
+      if (img) img.src = URL.createObjectURL(file);
+      if (status) status.textContent = `✓ Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+      if (removeBtn) removeBtn.style.display = 'block';
+      window._removeExistingGif = false;
+      return;
+    }
+
+    if (url) {
+      if (wrap) wrap.style.display = 'block';
+      if (img) img.src = url;
+      if (status) status.textContent = '✓ External GIF URL attached';
+      if (removeBtn) removeBtn.style.display = 'block';
+      window._removeExistingGif = false;
+      return;
+    }
+
+    const editIdx = parseInt($('exerciseEditIndex')?.value ?? '-1', 10);
+    const existing = editIdx >= 0 ? defaultExercises[editIdx] : null;
+    if (!window._removeExistingGif && existing?.gif_url) {
+      if (wrap) wrap.style.display = 'block';
+      if (img) img.src = existing.gif_url;
+      if (status) status.textContent = '✓ Custom GIF attached to exercise';
+      if (removeBtn) removeBtn.style.display = 'block';
+      return;
+    }
+
+    if (wrap) wrap.style.display = 'none';
+    if (img) img.removeAttribute('src');
+    if (status) status.textContent = '';
+    if (removeBtn) removeBtn.style.display = 'none';
+  }
+
   // ── Exercise Modal ──
   function openExerciseModal(editIdx = -1) {
     $('exerciseEditIndex').value = editIdx;
     window._removeExistingVideo = false;
     window._removeExistingIcon = false;
+    window._removeExistingGif = false;
+
     if (editIdx >= 0) {
       const ex = defaultExercises[editIdx];
       $('exerciseModalTitle').textContent = 'Edit Exercise';
@@ -599,7 +768,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       $('exModalBodyPart').value = normalizeKey(ex.body_part || inferExerciseBodyPart(ex));
       $('exModalAliases').value = (ex.aliases || []).join(', ');
       $('btnConfirmExercise').textContent = 'Save Changes';
-      // Show existing icon preview
+
+      // Icon preview
       if (ex.icon_url) {
         $('exModalIconPreview').innerHTML = `<img src="${esc(ex.icon_url)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;">`;
         $('btnRemoveIcon').style.display = 'block';
@@ -607,20 +777,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         $('exModalIconPreview').innerHTML = '';
         $('btnRemoveIcon').style.display = 'none';
       }
+
+      // Video File Status
+      $('exModalVideoFile').value = '';
       $('exModalVideoFileStatus').textContent = ex.video_file_url ? '✓ A video file is already uploaded for this exercise.' : '';
-      if (ex.video_file_url || ex.video_path) {
-        $('exModalVideoPreview').src = ex.video_file_url || esc(ex.video_path);
-      } else {
-        $('exModalVideoPreview').src = '';
-      }
       if (ex.video_file_url) {
         $('btnRemoveVideo').style.display = 'block';
       } else {
         $('btnRemoveVideo').style.display = 'none';
       }
-      // Populate URL fields
+
+      // Populate Video URL & GIF URL
       $('exModalVideoUrl').value = ex.video_url || '';
       $('exModalImageUrl').value = ex.image_url || '';
+      $('exModalGifUrl').value = ex.gif_url || '';
+      $('exModalGifFile').value = '';
+
+      updateVideoPreview();
+      updateGifPreview();
     } else {
       $('exerciseModalTitle').textContent = 'Add Exercise';
       $('exModalName').value = '';
@@ -633,11 +807,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       $('exModalIconPreview').innerHTML = '';
       $('exModalVideoFile').value = '';
       $('exModalVideoFileStatus').textContent = '';
-      $('exModalVideoPreview').src = '';
       $('btnRemoveVideo').style.display = 'none';
       $('btnRemoveIcon').style.display = 'none';
+      $('btnRemoveGif').style.display = 'none';
       $('exModalVideoUrl').value = '';
       $('exModalImageUrl').value = '';
+      $('exModalGifUrl').value = '';
+      $('exModalGifFile').value = '';
+
+      updateVideoPreview();
+      updateGifPreview();
       $('btnConfirmExercise').textContent = 'Add Exercise';
     }
     $('exerciseAddModal').style.display = 'flex';
@@ -645,6 +824,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function closeExerciseModal() {
     $('exerciseAddModal').style.display = 'none';
+    if ($('exModalVideoIframe')) {
+      $('exModalVideoIframe').src = '';
+      $('exModalVideoIframe').style.display = 'none';
+    }
+    if ($('exModalVideoPreview')) {
+      $('exModalVideoPreview').pause();
+      $('exModalVideoPreview').src = '';
+      $('exModalVideoPreview').style.display = 'none';
+    }
   }
 
   $('btnAddExercise')?.addEventListener('click', () => openExerciseModal(-1));
@@ -653,17 +841,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.target === $('exerciseAddModal')) closeExerciseModal();
   });
 
+  // Listeners for video extraction & preview
+  $('exModalVideoUrl')?.addEventListener('input', updateVideoPreview);
+  $('exModalVideoUrl')?.addEventListener('change', updateVideoPreview);
   $('exModalVideoFile')?.addEventListener('change', function() {
     window._removeExistingVideo = false;
-    const file = this.files[0];
-    if (file) {
-      $('exModalVideoPreview').src = URL.createObjectURL(file);
-      $('btnRemoveVideo').style.display = 'block';
-    } else {
-      $('exModalVideoPreview').src = '';
-      const editIdx = parseInt($('exerciseEditIndex').value, 10);
-      $('btnRemoveVideo').style.display = (editIdx >= 0 && defaultExercises[editIdx]?.video_file_url) ? 'block' : 'none';
-    }
+    updateVideoPreview();
+  });
+
+  // Listeners for GIF preview
+  $('exModalGifUrl')?.addEventListener('input', updateGifPreview);
+  $('exModalGifUrl')?.addEventListener('change', updateGifPreview);
+  $('exModalGifFile')?.addEventListener('change', function() {
+    window._removeExistingGif = false;
+    updateGifPreview();
   });
 
   $('exModalIcon')?.addEventListener('change', function() {
@@ -681,8 +872,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     window._removeExistingVideo = true;
     $('exModalVideoFile').value = '';
     $('exModalVideoFileStatus').textContent = '';
-    $('exModalVideoPreview').src = '';
+    $('exModalVideoUrl').value = '';
+    updateVideoPreview();
     $('btnRemoveVideo').style.display = 'none';
+  });
+
+  $('btnRemoveGif')?.addEventListener('click', () => {
+    window._removeExistingGif = true;
+    $('exModalGifFile').value = '';
+    $('exModalGifUrl').value = '';
+    $('exModalGifFileStatus').textContent = '';
+    updateGifPreview();
+    $('btnRemoveGif').style.display = 'none';
   });
 
   $('btnRemoveIcon')?.addEventListener('click', () => {
@@ -705,8 +906,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let image_path = imagePathFromName(name);
     let video_path = videoPathFromName(name);
 
-    // Handle icon upload if a file was selected — renamed to match the slug so
-    // it lines up with image_path, same as the Details panel's auto-rename.
+    // Handle icon upload if a file was selected
     let icon_url = editIdx >= 0 && !window._removeExistingIcon ? (defaultExercises[editIdx]?.icon_url || '') : '';
     const iconFile = $('exModalIcon')?.files?.[0];
     if (iconFile) {
@@ -719,7 +919,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // Handle an uploaded video file, same convention.
+    // Handle uploaded video file
     let video_file_url = editIdx >= 0 && !window._removeExistingVideo ? (defaultExercises[editIdx]?.video_file_url || '') : '';
     const videoFile = $('exModalVideoFile')?.files?.[0];
     if (videoFile) {
@@ -731,11 +931,27 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
+    // Handle custom GIF upload (alternative to YouTube URL)
+    let gif_url = editIdx >= 0 && !window._removeExistingGif ? (defaultExercises[editIdx]?.gif_url || '') : '';
+    const gifFile = $('exModalGifFile')?.files?.[0];
+    if (gifFile) {
+      try {
+        const renamed = new File([gifFile], `${slug || 'exercise'}.gif`, { type: 'image/gif' });
+        gif_url = await uploadMediaFile(renamed, 'exercise-gifs');
+      } catch (err) {
+        toast("GIF upload failed: " + err.message, "error");
+      }
+    } else if ($('exModalGifUrl')?.value?.trim()) {
+      gif_url = $('exModalGifUrl').value.trim();
+    } else if (window._removeExistingGif) {
+      gif_url = '';
+    }
+
     // Read URL fields
     const video_url = ($('exModalVideoUrl')?.value || '').trim();
     const image_url = ($('exModalImageUrl')?.value || '').trim();
 
-    const exerciseObj = { name, type, body_part, aliases, video_url, image_url, icon_url, image_path, video_path, video_file_url };
+    const exerciseObj = { name, type, body_part, aliases, video_url, image_url, icon_url, image_path, video_path, video_file_url, gif_url };
 
     if (editIdx >= 0) {
       defaultExercises[editIdx] = exerciseObj;
@@ -751,7 +967,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ── Upload media to Supabase storage ──
   async function uploadMediaFile(file, folder = 'exercise-icons') {
-    const kind = folder === 'exercise-videos' ? 'video' : 'image';
+    const kind = folder === 'exercise-videos' ? 'video' : (folder === 'exercise-gifs' ? 'gif' : 'image');
     if (window.Security?.validateUpload) {
       const v = await window.Security.validateUpload(file, kind);
       if (!v.valid) {

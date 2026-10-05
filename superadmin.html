@@ -571,18 +571,52 @@
       </div>
 
       <div class="form-group">
-        <label>Video File (optional — uploaded, plays directly in the app)</label>
+        <label style="display:flex; justify-content:space-between; align-items:center;">
+          <span>Video URL (YouTube or direct video link)</span>
+          <span class="badge" style="font-size:11px; background:rgba(239, 68, 68, 0.15); color:#f87171; padding:2px 8px; border-radius:6px;">YouTube / URL</span>
+        </label>
+        <input type="url" id="exModalVideoUrl" class="setting-input" placeholder="https://youtube.com/watch?v=... or https://youtu.be/... or .mp4 link">
+        <div id="exModalVideoUrlStatus" class="small" style="margin-top:4px; font-weight:500;"></div>
+        <small class="muted" style="margin-top:2px; display:block;">💡 Paste any YouTube link (watch, shorts, youtu.be, embed) or direct video URL. Video is automatically extracted and previewed.</small>
+      </div>
+
+      <!-- Custom Demo GIF (Alternative to YouTube URL) -->
+      <div class="form-group" style="padding:14px; background:linear-gradient(135deg, rgba(0, 242, 254, 0.05) 0%, rgba(0,0,0,0.3) 100%); border:1px solid rgba(0, 242, 254, 0.2); border-radius:12px;">
+        <label style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-weight:600; color:#fff;">🎞️ Custom Demo GIF (Alternative to YouTube URL)</span>
+          <span class="badge" style="font-size:10px; font-weight:700; text-transform:uppercase; background:rgba(0,242,254,0.15); color:var(--accent, #00f2fe); padding:2px 8px; border-radius:10px; border:1px solid rgba(0,242,254,0.3);">Looping Demo</span>
+        </label>
+        <small class="muted" style="display:block; margin-bottom:10px;">Upload an animated .gif demonstration or link an external GIF. Plays on continuous loop without ads or external video dependencies.</small>
+        
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input type="file" id="exModalGifFile" accept="image/gif" class="setting-input" style="font-size:12px; flex:1;">
+          <button type="button" class="btn small-btn btn-danger" id="btnRemoveGif" style="display:none; padding:0 12px; font-size:12px; height:36px; border-radius:8px;">Remove GIF</button>
+        </div>
+        <div id="exModalGifFileStatus" class="muted small" style="margin-top:4px;"></div>
+        
+        <div style="margin-top:8px;">
+          <input type="url" id="exModalGifUrl" class="setting-input" placeholder="Or external GIF URL: https://example.com/demo.gif">
+        </div>
+        
+        <div id="exModalGifPreviewWrap" style="margin-top:10px; display:none; text-align:center; background:#080c12; border-radius:10px; padding:10px; border:1px solid var(--glass-border);">
+          <img id="exModalGifPreview" src="" alt="GIF Preview" style="max-width:100%; max-height:200px; border-radius:8px; object-fit:contain;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Video File (optional — direct upload to storage)</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input type="file" id="exModalVideoFile" accept="video/*" class="setting-input" style="font-size:12px; flex:1;">
-          <button type="button" class="btn small-btn btn-danger" id="btnRemoveVideo" style="display:none; padding: 0 12px; font-size:12px; height: 36px; border-radius: 8px;">Remove</button>
+          <button type="button" class="btn small-btn btn-danger" id="btnRemoveVideo" style="display:none; padding: 0 12px; font-size:12px; height: 36px; border-radius: 8px;">Remove Video</button>
         </div>
         <div id="exModalVideoFileStatus" class="muted small" style="margin-top:4px;"></div>
-        <video id="exModalVideoPreview" controls style="width:100%; height:180px; border-radius:12px; margin-top:12px; background:#111; border:1px solid var(--glass-border);"></video>
       </div>
-      <div class="form-group">
-        <label>Video URL (optional — external link, saves Supabase storage)</label>
-        <input type="url" id="exModalVideoUrl" class="setting-input" placeholder="https://youtube.com/watch?v=... or any direct video link">
-        <small class="muted" style="margin-top:4px; display:block;">💡 Use a YouTube or external URL to avoid burning Supabase storage quota.</small>
+
+      <!-- Video Preview Area -->
+      <div id="exModalVideoPreviewWrap" class="form-group" style="margin-bottom:16px; display:none;">
+        <label style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:block;">Video Demonstration Preview</label>
+        <iframe id="exModalVideoIframe" style="width:100%; height:200px; border-radius:12px; background:#111; border:1px solid var(--glass-border); display:none;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <video id="exModalVideoPreview" controls style="width:100%; height:200px; border-radius:12px; background:#111; border:1px solid var(--glass-border); display:none;"></video>
       </div>
       <div class="form-group">
         <label>Icon Image (optional — shown as this exercise's default image)</label>

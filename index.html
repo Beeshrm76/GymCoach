@@ -986,6 +986,7 @@
       <div class="modal-body">
         <div class="detail-media">
           <div class="media-frame">
+            <iframe id="detailVideoFrame" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen hidden></iframe>
             <video id="detailVideo" controls muted playsinline preload="metadata" hidden></video>
             <img id="detailImage" alt="" hidden>
             <div class="media-fallback" id="detailMediaFallback">
@@ -1000,6 +1001,8 @@
             <label class="btn file-btn">Upload image<input id="detailImageUpload" type="file" accept="image/*"
                 hidden></label>
             <label class="btn file-btn">Upload demo video<input id="detailVideoUpload" type="file" accept="video/*"
+                hidden></label>
+            <label class="btn file-btn">Upload GIF<input id="detailGifUpload" type="file" accept="image/gif"
                 hidden></label>
             <button class="btn danger" data-action="remove-media">Remove media</button>
           </div>
@@ -1093,8 +1096,10 @@
               <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells" autocomplete="off"></label>
               <label class="span-2">Image path<input id="detailImagePath"
                   placeholder="e.g. images/bench_press.jpg" autocomplete="off"></label>
-              <label class="span-2">Video path<input id="detailVideoPath"
-                  placeholder="e.g. videos/bench_press.mp4" autocomplete="off"></label>
+              <label class="span-2">Video path / URL<input id="detailVideoPath"
+                  placeholder="e.g. videos/bench_press.mp4 or YouTube URL" autocomplete="off"></label>
+              <label class="span-2">GIF path / URL<input id="detailGifPath"
+                  placeholder="e.g. images/bench_press.gif or https://...gif" autocomplete="off"></label>
               <label>Pulley system
                 <select id="detailPulleySystem">
                   <option value="single">Single pulley</option>
