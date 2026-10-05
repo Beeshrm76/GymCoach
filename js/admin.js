@@ -825,6 +825,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  function extractVideoInfo(url) {
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim();
+    if (!clean) return null;
+
+    // YouTube matches (standard, shorts, embed, youtu.be)
+    const ytMatch = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+      return {
+        type: 'youtube',
+        id: ytMatch[1],
+        embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&playsinline=1`,
+        url: clean
+      };
+    }
+
+    // Vimeo matches
+    const vimeoMatch = clean.match(/vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/([^\/]*)\/videos\/|album\/(\d+)\/video\/|)(\d+)(?:$|\/|\?)/i);
+    if (vimeoMatch && vimeoMatch[3]) {
+      return {
+        type: 'vimeo',
+        id: vimeoMatch[3],
+        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[3]}`,
+        url: clean
+      };
+    }
+
+    return {
+      type: 'direct',
+      url: clean
+    };
+  }
+
+  function getDbExerciseBySlug(slug) {
+    if (!window.EXERCISE_DB || !slug) return null;
+    return window.EXERCISE_DB.find(ex => slugFromName(ex.name) === slug);
+  }
+
   async function selectExercise(name) {
     const slug = slugFromName(name);
     selectedMediaSlug = slug;
@@ -839,30 +877,63 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   async function refreshMediaPreviews() {
-    if (!selectedMediaSlug || !window.MediaStore) return;
+    if (!selectedMediaSlug) return;
+    const dbEx = getDbExerciseBySlug(selectedMediaSlug);
 
-    // Image preview
+    // 1. Image preview
     const imgPreview = document.getElementById("adminMediaImagePreview");
     const imgRemove = document.getElementById("adminMediaImageRemove");
-    const imgUrl = await MediaStore.getMediaBySlugURL(selectedMediaSlug, "image");
-    if (imgUrl) {
-      imgPreview.innerHTML = `<img src="${imgUrl}" alt="Exercise image" style="max-width:100%; max-height:180px; border-radius:8px;">`;
-      imgRemove.style.display = "";
-    } else {
-      imgPreview.innerHTML = `<span class="admin-media-placeholder">No image</span>`;
-      imgRemove.style.display = "none";
+    const customImgUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "image") : null;
+    const fallbackImgUrl = dbEx?.icon_url || dbEx?.image_url || "";
+    const imgUrl = customImgUrl || fallbackImgUrl;
+
+    if (imgPreview) {
+      if (imgUrl) {
+        imgPreview.innerHTML = `<img src="${esc(imgUrl)}" alt="Exercise image" style="max-width:100%; max-height:180px; border-radius:8px; object-fit:contain;">`;
+        if (imgRemove) imgRemove.style.display = customImgUrl ? "" : "none";
+      } else {
+        imgPreview.innerHTML = `<span class="admin-media-placeholder">No image</span>`;
+        if (imgRemove) imgRemove.style.display = "none";
+      }
     }
 
-    // Video preview
+    // 2. Video preview
     const vidPreview = document.getElementById("adminMediaVideoPreview");
     const vidRemove = document.getElementById("adminMediaVideoRemove");
-    const vidUrl = await MediaStore.getMediaBySlugURL(selectedMediaSlug, "video");
-    if (vidUrl) {
-      vidPreview.innerHTML = `<video src="${vidUrl}" controls muted style="max-width:100%; max-height:180px; border-radius:8px;"></video>`;
-      vidRemove.style.display = "";
-    } else {
-      vidPreview.innerHTML = `<span class="admin-media-placeholder">No video</span>`;
-      vidRemove.style.display = "none";
+    const customVidUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "video") : null;
+    const fallbackVidUrl = dbEx?.video_file_url || dbEx?.video_url || "";
+    const vidUrl = customVidUrl || fallbackVidUrl;
+
+    if (vidPreview) {
+      if (vidUrl) {
+        const info = extractVideoInfo(vidUrl);
+        if (info && (info.type === 'youtube' || info.type === 'vimeo')) {
+          vidPreview.innerHTML = `<iframe src="${info.embedUrl}" style="width:100%; height:180px; border:0; border-radius:8px;" allowfullscreen></iframe>`;
+        } else {
+          vidPreview.innerHTML = `<video src="${esc(vidUrl)}" controls muted style="max-width:100%; max-height:180px; border-radius:8px;"></video>`;
+        }
+        if (vidRemove) vidRemove.style.display = customVidUrl ? "" : "none";
+      } else {
+        vidPreview.innerHTML = `<span class="admin-media-placeholder">No video</span>`;
+        if (vidRemove) vidRemove.style.display = "none";
+      }
+    }
+
+    // 3. GIF preview
+    const gifPreview = document.getElementById("adminMediaGifPreview");
+    const gifRemove = document.getElementById("adminMediaGifRemove");
+    const customGifUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "gif") : null;
+    const fallbackGifUrl = dbEx?.gif_url || "";
+    const gifUrl = customGifUrl || fallbackGifUrl;
+
+    if (gifPreview) {
+      if (gifUrl) {
+        gifPreview.innerHTML = `<img src="${esc(gifUrl)}" alt="Exercise GIF" style="max-width:100%; max-height:180px; border-radius:8px; object-fit:contain;">`;
+        if (gifRemove) gifRemove.style.display = customGifUrl ? "" : "none";
+      } else {
+        gifPreview.innerHTML = `<span class="admin-media-placeholder">No GIF</span>`;
+        if (gifRemove) gifRemove.style.display = "none";
+      }
     }
   }
 
@@ -904,10 +975,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // GIF upload
+  document.getElementById("adminMediaGifInput")?.addEventListener("change", async e => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedMediaSlug) return;
+    if (file.type !== "image/gif" && !file.name.toLowerCase().endsWith(".gif")) {
+      toast("Please select a GIF file.", "error");
+      return;
+    }
+    try {
+      await MediaStore.saveMediaBySlug(selectedMediaSlug, "gif", file);
+      toast("GIF uploaded successfully!");
+      await refreshMediaPreviews();
+      loadMediaList();
+    } catch (err) {
+      toast("Failed to save GIF: " + err.message, "error");
+    }
+  });
+
   // Image remove
   document.getElementById("adminMediaImageRemove")?.addEventListener("click", async () => {
     if (!selectedMediaSlug) return;
-    if (!confirm("Remove the image for this exercise?")) return;
+    if (!confirm("Remove the custom image for this exercise?")) return;
     try {
       await MediaStore.deleteMediaBySlug(selectedMediaSlug, "image");
       toast("Image removed.");
@@ -921,7 +1011,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Video remove
   document.getElementById("adminMediaVideoRemove")?.addEventListener("click", async () => {
     if (!selectedMediaSlug) return;
-    if (!confirm("Remove the video for this exercise?")) return;
+    if (!confirm("Remove the custom video for this exercise?")) return;
     try {
       await MediaStore.deleteMediaBySlug(selectedMediaSlug, "video");
       toast("Video removed.");
@@ -929,6 +1019,108 @@ document.addEventListener("DOMContentLoaded", async () => {
       loadMediaList();
     } catch (err) {
       toast("Failed to remove video: " + err.message, "error");
+    }
+  });
+
+  // GIF remove
+  document.getElementById("adminMediaGifRemove")?.addEventListener("click", async () => {
+    if (!selectedMediaSlug) return;
+    if (!confirm("Remove the custom GIF for this exercise?")) return;
+    try {
+      await MediaStore.deleteMediaBySlug(selectedMediaSlug, "gif");
+      toast("GIF removed.");
+      await refreshMediaPreviews();
+      loadMediaList();
+    } catch (err) {
+      toast("Failed to remove GIF: " + err.message, "error");
+    }
+  });
+
+  // ── Full Media Preview Modal for Admin Panel ──
+  async function openAdminMediaPreviewModal(slug) {
+    if (!slug) return;
+    const modal = document.getElementById("adminMediaPreviewModal");
+    if (!modal) return;
+
+    const dbEx = getDbExerciseBySlug(slug);
+    const exerciseName = dbEx?.name || slug.replace(/_/g, " ");
+
+    const titleEl = document.getElementById("adminMediaPreviewModalTitle");
+    if (titleEl) titleEl.textContent = `${exerciseName} — Media Preview`;
+
+    const vidBox = document.getElementById("adminModalVideoPreviewBox");
+    const gifBox = document.getElementById("adminModalGifPreviewBox");
+    const imgBox = document.getElementById("adminModalImagePreviewBox");
+
+    // Fetch media URLs
+    const customVid = window.MediaStore ? await MediaStore.getMediaBySlugURL(slug, "video") : null;
+    const vidUrl = customVid || dbEx?.video_file_url || dbEx?.video_url || "";
+
+    const customGif = window.MediaStore ? await MediaStore.getMediaBySlugURL(slug, "gif") : null;
+    const gifUrl = customGif || dbEx?.gif_url || "";
+
+    const customImg = window.MediaStore ? await MediaStore.getMediaBySlugURL(slug, "image") : null;
+    const imgUrl = customImg || dbEx?.icon_url || dbEx?.image_url || "";
+
+    // 1. Video Box
+    if (vidBox) {
+      if (vidUrl) {
+        const info = extractVideoInfo(vidUrl);
+        if (info && (info.type === 'youtube' || info.type === 'vimeo')) {
+          vidBox.innerHTML = `<iframe src="${info.embedUrl}" style="width:100%; height:100%; border:0;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        } else {
+          vidBox.innerHTML = `<video src="${esc(vidUrl)}" controls muted autoplay playsinline style="width:100%; height:100%; object-fit:contain;"></video>`;
+        }
+      } else {
+        vidBox.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:16px;"><div style="font-size:32px; opacity:0.4; margin-bottom:4px;">🎬</div><div style="font-size:12px;">No video available</div></div>`;
+      }
+    }
+
+    // 2. GIF Box
+    if (gifBox) {
+      if (gifUrl) {
+        gifBox.innerHTML = `<img src="${esc(gifUrl)}" alt="Looping GIF demo" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+      } else {
+        gifBox.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:16px;"><div style="font-size:32px; opacity:0.4; margin-bottom:4px;">🎞️</div><div style="font-size:12px;">No GIF available</div></div>`;
+      }
+    }
+
+    // 3. Image Box
+    if (imgBox) {
+      if (imgUrl) {
+        imgBox.innerHTML = `<img src="${esc(imgUrl)}" alt="Exercise image" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+      } else {
+        imgBox.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:16px;"><div style="font-size:32px; opacity:0.4; margin-bottom:4px;">🖼️</div><div style="font-size:12px;">No image available</div></div>`;
+      }
+    }
+
+    modal.style.display = "flex";
+  }
+
+  function closeAdminMediaPreviewModal() {
+    const modal = document.getElementById("adminMediaPreviewModal");
+    if (!modal) return;
+    modal.style.display = "none";
+    const vidBox = document.getElementById("adminModalVideoPreviewBox");
+    const gifBox = document.getElementById("adminModalGifPreviewBox");
+    const imgBox = document.getElementById("adminModalImagePreviewBox");
+    if (vidBox) vidBox.innerHTML = "";
+    if (gifBox) gifBox.innerHTML = "";
+    if (imgBox) imgBox.innerHTML = "";
+  }
+
+  // Wire modal preview events
+  document.getElementById("btnAdminPreviewMedia")?.addEventListener("click", () => {
+    if (selectedMediaSlug) openAdminMediaPreviewModal(selectedMediaSlug);
+  });
+  document.getElementById("btnCloseAdminMediaPreviewModal")?.addEventListener("click", closeAdminMediaPreviewModal);
+  document.getElementById("btnCloseAdminMediaPreviewModalBtn")?.addEventListener("click", closeAdminMediaPreviewModal);
+  document.getElementById("adminMediaPreviewModal")?.addEventListener("click", e => {
+    if (e.target === document.getElementById("adminMediaPreviewModal")) closeAdminMediaPreviewModal();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && document.getElementById("adminMediaPreviewModal")?.style.display === "flex") {
+      closeAdminMediaPreviewModal();
     }
   });
 
@@ -948,9 +1140,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const parts = String(k).split("::");
         const slug = parts[1];
         const kind = parts[2];
-        if (!map[slug]) map[slug] = { slug, image: false, video: false };
+        if (!map[slug]) map[slug] = { slug, image: false, video: false, gif: false };
         if (kind === "image") map[slug].image = true;
         if (kind === "video") map[slug].video = true;
+        if (kind === "gif") map[slug].gif = true;
       });
 
       const entries = Object.values(map);
@@ -969,18 +1162,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       list.innerHTML = entries.map(e => `
         <div class="admin-media-list-item" data-media-slug="${esc(e.slug)}">
           <span class="admin-media-list-name">${esc(nameForSlug(e.slug))}</span>
-          <span class="admin-media-list-badges">
-            ${e.image ? '<span class="media-badge img-badge">📷 Image</span>' : ''}
-            ${e.video ? '<span class="media-badge vid-badge">🎬 Video</span>' : ''}
-          </span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="admin-media-list-badges">
+              ${e.image ? '<span class="media-badge img-badge">📷 Image</span>' : ''}
+              ${e.video ? '<span class="media-badge vid-badge">🎬 Video</span>' : ''}
+              ${e.gif ? '<span class="media-badge gif-badge">🎞️ GIF</span>' : ''}
+            </span>
+            <button type="button" class="btn small-btn btn-admin-media-preview-btn" data-slug="${esc(e.slug)}" style="padding:2px 8px; font-size:11px; background:rgba(0,242,254,0.12); color:var(--accent, #00f2fe); border:1px solid rgba(0,242,254,0.3); font-weight:600;" title="Full media preview">👁️ Preview</button>
+          </div>
         </div>
       `).join("");
 
+      list.querySelectorAll(".btn-admin-media-preview-btn").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const slug = btn.dataset.slug;
+          openAdminMediaPreviewModal(slug);
+        };
+      });
+
       list.querySelectorAll("[data-media-slug]").forEach(item => {
-        item.onclick = () => {
+        item.onclick = (e) => {
+          if (e.target.closest('.btn-admin-media-preview-btn')) return;
           const slug = item.dataset.mediaSlug;
           const name = item.querySelector(".admin-media-list-name")?.textContent || slug;
-          searchInput.value = name;
+          if (searchInput) searchInput.value = name;
           selectExercise(name);
         };
       });

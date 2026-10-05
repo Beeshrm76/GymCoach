@@ -254,7 +254,10 @@
             <div id="adminMediaSearchResults" class="admin-media-search-results"></div>
 
             <div id="adminMediaSelectedExercise" class="admin-media-selected" style="display:none;">
-              <div class="admin-media-exercise-name" id="adminMediaExName"></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                <div class="admin-media-exercise-name" id="adminMediaExName" style="margin-bottom:0;"></div>
+                <button type="button" class="btn small-btn" id="btnAdminPreviewMedia" style="background:rgba(0,242,254,0.15); color:var(--accent, #00f2fe); border:1px solid rgba(0,242,254,0.3); font-weight:600;">👁️ Full Preview</button>
+              </div>
 
               <div class="admin-media-preview-row">
                 <div class="admin-media-preview-card">
@@ -271,13 +274,25 @@
 
                 <div class="admin-media-preview-card">
                   <h5>🎬 Video</h5>
-                  <div class="admin-media-preview" id="adminMediaVideoPreview">
+                  <div class="admin-media-preview" id="adminMediaVideoPreview" style="background:#000;">
                     <span class="admin-media-placeholder">No video</span>
                   </div>
                   <div class="admin-media-upload-row">
                     <label class="btn small-btn" for="adminMediaVideoInput">Choose Video</label>
                     <input type="file" id="adminMediaVideoInput" accept="video/*" hidden>
                     <button class="btn small-btn danger" id="adminMediaVideoRemove" style="display:none;">Remove</button>
+                  </div>
+                </div>
+
+                <div class="admin-media-preview-card">
+                  <h5>🎞️ Custom GIF</h5>
+                  <div class="admin-media-preview" id="adminMediaGifPreview" style="background:#000;">
+                    <span class="admin-media-placeholder">No GIF</span>
+                  </div>
+                  <div class="admin-media-upload-row">
+                    <label class="btn small-btn" for="adminMediaGifInput">Choose GIF</label>
+                    <input type="file" id="adminMediaGifInput" accept="image/gif" hidden>
+                    <button class="btn small-btn danger" id="adminMediaGifRemove" style="display:none;">Remove</button>
                   </div>
                 </div>
               </div>
@@ -296,6 +311,43 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- ══════════ ADMIN MEDIA FULL PREVIEW MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="adminMediaPreviewModal" style="display:none;">
+    <div class="admin-modal" style="max-width:760px; width:95%;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--glass-border);">
+        <div>
+          <h3 id="adminMediaPreviewModalTitle" style="margin:0; font-size:18px; color:#fff;">Media Preview</h3>
+          <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">View attached video, looping GIF, and image</p>
+        </div>
+        <button type="button" class="btn small-btn" id="btnCloseAdminMediaPreviewModal" style="font-size:18px; border:none; background:transparent; cursor:pointer; color:var(--text-muted); padding:4px 8px;">✕</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;" id="adminMediaPreviewModalGrid">
+        <!-- Video -->
+        <div style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
+          <h5 style="margin:0 0 8px 0; color:#fff; font-size:13px;">🎬 Video Demonstration</h5>
+          <div id="adminModalVideoPreviewBox" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
+        </div>
+
+        <!-- GIF -->
+        <div style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
+          <h5 style="margin:0 0 8px 0; color:#fff; font-size:13px;">🎞️ Looping GIF</h5>
+          <div id="adminModalGifPreviewBox" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
+        </div>
+
+        <!-- Image -->
+        <div style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
+          <h5 style="margin:0 0 8px 0; color:#fff; font-size:13px;">🖼️ Image / Icon</h5>
+          <div id="adminModalImagePreviewBox" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn" id="btnCloseAdminMediaPreviewModalBtn">Close Preview</button>
+      </div>
+    </div>
   </div>
 
   <!-- ══════════ ATHLETE WORKOUT DATA & DTS MODAL ══════════ -->

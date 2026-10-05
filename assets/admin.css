@@ -876,12 +876,12 @@ html, body {
 }
 .admin-media-preview-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .admin-media-preview-row {
-    grid-template-columns: 1fr
+    grid-template-columns: 1fr;
   }
 }
 .admin-media-preview-card {
@@ -974,6 +974,10 @@ html, body {
 .vid-badge {
   background: rgba(168,85,247,.15);
   color: #c084fc
+}
+.gif-badge {
+  background: rgba(16,185,129,.15);
+  color: #34d399
 }
 .form-group {
   position: relative

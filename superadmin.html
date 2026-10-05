@@ -284,8 +284,8 @@
                 <th>Exercise Name</th>
                 <th>Type</th>
                 <th>Body Part</th>
-                <th>Video</th>
-                <th style="width:140px;">Actions</th>
+                <th>Media</th>
+                <th style="width:210px;">Actions</th>
               </tr>
             </thead>
             <tbody id="exercisesTableBody">
@@ -634,6 +634,72 @@
       <div class="modal-actions">
         <button class="btn" id="btnCancelExercise">Cancel</button>
         <button class="btn primary" id="btnConfirmExercise">Add Exercise</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ EXERCISE MEDIA PREVIEW MODAL ══════════ -->
+  <div class="admin-modal-overlay" id="exerciseMediaPreviewModal" style="display:none;">
+    <div class="admin-modal" style="max-width:760px; width:95%;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--glass-border);">
+        <div>
+          <h3 id="mediaPreviewModalTitle" style="margin:0; font-size:18px; color:#fff;">Exercise Media Preview</h3>
+          <p id="mediaPreviewModalSubtitle" style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">View all attached images, videos, and looping GIFs</p>
+        </div>
+        <button type="button" class="btn small-btn" id="btnCloseMediaPreviewModal" style="font-size:18px; line-height:1; border:none; background:transparent; cursor:pointer; color:var(--text-muted); padding:4px 8px;">✕</button>
+      </div>
+
+      <!-- Media Filter Pills -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button type="button" class="btn small-btn active" id="mediaPreviewTabAll" onclick="switchMediaPreviewTab('all')" style="font-size:12px;">All Media</button>
+        <button type="button" class="btn small-btn" id="mediaPreviewTabVideo" onclick="switchMediaPreviewTab('video')" style="font-size:12px;">🎬 Video</button>
+        <button type="button" class="btn small-btn" id="mediaPreviewTabGif" onclick="switchMediaPreviewTab('gif')" style="font-size:12px;">🎞️ Custom GIF</button>
+        <button type="button" class="btn small-btn" id="mediaPreviewTabImage" onclick="switchMediaPreviewTab('image')" style="font-size:12px;">🖼️ Image / Icon</button>
+      </div>
+
+      <!-- Media Content Grid -->
+      <div id="mediaPreviewContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+        
+        <!-- Video Card -->
+        <div class="media-preview-section" id="mediaPreviewVideoCard" style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:600; font-size:13px; color:#fff;">🎬 Video Demonstration</span>
+            <span id="mediaPreviewVideoBadge" class="badge" style="font-size:10px; background:rgba(239, 68, 68, 0.15); color:#f87171; padding:2px 6px; border-radius:6px;"></span>
+          </div>
+          <div id="mediaPreviewVideoContent" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.06);">
+            <!-- Dynamic Video Content -->
+          </div>
+          <div id="mediaPreviewVideoSource" class="muted small" style="margin-top:8px; word-break:break-all; font-size:11px; flex:1;"></div>
+        </div>
+
+        <!-- GIF Card -->
+        <div class="media-preview-section" id="mediaPreviewGifCard" style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:600; font-size:13px; color:#fff;">🎞️ Custom Demo GIF</span>
+            <span id="mediaPreviewGifBadge" class="badge" style="font-size:10px; background:rgba(0, 242, 254, 0.15); color:var(--accent, #00f2fe); padding:2px 6px; border-radius:6px;"></span>
+          </div>
+          <div id="mediaPreviewGifContent" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.06);">
+            <!-- Dynamic GIF Content -->
+          </div>
+          <div id="mediaPreviewGifSource" class="muted small" style="margin-top:8px; word-break:break-all; font-size:11px; flex:1;"></div>
+        </div>
+
+        <!-- Image / Icon Card -->
+        <div class="media-preview-section" id="mediaPreviewImageCard" style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:600; font-size:13px; color:#fff;">🖼️ Icon &amp; Image</span>
+            <span id="mediaPreviewImageBadge" class="badge" style="font-size:10px; background:rgba(16, 185, 129, 0.15); color:#10b981; padding:2px 6px; border-radius:6px;"></span>
+          </div>
+          <div id="mediaPreviewImageContent" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,255,255,0.06);">
+            <!-- Dynamic Image Content -->
+          </div>
+          <div id="mediaPreviewImageSource" class="muted small" style="margin-top:8px; word-break:break-all; font-size:11px; flex:1;"></div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:18px; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn" id="btnCloseMediaPreviewBtn">Close Preview</button>
       </div>
     </div>
   </div>

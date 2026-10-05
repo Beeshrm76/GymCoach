@@ -577,10 +577,18 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td><strong>${esc(ex.name)}</strong>${ex.aliases?.length ? `<br><small style="color:var(--text-muted)">${esc(ex.aliases.join(', '))}</small>` : ''}</td>
           <td><span class="role-badge" style="background:var(--bg-input);font-size:11px;font-weight:600;text-transform:capitalize;">${esc(displayType)}</span></td>
           <td style="font-weight:500;">${esc(displayBody)}</td>
-          <td>${mediaStatus}</td>
+          <td onclick="openMediaPreview(${origIdx})" title="Click to preview media" style="cursor:pointer;">
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <span>${mediaStatus}</span>
+              ${(ex.video_file_url || ex.video_url || ex.gif_url || ex.icon_url || ex.image_url) ? '<small style="color:var(--accent, #00f2fe); font-size:11px;">👁️ Click to view</small>' : ''}
+            </div>
+          </td>
           <td>
-            <button class="btn small-btn" onclick="editExercise(${origIdx})">Edit</button>
-            <button class="btn small-btn btn-danger" onclick="deleteExercise(${origIdx})">Delete</button>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="btn small-btn" style="background:rgba(0,242,254,0.12); color:var(--accent, #00f2fe); border:1px solid rgba(0,242,254,0.3); font-weight:600;" onclick="openMediaPreview(${origIdx})" title="Preview all media for this exercise">👁️ Preview</button>
+              <button class="btn small-btn" onclick="editExercise(${origIdx})">Edit</button>
+              <button class="btn small-btn btn-danger" onclick="deleteExercise(${origIdx})">Delete</button>
+            </div>
           </td>
         </tr>`;
     }).join('');
@@ -834,6 +842,145 @@ document.addEventListener("DOMContentLoaded", async () => {
       $('exModalVideoPreview').style.display = 'none';
     }
   }
+
+  // ── Exercise Media Preview Modal Logic ──
+  window.openMediaPreview = function(origIdx) {
+    const ex = defaultExercises[origIdx];
+    if (!ex) return;
+
+    if ($('mediaPreviewModalTitle')) $('mediaPreviewModalTitle').textContent = ex.name || 'Exercise Media';
+    if ($('mediaPreviewModalSubtitle')) {
+      const typeStr = ex.type ? ex.type.charAt(0).toUpperCase() + ex.type.slice(1) : 'Standard';
+      const bodyStr = ex.body_part ? ex.body_part.charAt(0).toUpperCase() + ex.body_part.slice(1) : 'General';
+      $('mediaPreviewModalSubtitle').textContent = `Type: ${typeStr}  •  Muscle Group: ${bodyStr}`;
+    }
+
+    // Reset tabs to "all"
+    switchMediaPreviewTab('all');
+
+    // 1. Video Preview
+    const vidContent = $('mediaPreviewVideoContent');
+    const vidBadge = $('mediaPreviewVideoBadge');
+    const vidSource = $('mediaPreviewVideoSource');
+    const vidUrl = ex.video_file_url || ex.video_url || '';
+
+    if (vidUrl) {
+      const info = extractVideoInfo(vidUrl);
+      if (info && (info.type === 'youtube' || info.type === 'vimeo')) {
+        vidContent.innerHTML = `<iframe src="${info.embedUrl}" style="width:100%;height:100%;border:0;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        vidBadge.textContent = info.type === 'youtube' ? 'YouTube' : 'Vimeo';
+        vidBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+        vidBadge.style.color = '#f87171';
+        vidSource.innerHTML = `Source: <a href="${esc(info.url)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(info.url.length > 55 ? info.url.slice(0, 55) + '…' : info.url)}</a>`;
+      } else {
+        vidContent.innerHTML = `<video src="${esc(vidUrl)}" controls muted autoplay playsinline style="width:100%;height:100%;object-fit:contain;"></video>`;
+        vidBadge.textContent = ex.video_file_url ? 'Uploaded File' : 'Direct Video';
+        vidBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+        vidBadge.style.color = '#10b981';
+        vidSource.innerHTML = `Source: <a href="${esc(vidUrl)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(vidUrl.length > 55 ? vidUrl.slice(0, 55) + '…' : vidUrl)}</a>`;
+      }
+    } else {
+      vidContent.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px;"><div style="font-size:36px; margin-bottom:6px; opacity:0.4;">🎬</div><div style="font-size:12px;">No video attached</div></div>`;
+      vidBadge.textContent = 'None';
+      vidBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+      vidBadge.style.color = 'var(--text-muted)';
+      vidSource.innerHTML = '';
+    }
+
+    // 2. GIF Preview
+    const gifContent = $('mediaPreviewGifContent');
+    const gifBadge = $('mediaPreviewGifBadge');
+    const gifSource = $('mediaPreviewGifSource');
+
+    if (ex.gif_url) {
+      gifContent.innerHTML = `<img src="${esc(ex.gif_url)}" alt="Looping GIF demo" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+      gifBadge.textContent = 'Looping GIF';
+      gifBadge.style.background = 'rgba(0, 242, 254, 0.15)';
+      gifBadge.style.color = 'var(--accent, #00f2fe)';
+      gifSource.innerHTML = `Source: <a href="${esc(ex.gif_url)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(ex.gif_url.length > 55 ? ex.gif_url.slice(0, 55) + '…' : ex.gif_url)}</a>`;
+    } else {
+      gifContent.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px;"><div style="font-size:36px; margin-bottom:6px; opacity:0.4;">🎞️</div><div style="font-size:12px;">No custom GIF uploaded</div></div>`;
+      gifBadge.textContent = 'None';
+      gifBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+      gifBadge.style.color = 'var(--text-muted)';
+      gifSource.innerHTML = '';
+    }
+
+    // 3. Image / Icon Preview
+    const imgContent = $('mediaPreviewImageContent');
+    const imgBadge = $('mediaPreviewImageBadge');
+    const imgSource = $('mediaPreviewImageSource');
+    const imgUrl = ex.icon_url || ex.image_url || '';
+
+    if (imgUrl) {
+      imgContent.innerHTML = `<img src="${esc(imgUrl)}" alt="Exercise image" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+      imgBadge.textContent = ex.icon_url ? 'Icon Image' : 'Image URL';
+      imgBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+      imgBadge.style.color = '#10b981';
+      imgSource.innerHTML = `Source: <a href="${esc(imgUrl)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(imgUrl.length > 55 ? imgUrl.slice(0, 55) + '…' : imgUrl)}</a>`;
+    } else {
+      imgContent.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px;"><div style="font-size:36px; margin-bottom:6px; opacity:0.4;">🖼️</div><div style="font-size:12px;">No image or icon attached</div></div>`;
+      imgBadge.textContent = 'None';
+      imgBadge.style.background = 'rgba(255, 255, 255, 0.05)';
+      imgBadge.style.color = 'var(--text-muted)';
+      imgSource.innerHTML = '';
+    }
+
+    $('exerciseMediaPreviewModal').style.display = 'flex';
+  };
+
+  window.closeMediaPreview = function() {
+    $('exerciseMediaPreviewModal').style.display = 'none';
+    if ($('mediaPreviewVideoContent')) $('mediaPreviewVideoContent').innerHTML = '';
+    if ($('mediaPreviewGifContent')) $('mediaPreviewGifContent').innerHTML = '';
+    if ($('mediaPreviewImageContent')) $('mediaPreviewImageContent').innerHTML = '';
+  };
+
+  window.switchMediaPreviewTab = function(tab) {
+    const vCard = $('mediaPreviewVideoCard');
+    const gCard = $('mediaPreviewGifCard');
+    const iCard = $('mediaPreviewImageCard');
+    const tAll = $('mediaPreviewTabAll');
+    const tVid = $('mediaPreviewTabVideo');
+    const tGif = $('mediaPreviewTabGif');
+    const tImg = $('mediaPreviewTabImage');
+
+    [tAll, tVid, tGif, tImg].forEach(b => {
+      if (b) {
+        b.classList.remove('active');
+        b.style.background = '';
+        b.style.color = '';
+      }
+    });
+
+    if (tab === 'video') {
+      if (tVid) { tVid.classList.add('active'); tVid.style.background = 'rgba(239, 68, 68, 0.2)'; tVid.style.color = '#f87171'; }
+      if (vCard) vCard.style.display = 'flex';
+      if (gCard) gCard.style.display = 'none';
+      if (iCard) iCard.style.display = 'none';
+    } else if (tab === 'gif') {
+      if (tGif) { tGif.classList.add('active'); tGif.style.background = 'rgba(0, 242, 254, 0.2)'; tGif.style.color = 'var(--accent, #00f2fe)'; }
+      if (vCard) vCard.style.display = 'none';
+      if (gCard) gCard.style.display = 'flex';
+      if (iCard) iCard.style.display = 'none';
+    } else if (tab === 'image') {
+      if (tImg) { tImg.classList.add('active'); tImg.style.background = 'rgba(16, 185, 129, 0.2)'; tImg.style.color = '#10b981'; }
+      if (vCard) vCard.style.display = 'none';
+      if (gCard) gCard.style.display = 'none';
+      if (iCard) iCard.style.display = 'flex';
+    } else {
+      if (tAll) { tAll.classList.add('active'); tAll.style.background = 'var(--accent, #00f2fe)'; tAll.style.color = '#000'; }
+      if (vCard) vCard.style.display = 'flex';
+      if (gCard) gCard.style.display = 'flex';
+      if (iCard) iCard.style.display = 'flex';
+    }
+  };
+
+  $('btnCloseMediaPreviewModal')?.addEventListener('click', closeMediaPreview);
+  $('btnCloseMediaPreviewBtn')?.addEventListener('click', closeMediaPreview);
+  $('exerciseMediaPreviewModal')?.addEventListener('click', e => {
+    if (e.target === $('exerciseMediaPreviewModal')) closeMediaPreview();
+  });
 
   $('btnAddExercise')?.addEventListener('click', () => openExerciseModal(-1));
   $('btnCancelExercise')?.addEventListener('click', closeExerciseModal);
