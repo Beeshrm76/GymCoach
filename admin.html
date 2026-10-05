@@ -208,6 +208,9 @@
             <h1>Exercise Media</h1>
             <p>Upload and manage images & videos for exercises. Media will be available to all users.</p>
           </div>
+          <div>
+            <button type="button" class="btn small-btn" id="btnExportExercisesAdmin" style="display:inline-flex; align-items:center; gap:6px;">📥 Export All Exercises (JSON)</button>
+          </div>
         </div>
 
         <div class="settings-grid" style="grid-template-columns: minmax(0, 700px);">
@@ -272,13 +275,20 @@
                   </div>
                 </div>
 
-                <div class="admin-media-preview-card">
-                  <h5>🎬 Video</h5>
+                <div class="admin-media-preview-card" id="adminMediaVideoCard">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h5 id="adminMediaVideoTitle" style="margin:0;">🎬 Video</h5>
+                    <!-- Toggle Video or GIF in Video Preview Section -->
+                    <div class="media-toggle-pill-group">
+                      <button type="button" class="btn-preview-toggle active" id="btnAdminToggleVideo" title="Switch to Video Demonstration">🎬 Video</button>
+                      <button type="button" class="btn-preview-toggle" id="btnAdminToggleGif" title="Switch to Looping GIF Demonstration">🎞️ GIF</button>
+                    </div>
+                  </div>
                   <div class="admin-media-preview" id="adminMediaVideoPreview" style="background:#000;">
                     <span class="admin-media-placeholder">No video</span>
                   </div>
                   <div class="admin-media-upload-row">
-                    <label class="btn small-btn" for="adminMediaVideoInput">Choose Video</label>
+                    <label class="btn small-btn" for="adminMediaVideoInput" id="adminMediaVideoInputLabel">Choose Video</label>
                     <input type="file" id="adminMediaVideoInput" accept="video/*" hidden>
                     <button class="btn small-btn danger" id="adminMediaVideoRemove" style="display:none;">Remove</button>
                   </div>
@@ -324,21 +334,29 @@
         <button type="button" class="btn small-btn" id="btnCloseAdminMediaPreviewModal" style="font-size:18px; border:none; background:transparent; cursor:pointer; color:var(--text-muted); padding:4px 8px;">✕</button>
       </div>
 
+      <!-- Media Filter Pills -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        <button type="button" class="btn small-btn active" id="adminModalTabAll" style="font-size:12px;">All Media</button>
+        <button type="button" class="btn small-btn" id="adminModalTabVideo" style="font-size:12px;">🎬 Video</button>
+        <button type="button" class="btn small-btn" id="adminModalTabGif" style="font-size:12px;">🎞️ Looping GIF</button>
+        <button type="button" class="btn small-btn" id="adminModalTabImage" style="font-size:12px;">🖼️ Image</button>
+      </div>
+
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px;" id="adminMediaPreviewModalGrid">
         <!-- Video -->
-        <div style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
+        <div id="adminModalVideoCard" style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
           <h5 style="margin:0 0 8px 0; color:#fff; font-size:13px;">🎬 Video Demonstration</h5>
           <div id="adminModalVideoPreviewBox" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
         </div>
 
         <!-- GIF -->
-        <div style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
+        <div id="adminModalGifCard" style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
           <h5 style="margin:0 0 8px 0; color:#fff; font-size:13px;">🎞️ Looping GIF</h5>
           <div id="adminModalGifPreviewBox" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
         </div>
 
         <!-- Image -->
-        <div style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
+        <div id="adminModalImageCard" style="background:#080c12; border:1px solid var(--glass-border); border-radius:12px; padding:12px;">
           <h5 style="margin:0 0 8px 0; color:#fff; font-size:13px;">🖼️ Image / Icon</h5>
           <div id="adminModalImagePreviewBox" style="aspect-ratio:16/9; background:#000; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;"></div>
         </div>

@@ -1,0 +1,3754 @@
+[
+  {
+    "name": "Flat Barbell Bench Press",
+    "slug": "flat_barbell_bench_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bench press",
+      "bb bench press",
+      "flat bench"
+    ],
+    "default_video_path": "videos/flat_barbell_bench_press.mp4",
+    "default_gif_path": "images/flat_barbell_bench_press.gif",
+    "default_image_path": "images/flat_barbell_bench_press.jpg"
+  },
+  {
+    "name": "Incline Barbell Bench Press",
+    "slug": "incline_barbell_bench_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "incline bench",
+      "incline bb bench"
+    ],
+    "default_video_path": "videos/incline_barbell_bench_press.mp4",
+    "default_gif_path": "images/incline_barbell_bench_press.gif",
+    "default_image_path": "images/incline_barbell_bench_press.jpg"
+  },
+  {
+    "name": "Decline Barbell Bench Press",
+    "slug": "decline_barbell_bench_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "decline bench",
+      "decline bb bench"
+    ],
+    "default_video_path": "videos/decline_barbell_bench_press.mp4",
+    "default_gif_path": "images/decline_barbell_bench_press.gif",
+    "default_image_path": "images/decline_barbell_bench_press.jpg"
+  },
+  {
+    "name": "Flat Dumbbell Press",
+    "slug": "flat_dumbbell_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db press",
+      "flat db press",
+      "dumbbell bench press"
+    ],
+    "default_video_path": "videos/flat_dumbbell_press.mp4",
+    "default_gif_path": "images/flat_dumbbell_press.gif",
+    "default_image_path": "images/flat_dumbbell_press.jpg"
+  },
+  {
+    "name": "Incline Dumbbell Press",
+    "slug": "incline_dumbbell_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "incline db press"
+    ],
+    "default_video_path": "videos/incline_dumbbell_press.mp4",
+    "default_gif_path": "images/incline_dumbbell_press.gif",
+    "default_image_path": "images/incline_dumbbell_press.jpg"
+  },
+  {
+    "name": "Decline Dumbbell Press",
+    "slug": "decline_dumbbell_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "decline db press"
+    ],
+    "default_video_path": "videos/decline_dumbbell_press.mp4",
+    "default_gif_path": "images/decline_dumbbell_press.gif",
+    "default_image_path": "images/decline_dumbbell_press.jpg"
+  },
+  {
+    "name": "Seated Chest Press",
+    "slug": "seated_chest_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "chest press machine",
+      "machine chest press"
+    ],
+    "default_video_path": "videos/seated_chest_press.mp4",
+    "default_gif_path": "images/seated_chest_press.gif",
+    "default_image_path": "images/seated_chest_press.jpg"
+  },
+  {
+    "name": "Pec Fly",
+    "slug": "pec_fly",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "pec deck",
+      "chest fly",
+      "butterfly",
+      "machine fly",
+      "pec fly machine"
+    ],
+    "default_video_path": "videos/pec_fly.mp4",
+    "default_gif_path": "images/pec_fly.gif",
+    "default_image_path": "images/pec_fly.jpg"
+  },
+  {
+    "name": "Cable Fly",
+    "slug": "cable_fly",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable crossover",
+      "cable chest fly"
+    ],
+    "default_video_path": "videos/cable_fly.mp4",
+    "default_gif_path": "images/cable_fly.gif",
+    "default_image_path": "images/cable_fly.jpg"
+  },
+  {
+    "name": "Low Cable Fly",
+    "slug": "low_cable_fly",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "low to high cable fly",
+      "incline cable fly"
+    ],
+    "default_video_path": "videos/low_cable_fly.mp4",
+    "default_gif_path": "images/low_cable_fly.gif",
+    "default_image_path": "images/low_cable_fly.jpg"
+  },
+  {
+    "name": "High Cable Fly",
+    "slug": "high_cable_fly",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "high to low cable fly",
+      "decline cable fly"
+    ],
+    "default_video_path": "videos/high_cable_fly.mp4",
+    "default_gif_path": "images/high_cable_fly.gif",
+    "default_image_path": "images/high_cable_fly.jpg"
+  },
+  {
+    "name": "Dumbbell Fly",
+    "slug": "dumbbell_fly",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db fly",
+      "flat dumbbell fly"
+    ],
+    "default_video_path": "videos/dumbbell_fly.mp4",
+    "default_gif_path": "images/dumbbell_fly.gif",
+    "default_image_path": "images/dumbbell_fly.jpg"
+  },
+  {
+    "name": "Incline Dumbbell Fly",
+    "slug": "incline_dumbbell_fly",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "incline db fly"
+    ],
+    "default_video_path": "videos/incline_dumbbell_fly.mp4",
+    "default_gif_path": "images/incline_dumbbell_fly.gif",
+    "default_image_path": "images/incline_dumbbell_fly.jpg"
+  },
+  {
+    "name": "Push-Ups",
+    "slug": "push_ups",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "push ups",
+      "pushup",
+      "press up"
+    ],
+    "default_video_path": "videos/push_ups.mp4",
+    "default_gif_path": "images/push_ups.gif",
+    "default_image_path": "images/push_ups.jpg"
+  },
+  {
+    "name": "Weighted Push-Ups",
+    "slug": "weighted_push_ups",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "weighted pushup"
+    ],
+    "default_video_path": "videos/weighted_push_ups.mp4",
+    "default_gif_path": "images/weighted_push_ups.gif",
+    "default_image_path": "images/weighted_push_ups.jpg"
+  },
+  {
+    "name": "Dips",
+    "slug": "dips",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "chest dips",
+      "parallel bar dips",
+      "weighted dips"
+    ],
+    "default_video_path": "videos/dips.mp4",
+    "default_gif_path": "images/dips.gif",
+    "default_image_path": "images/dips.jpg"
+  },
+  {
+    "name": "Machine Dips",
+    "slug": "machine_dips",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "assisted dips",
+      "dip machine"
+    ],
+    "default_video_path": "videos/machine_dips.mp4",
+    "default_gif_path": "images/machine_dips.gif",
+    "default_image_path": "images/machine_dips.jpg"
+  },
+  {
+    "name": "Close Grip Bench Press",
+    "slug": "close_grip_bench_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "close grip bb bench",
+      "narrow grip bench"
+    ],
+    "default_video_path": "videos/close_grip_bench_press.mp4",
+    "default_gif_path": "images/close_grip_bench_press.gif",
+    "default_image_path": "images/close_grip_bench_press.jpg"
+  },
+  {
+    "name": "Landmine Press",
+    "slug": "landmine_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "angled barbell press"
+    ],
+    "default_video_path": "videos/landmine_press.mp4",
+    "default_gif_path": "images/landmine_press.gif",
+    "default_image_path": "images/landmine_press.jpg"
+  },
+  {
+    "name": "Floor Press",
+    "slug": "floor_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dumbbell floor press",
+      "barbell floor press"
+    ],
+    "default_video_path": "videos/floor_press.mp4",
+    "default_gif_path": "images/floor_press.gif",
+    "default_image_path": "images/floor_press.jpg"
+  },
+  {
+    "name": "Smith Machine Bench Press",
+    "slug": "smith_machine_bench_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "smith bench",
+      "smith machine press"
+    ],
+    "default_video_path": "videos/smith_machine_bench_press.mp4",
+    "default_gif_path": "images/smith_machine_bench_press.gif",
+    "default_image_path": "images/smith_machine_bench_press.jpg"
+  },
+  {
+    "name": "Svend Press",
+    "slug": "svend_press",
+    "type": "push",
+    "body_part": "chest",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "plate squeeze press"
+    ],
+    "default_video_path": "videos/svend_press.mp4",
+    "default_gif_path": "images/svend_press.gif",
+    "default_image_path": "images/svend_press.jpg"
+  },
+  {
+    "name": "Lat Pulldown",
+    "slug": "lat_pulldown",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wide grip pulldown",
+      "cable pulldown"
+    ],
+    "default_video_path": "videos/lat_pulldown.mp4",
+    "default_gif_path": "images/lat_pulldown.gif",
+    "default_image_path": "images/lat_pulldown.jpg"
+  },
+  {
+    "name": "Close Grip Lat Pulldown",
+    "slug": "close_grip_lat_pulldown",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "close grip pulldown",
+      "narrow grip pulldown",
+      "v-bar pulldown"
+    ],
+    "default_video_path": "videos/close_grip_lat_pulldown.mp4",
+    "default_gif_path": "images/close_grip_lat_pulldown.gif",
+    "default_image_path": "images/close_grip_lat_pulldown.jpg"
+  },
+  {
+    "name": "Close Underhand Lat Pulldown",
+    "slug": "close_underhand_lat_pulldown",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "underhand pulldown",
+      "reverse grip pulldown",
+      "supinated pulldown"
+    ],
+    "default_video_path": "videos/close_underhand_lat_pulldown.mp4",
+    "default_gif_path": "images/close_underhand_lat_pulldown.gif",
+    "default_image_path": "images/close_underhand_lat_pulldown.jpg"
+  },
+  {
+    "name": "Straight Arm Pulldown",
+    "slug": "straight_arm_pulldown",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "straight arm lat pulldown",
+      "stiff arm pulldown"
+    ],
+    "default_video_path": "videos/straight_arm_pulldown.mp4",
+    "default_gif_path": "images/straight_arm_pulldown.gif",
+    "default_image_path": "images/straight_arm_pulldown.jpg"
+  },
+  {
+    "name": "Pull-Ups",
+    "slug": "pull_ups",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "pull ups",
+      "pullup",
+      "wide grip pull up"
+    ],
+    "default_video_path": "videos/pull_ups.mp4",
+    "default_gif_path": "images/pull_ups.gif",
+    "default_image_path": "images/pull_ups.jpg"
+  },
+  {
+    "name": "Chin-Ups",
+    "slug": "chin_ups",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "chin ups",
+      "chinup",
+      "underhand pull up"
+    ],
+    "default_video_path": "videos/chin_ups.mp4",
+    "default_gif_path": "images/chin_ups.gif",
+    "default_image_path": "images/chin_ups.jpg"
+  },
+  {
+    "name": "Neutral Grip Pull-Ups",
+    "slug": "neutral_grip_pull_ups",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hammer grip pull ups",
+      "parallel grip pull ups"
+    ],
+    "default_video_path": "videos/neutral_grip_pull_ups.mp4",
+    "default_gif_path": "images/neutral_grip_pull_ups.gif",
+    "default_image_path": "images/neutral_grip_pull_ups.jpg"
+  },
+  {
+    "name": "Seated Cable Row",
+    "slug": "seated_cable_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable row",
+      "low row",
+      "seated row"
+    ],
+    "default_video_path": "videos/seated_cable_row.mp4",
+    "default_gif_path": "images/seated_cable_row.gif",
+    "default_image_path": "images/seated_cable_row.jpg"
+  },
+  {
+    "name": "Single Arm Cable Row",
+    "slug": "single_arm_cable_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "one arm cable row"
+    ],
+    "default_video_path": "videos/single_arm_cable_row.mp4",
+    "default_gif_path": "images/single_arm_cable_row.gif",
+    "default_image_path": "images/single_arm_cable_row.jpg"
+  },
+  {
+    "name": "Chest Supported Dumbbell Row",
+    "slug": "chest_supported_dumbbell_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "chest supported row",
+      "incline db row",
+      "seal row"
+    ],
+    "default_video_path": "videos/chest_supported_dumbbell_row.mp4",
+    "default_gif_path": "images/chest_supported_dumbbell_row.gif",
+    "default_image_path": "images/chest_supported_dumbbell_row.jpg"
+  },
+  {
+    "name": "Barbell Row",
+    "slug": "barbell_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bent over row",
+      "bb row",
+      "barbell bent over row"
+    ],
+    "default_video_path": "videos/barbell_row.mp4",
+    "default_gif_path": "images/barbell_row.gif",
+    "default_image_path": "images/barbell_row.jpg"
+  },
+  {
+    "name": "Pendlay Row",
+    "slug": "pendlay_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "strict barbell row"
+    ],
+    "default_video_path": "videos/pendlay_row.mp4",
+    "default_gif_path": "images/pendlay_row.gif",
+    "default_image_path": "images/pendlay_row.jpg"
+  },
+  {
+    "name": "T-Bar Row",
+    "slug": "t_bar_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "t bar row",
+      "landmine row"
+    ],
+    "default_video_path": "videos/t_bar_row.mp4",
+    "default_gif_path": "images/t_bar_row.gif",
+    "default_image_path": "images/t_bar_row.jpg"
+  },
+  {
+    "name": "Dumbbell Row",
+    "slug": "dumbbell_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db row",
+      "one arm dumbbell row",
+      "single arm db row"
+    ],
+    "default_video_path": "videos/dumbbell_row.mp4",
+    "default_gif_path": "images/dumbbell_row.gif",
+    "default_image_path": "images/dumbbell_row.jpg"
+  },
+  {
+    "name": "Kroc Row",
+    "slug": "kroc_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "heavy dumbbell row"
+    ],
+    "default_video_path": "videos/kroc_row.mp4",
+    "default_gif_path": "images/kroc_row.gif",
+    "default_image_path": "images/kroc_row.jpg"
+  },
+  {
+    "name": "Meadows Row",
+    "slug": "meadows_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "landmine meadows row"
+    ],
+    "default_video_path": "videos/meadows_row.mp4",
+    "default_gif_path": "images/meadows_row.gif",
+    "default_image_path": "images/meadows_row.jpg"
+  },
+  {
+    "name": "Machine Row",
+    "slug": "machine_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "plate loaded row",
+      "hammer strength row"
+    ],
+    "default_video_path": "videos/machine_row.mp4",
+    "default_gif_path": "images/machine_row.gif",
+    "default_image_path": "images/machine_row.jpg"
+  },
+  {
+    "name": "Inverted Row",
+    "slug": "inverted_row",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "body weight row",
+      "australian pull up"
+    ],
+    "default_video_path": "videos/inverted_row.mp4",
+    "default_gif_path": "images/inverted_row.gif",
+    "default_image_path": "images/inverted_row.jpg"
+  },
+  {
+    "name": "Face Pull",
+    "slug": "face_pull",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable face pull",
+      "rope face pull"
+    ],
+    "default_video_path": "videos/face_pull.mp4",
+    "default_gif_path": "images/face_pull.gif",
+    "default_image_path": "images/face_pull.jpg"
+  },
+  {
+    "name": "Reverse Pec Fly",
+    "slug": "reverse_pec_fly",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "reverse pec deck",
+      "rear delt fly machine",
+      "reverse fly machine"
+    ],
+    "default_video_path": "videos/reverse_pec_fly.mp4",
+    "default_gif_path": "images/reverse_pec_fly.gif",
+    "default_image_path": "images/reverse_pec_fly.jpg"
+  },
+  {
+    "name": "Cable Rear Delt Fly",
+    "slug": "cable_rear_delt_fly",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "reverse cable fly",
+      "rear delt cable fly"
+    ],
+    "default_video_path": "videos/cable_rear_delt_fly.mp4",
+    "default_gif_path": "images/cable_rear_delt_fly.gif",
+    "default_image_path": "images/cable_rear_delt_fly.jpg"
+  },
+  {
+    "name": "Dumbbell Rear Delt Fly",
+    "slug": "dumbbell_rear_delt_fly",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bent over rear delt fly",
+      "bent over db fly"
+    ],
+    "default_video_path": "videos/dumbbell_rear_delt_fly.mp4",
+    "default_gif_path": "images/dumbbell_rear_delt_fly.gif",
+    "default_image_path": "images/dumbbell_rear_delt_fly.jpg"
+  },
+  {
+    "name": "Hyperextension",
+    "slug": "hyperextension",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "back extension",
+      "roman chair"
+    ],
+    "default_video_path": "videos/hyperextension.mp4",
+    "default_gif_path": "images/hyperextension.gif",
+    "default_image_path": "images/hyperextension.jpg"
+  },
+  {
+    "name": "Rack Pull",
+    "slug": "rack_pull",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "block pull"
+    ],
+    "default_video_path": "videos/rack_pull.mp4",
+    "default_gif_path": "images/rack_pull.gif",
+    "default_image_path": "images/rack_pull.jpg"
+  },
+  {
+    "name": "Shrugs",
+    "slug": "shrugs",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell shrug",
+      "dumbbell shrug",
+      "trap shrug"
+    ],
+    "default_video_path": "videos/shrugs.mp4",
+    "default_gif_path": "images/shrugs.gif",
+    "default_image_path": "images/shrugs.jpg"
+  },
+  {
+    "name": "Cable Shrug",
+    "slug": "cable_shrug",
+    "type": "pull",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable trap shrug"
+    ],
+    "default_video_path": "videos/cable_shrug.mp4",
+    "default_gif_path": "images/cable_shrug.gif",
+    "default_image_path": "images/cable_shrug.jpg"
+  },
+  {
+    "name": "Overhead Press",
+    "slug": "overhead_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "military press",
+      "standing press",
+      "barbell ohp",
+      "ohp"
+    ],
+    "default_video_path": "videos/overhead_press.mp4",
+    "default_gif_path": "images/overhead_press.gif",
+    "default_image_path": "images/overhead_press.jpg"
+  },
+  {
+    "name": "Seated Overhead Press",
+    "slug": "seated_overhead_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "seated military press",
+      "seated ohp"
+    ],
+    "default_video_path": "videos/seated_overhead_press.mp4",
+    "default_gif_path": "images/seated_overhead_press.gif",
+    "default_image_path": "images/seated_overhead_press.jpg"
+  },
+  {
+    "name": "Shoulder Press Machine",
+    "slug": "shoulder_press_machine",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "shoulder press",
+      "machine shoulder press",
+      "seated shoulder press machine"
+    ],
+    "default_video_path": "videos/shoulder_press_machine.mp4",
+    "default_gif_path": "images/shoulder_press_machine.gif",
+    "default_image_path": "images/shoulder_press_machine.jpg"
+  },
+  {
+    "name": "Dumbbell Shoulder Press",
+    "slug": "dumbbell_shoulder_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db shoulder press",
+      "seated dumbbell press",
+      "db ohp"
+    ],
+    "default_video_path": "videos/dumbbell_shoulder_press.mp4",
+    "default_gif_path": "images/dumbbell_shoulder_press.gif",
+    "default_image_path": "images/dumbbell_shoulder_press.jpg"
+  },
+  {
+    "name": "Arnold Press",
+    "slug": "arnold_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "arnold dumbbell press"
+    ],
+    "default_video_path": "videos/arnold_press.mp4",
+    "default_gif_path": "images/arnold_press.gif",
+    "default_image_path": "images/arnold_press.jpg"
+  },
+  {
+    "name": "Push Press",
+    "slug": "push_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing push press"
+    ],
+    "default_video_path": "videos/push_press.mp4",
+    "default_gif_path": "images/push_press.gif",
+    "default_image_path": "images/push_press.jpg"
+  },
+  {
+    "name": "Behind the Neck Press",
+    "slug": "behind_the_neck_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "btnp",
+      "behind neck press"
+    ],
+    "default_video_path": "videos/behind_the_neck_press.mp4",
+    "default_gif_path": "images/behind_the_neck_press.gif",
+    "default_image_path": "images/behind_the_neck_press.jpg"
+  },
+  {
+    "name": "Smith Machine Shoulder Press",
+    "slug": "smith_machine_shoulder_press",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "smith shoulder press",
+      "smith ohp"
+    ],
+    "default_video_path": "videos/smith_machine_shoulder_press.mp4",
+    "default_gif_path": "images/smith_machine_shoulder_press.gif",
+    "default_image_path": "images/smith_machine_shoulder_press.jpg"
+  },
+  {
+    "name": "Dumbbell Lateral Raise",
+    "slug": "dumbbell_lateral_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "lateral raise",
+      "side raise",
+      "db lateral raise"
+    ],
+    "default_video_path": "videos/dumbbell_lateral_raise.mp4",
+    "default_gif_path": "images/dumbbell_lateral_raise.gif",
+    "default_image_path": "images/dumbbell_lateral_raise.jpg"
+  },
+  {
+    "name": "Cable Lateral Raise",
+    "slug": "cable_lateral_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable side raise",
+      "single arm cable lateral raise"
+    ],
+    "default_video_path": "videos/cable_lateral_raise.mp4",
+    "default_gif_path": "images/cable_lateral_raise.gif",
+    "default_image_path": "images/cable_lateral_raise.jpg"
+  },
+  {
+    "name": "Machine Lateral Raise",
+    "slug": "machine_lateral_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "lateral raise machine"
+    ],
+    "default_video_path": "videos/machine_lateral_raise.mp4",
+    "default_gif_path": "images/machine_lateral_raise.gif",
+    "default_image_path": "images/machine_lateral_raise.jpg"
+  },
+  {
+    "name": "Leaning Lateral Raise",
+    "slug": "leaning_lateral_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "incline lateral raise"
+    ],
+    "default_video_path": "videos/leaning_lateral_raise.mp4",
+    "default_gif_path": "images/leaning_lateral_raise.gif",
+    "default_image_path": "images/leaning_lateral_raise.jpg"
+  },
+  {
+    "name": "Dumbbell Front Raise",
+    "slug": "dumbbell_front_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "front raise",
+      "db front raise"
+    ],
+    "default_video_path": "videos/dumbbell_front_raise.mp4",
+    "default_gif_path": "images/dumbbell_front_raise.gif",
+    "default_image_path": "images/dumbbell_front_raise.jpg"
+  },
+  {
+    "name": "Cable Front Raise",
+    "slug": "cable_front_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "front cable raise"
+    ],
+    "default_video_path": "videos/cable_front_raise.mp4",
+    "default_gif_path": "images/cable_front_raise.gif",
+    "default_image_path": "images/cable_front_raise.jpg"
+  },
+  {
+    "name": "Plate Front Raise",
+    "slug": "plate_front_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "front plate raise"
+    ],
+    "default_video_path": "videos/plate_front_raise.mp4",
+    "default_gif_path": "images/plate_front_raise.gif",
+    "default_image_path": "images/plate_front_raise.jpg"
+  },
+  {
+    "name": "Upright Row",
+    "slug": "upright_row",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell upright row",
+      "cable upright row",
+      "db upright row"
+    ],
+    "default_video_path": "videos/upright_row.mp4",
+    "default_gif_path": "images/upright_row.gif",
+    "default_image_path": "images/upright_row.jpg"
+  },
+  {
+    "name": "Lu Raise",
+    "slug": "lu_raise",
+    "type": "push",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "lu lateral raise"
+    ],
+    "default_video_path": "videos/lu_raise.mp4",
+    "default_gif_path": "images/lu_raise.gif",
+    "default_image_path": "images/lu_raise.jpg"
+  },
+  {
+    "name": "Reverse Fly",
+    "slug": "reverse_fly",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "rear delt fly",
+      "bent over fly",
+      "reverse dumbbell fly"
+    ],
+    "default_video_path": "videos/reverse_fly.mp4",
+    "default_gif_path": "images/reverse_fly.gif",
+    "default_image_path": "images/reverse_fly.jpg"
+  },
+  {
+    "name": "Band Pull Apart",
+    "slug": "band_pull_apart",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "banded pull apart",
+      "resistance band pull apart"
+    ],
+    "default_video_path": "videos/band_pull_apart.mp4",
+    "default_gif_path": "images/band_pull_apart.gif",
+    "default_image_path": "images/band_pull_apart.jpg"
+  },
+  {
+    "name": "Seated Rear Delt Fly",
+    "slug": "seated_rear_delt_fly",
+    "type": "pull",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "seated reverse fly"
+    ],
+    "default_video_path": "videos/seated_rear_delt_fly.mp4",
+    "default_gif_path": "images/seated_rear_delt_fly.gif",
+    "default_image_path": "images/seated_rear_delt_fly.jpg"
+  },
+  {
+    "name": "Barbell Curl",
+    "slug": "barbell_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bb curl",
+      "standing barbell curl",
+      "bicep curl barbell"
+    ],
+    "default_video_path": "videos/barbell_curl.mp4",
+    "default_gif_path": "images/barbell_curl.gif",
+    "default_image_path": "images/barbell_curl.jpg"
+  },
+  {
+    "name": "EZ Bar Curl",
+    "slug": "ez_bar_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "ez curl",
+      "ez barbell curl",
+      "cambered bar curl"
+    ],
+    "default_video_path": "videos/ez_bar_curl.mp4",
+    "default_gif_path": "images/ez_bar_curl.gif",
+    "default_image_path": "images/ez_bar_curl.jpg"
+  },
+  {
+    "name": "Dumbbell Curl",
+    "slug": "dumbbell_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db curl",
+      "standing dumbbell curl",
+      "bicep curl"
+    ],
+    "default_video_path": "videos/dumbbell_curl.mp4",
+    "default_gif_path": "images/dumbbell_curl.gif",
+    "default_image_path": "images/dumbbell_curl.jpg"
+  },
+  {
+    "name": "Alternating Dumbbell Curl",
+    "slug": "alternating_dumbbell_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "alternating curl",
+      "alternate db curl"
+    ],
+    "default_video_path": "videos/alternating_dumbbell_curl.mp4",
+    "default_gif_path": "images/alternating_dumbbell_curl.gif",
+    "default_image_path": "images/alternating_dumbbell_curl.jpg"
+  },
+  {
+    "name": "Hammer Curl",
+    "slug": "hammer_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dumbbell hammer curl",
+      "neutral grip curl"
+    ],
+    "default_video_path": "videos/hammer_curl.mp4",
+    "default_gif_path": "images/hammer_curl.gif",
+    "default_image_path": "images/hammer_curl.jpg"
+  },
+  {
+    "name": "Cross Body Hammer Curl",
+    "slug": "cross_body_hammer_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cross body curl",
+      "pinwheel curl"
+    ],
+    "default_video_path": "videos/cross_body_hammer_curl.mp4",
+    "default_gif_path": "images/cross_body_hammer_curl.gif",
+    "default_image_path": "images/cross_body_hammer_curl.jpg"
+  },
+  {
+    "name": "Preacher Curl",
+    "slug": "preacher_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "preacher bench curl",
+      "scott curl",
+      "ez bar preacher curl"
+    ],
+    "default_video_path": "videos/preacher_curl.mp4",
+    "default_gif_path": "images/preacher_curl.gif",
+    "default_image_path": "images/preacher_curl.jpg"
+  },
+  {
+    "name": "Dumbbell Preacher Curl",
+    "slug": "dumbbell_preacher_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db preacher curl",
+      "single arm preacher curl"
+    ],
+    "default_video_path": "videos/dumbbell_preacher_curl.mp4",
+    "default_gif_path": "images/dumbbell_preacher_curl.gif",
+    "default_image_path": "images/dumbbell_preacher_curl.jpg"
+  },
+  {
+    "name": "Incline Dumbbell Curl",
+    "slug": "incline_dumbbell_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "incline curl",
+      "incline db curl",
+      "incline bicep curl"
+    ],
+    "default_video_path": "videos/incline_dumbbell_curl.mp4",
+    "default_gif_path": "images/incline_dumbbell_curl.gif",
+    "default_image_path": "images/incline_dumbbell_curl.jpg"
+  },
+  {
+    "name": "Concentration Curl",
+    "slug": "concentration_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "seated concentration curl",
+      "db concentration curl"
+    ],
+    "default_video_path": "videos/concentration_curl.mp4",
+    "default_gif_path": "images/concentration_curl.gif",
+    "default_image_path": "images/concentration_curl.jpg"
+  },
+  {
+    "name": "Cable Curl",
+    "slug": "cable_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable bicep curl",
+      "standing cable curl"
+    ],
+    "default_video_path": "videos/cable_curl.mp4",
+    "default_gif_path": "images/cable_curl.gif",
+    "default_image_path": "images/cable_curl.jpg"
+  },
+  {
+    "name": "Cable Hammer Curl",
+    "slug": "cable_hammer_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "rope cable curl",
+      "rope hammer curl"
+    ],
+    "default_video_path": "videos/cable_hammer_curl.mp4",
+    "default_gif_path": "images/cable_hammer_curl.gif",
+    "default_image_path": "images/cable_hammer_curl.jpg"
+  },
+  {
+    "name": "Machine Curl",
+    "slug": "machine_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bicep curl machine",
+      "preacher curl machine"
+    ],
+    "default_video_path": "videos/machine_curl.mp4",
+    "default_gif_path": "images/machine_curl.gif",
+    "default_image_path": "images/machine_curl.jpg"
+  },
+  {
+    "name": "Spider Curl",
+    "slug": "spider_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "spider dumbbell curl",
+      "spider barbell curl"
+    ],
+    "default_video_path": "videos/spider_curl.mp4",
+    "default_gif_path": "images/spider_curl.gif",
+    "default_image_path": "images/spider_curl.jpg"
+  },
+  {
+    "name": "Drag Curl",
+    "slug": "drag_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell drag curl"
+    ],
+    "default_video_path": "videos/drag_curl.mp4",
+    "default_gif_path": "images/drag_curl.gif",
+    "default_image_path": "images/drag_curl.jpg"
+  },
+  {
+    "name": "Bayesian Curl",
+    "slug": "bayesian_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable bayesian curl"
+    ],
+    "default_video_path": "videos/bayesian_curl.mp4",
+    "default_gif_path": "images/bayesian_curl.gif",
+    "default_image_path": "images/bayesian_curl.jpg"
+  },
+  {
+    "name": "Reverse Curl",
+    "slug": "reverse_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "reverse barbell curl",
+      "reverse ez bar curl"
+    ],
+    "default_video_path": "videos/reverse_curl.mp4",
+    "default_gif_path": "images/reverse_curl.gif",
+    "default_image_path": "images/reverse_curl.jpg"
+  },
+  {
+    "name": "Zottman Curl",
+    "slug": "zottman_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "zottman dumbbell curl"
+    ],
+    "default_video_path": "videos/zottman_curl.mp4",
+    "default_gif_path": "images/zottman_curl.gif",
+    "default_image_path": "images/zottman_curl.jpg"
+  },
+  {
+    "name": "21s Curl",
+    "slug": "21s_curl",
+    "type": "pull",
+    "body_part": "biceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "21s bicep curl",
+      "partial curls"
+    ],
+    "default_video_path": "videos/21s_curl.mp4",
+    "default_gif_path": "images/21s_curl.gif",
+    "default_image_path": "images/21s_curl.jpg"
+  },
+  {
+    "name": "Tricep Pushdown",
+    "slug": "tricep_pushdown",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "tricep press down",
+      "cable pushdown",
+      "v-bar pushdown",
+      "bar pushdown"
+    ],
+    "default_video_path": "videos/tricep_pushdown.mp4",
+    "default_gif_path": "images/tricep_pushdown.gif",
+    "default_image_path": "images/tricep_pushdown.jpg"
+  },
+  {
+    "name": "Rope Pushdown",
+    "slug": "rope_pushdown",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "rope tricep pushdown",
+      "tricep rope pushdown",
+      "cable rope pushdown"
+    ],
+    "default_video_path": "videos/rope_pushdown.mp4",
+    "default_gif_path": "images/rope_pushdown.gif",
+    "default_image_path": "images/rope_pushdown.jpg"
+  },
+  {
+    "name": "Single Arm Cable Pushdown",
+    "slug": "single_arm_cable_pushdown",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "one arm pushdown",
+      "single arm tricep pushdown"
+    ],
+    "default_video_path": "videos/single_arm_cable_pushdown.mp4",
+    "default_gif_path": "images/single_arm_cable_pushdown.gif",
+    "default_image_path": "images/single_arm_cable_pushdown.jpg"
+  },
+  {
+    "name": "Overhead Tricep Extension",
+    "slug": "overhead_tricep_extension",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable overhead extension",
+      "overhead extension",
+      "french press cable"
+    ],
+    "default_video_path": "videos/overhead_tricep_extension.mp4",
+    "default_gif_path": "images/overhead_tricep_extension.gif",
+    "default_image_path": "images/overhead_tricep_extension.jpg"
+  },
+  {
+    "name": "Dumbbell Overhead Tricep Extension",
+    "slug": "dumbbell_overhead_tricep_extension",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db overhead extension",
+      "dumbbell french press",
+      "seated db extension"
+    ],
+    "default_video_path": "videos/dumbbell_overhead_tricep_extension.mp4",
+    "default_gif_path": "images/dumbbell_overhead_tricep_extension.gif",
+    "default_image_path": "images/dumbbell_overhead_tricep_extension.jpg"
+  },
+  {
+    "name": "Skull Crusher",
+    "slug": "skull_crusher",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "lying tricep extension",
+      "ez bar skull crusher",
+      "barbell skull crusher"
+    ],
+    "default_video_path": "videos/skull_crusher.mp4",
+    "default_gif_path": "images/skull_crusher.gif",
+    "default_image_path": "images/skull_crusher.jpg"
+  },
+  {
+    "name": "Dumbbell Skull Crusher",
+    "slug": "dumbbell_skull_crusher",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db skull crusher",
+      "lying db extension"
+    ],
+    "default_video_path": "videos/dumbbell_skull_crusher.mp4",
+    "default_gif_path": "images/dumbbell_skull_crusher.gif",
+    "default_image_path": "images/dumbbell_skull_crusher.jpg"
+  },
+  {
+    "name": "Tricep Kickback",
+    "slug": "tricep_kickback",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dumbbell kickback",
+      "cable kickback",
+      "db kickback"
+    ],
+    "default_video_path": "videos/tricep_kickback.mp4",
+    "default_gif_path": "images/tricep_kickback.gif",
+    "default_image_path": "images/tricep_kickback.jpg"
+  },
+  {
+    "name": "Close Grip Bench Press",
+    "slug": "close_grip_bench_press",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cgbp",
+      "narrow bench"
+    ],
+    "default_video_path": "videos/close_grip_bench_press.mp4",
+    "default_gif_path": "images/close_grip_bench_press.gif",
+    "default_image_path": "images/close_grip_bench_press.jpg"
+  },
+  {
+    "name": "Diamond Push-Ups",
+    "slug": "diamond_push_ups",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "diamond pushup",
+      "close grip push up",
+      "triangle push up"
+    ],
+    "default_video_path": "videos/diamond_push_ups.mp4",
+    "default_gif_path": "images/diamond_push_ups.gif",
+    "default_image_path": "images/diamond_push_ups.jpg"
+  },
+  {
+    "name": "Tricep Dips",
+    "slug": "tricep_dips",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bench dips",
+      "chair dips",
+      "bodyweight dips"
+    ],
+    "default_video_path": "videos/tricep_dips.mp4",
+    "default_gif_path": "images/tricep_dips.gif",
+    "default_image_path": "images/tricep_dips.jpg"
+  },
+  {
+    "name": "JM Press",
+    "slug": "jm_press",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "jm bench press"
+    ],
+    "default_video_path": "videos/jm_press.mp4",
+    "default_gif_path": "images/jm_press.gif",
+    "default_image_path": "images/jm_press.jpg"
+  },
+  {
+    "name": "Tate Press",
+    "slug": "tate_press",
+    "type": "push",
+    "body_part": "triceps",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "tate dumbbell press"
+    ],
+    "default_video_path": "videos/tate_press.mp4",
+    "default_gif_path": "images/tate_press.gif",
+    "default_image_path": "images/tate_press.jpg"
+  },
+  {
+    "name": "Wrist Curl",
+    "slug": "wrist_curl",
+    "type": "pull",
+    "body_part": "forearms",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell wrist curl",
+      "dumbbell wrist curl",
+      "forearm curl"
+    ],
+    "default_video_path": "videos/wrist_curl.mp4",
+    "default_gif_path": "images/wrist_curl.gif",
+    "default_image_path": "images/wrist_curl.jpg"
+  },
+  {
+    "name": "Reverse Wrist Curl",
+    "slug": "reverse_wrist_curl",
+    "type": "pull",
+    "body_part": "forearms",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wrist extension",
+      "forearm extension"
+    ],
+    "default_video_path": "videos/reverse_wrist_curl.mp4",
+    "default_gif_path": "images/reverse_wrist_curl.gif",
+    "default_image_path": "images/reverse_wrist_curl.jpg"
+  },
+  {
+    "name": "Farmer Walk",
+    "slug": "farmer_walk",
+    "type": "other",
+    "body_part": "forearms",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "farmer carry",
+      "farmers walk",
+      "dumbbell carry"
+    ],
+    "default_video_path": "videos/farmer_walk.mp4",
+    "default_gif_path": "images/farmer_walk.gif",
+    "default_image_path": "images/farmer_walk.jpg"
+  },
+  {
+    "name": "Plate Pinch",
+    "slug": "plate_pinch",
+    "type": "other",
+    "body_part": "forearms",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "plate pinch hold"
+    ],
+    "default_video_path": "videos/plate_pinch.mp4",
+    "default_gif_path": "images/plate_pinch.gif",
+    "default_image_path": "images/plate_pinch.jpg"
+  },
+  {
+    "name": "Dead Hang",
+    "slug": "dead_hang",
+    "type": "pull",
+    "body_part": "forearms",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bar hang",
+      "hanging hold"
+    ],
+    "default_video_path": "videos/dead_hang.mp4",
+    "default_gif_path": "images/dead_hang.gif",
+    "default_image_path": "images/dead_hang.jpg"
+  },
+  {
+    "name": "Gripper",
+    "slug": "gripper",
+    "type": "other",
+    "body_part": "forearms",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hand gripper",
+      "grip trainer",
+      "captains of crush"
+    ],
+    "default_video_path": "videos/gripper.mp4",
+    "default_gif_path": "images/gripper.gif",
+    "default_image_path": "images/gripper.jpg"
+  },
+  {
+    "name": "Barbell Back Squat",
+    "slug": "barbell_back_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "squat",
+      "back squat",
+      "bb squat"
+    ],
+    "default_video_path": "videos/barbell_back_squat.mp4",
+    "default_gif_path": "images/barbell_back_squat.gif",
+    "default_image_path": "images/barbell_back_squat.jpg"
+  },
+  {
+    "name": "Barbell Front Squat",
+    "slug": "barbell_front_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "front squat",
+      "bb front squat"
+    ],
+    "default_video_path": "videos/barbell_front_squat.mp4",
+    "default_gif_path": "images/barbell_front_squat.gif",
+    "default_image_path": "images/barbell_front_squat.jpg"
+  },
+  {
+    "name": "Dumbbell Front Squat",
+    "slug": "dumbbell_front_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db front squat",
+      "goblet front squat"
+    ],
+    "default_video_path": "videos/dumbbell_front_squat.mp4",
+    "default_gif_path": "images/dumbbell_front_squat.gif",
+    "default_image_path": "images/dumbbell_front_squat.jpg"
+  },
+  {
+    "name": "Goblet Squat",
+    "slug": "goblet_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db goblet squat",
+      "kettlebell goblet squat"
+    ],
+    "default_video_path": "videos/goblet_squat.mp4",
+    "default_gif_path": "images/goblet_squat.gif",
+    "default_image_path": "images/goblet_squat.jpg"
+  },
+  {
+    "name": "Front Arnold Squat",
+    "slug": "front_arnold_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "arnold squat",
+      "front arnolds"
+    ],
+    "default_video_path": "videos/front_arnold_squat.mp4",
+    "default_gif_path": "images/front_arnold_squat.gif",
+    "default_image_path": "images/front_arnold_squat.jpg"
+  },
+  {
+    "name": "Leg Press",
+    "slug": "leg_press",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "45 degree leg press",
+      "machine leg press",
+      "plate loaded leg press"
+    ],
+    "default_video_path": "videos/leg_press.mp4",
+    "default_gif_path": "images/leg_press.gif",
+    "default_image_path": "images/leg_press.jpg"
+  },
+  {
+    "name": "Hack Squat",
+    "slug": "hack_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hack squat machine",
+      "reverse hack squat"
+    ],
+    "default_video_path": "videos/hack_squat.mp4",
+    "default_gif_path": "images/hack_squat.gif",
+    "default_image_path": "images/hack_squat.jpg"
+  },
+  {
+    "name": "V-Squat",
+    "slug": "v_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "v squat machine",
+      "pendulum squat"
+    ],
+    "default_video_path": "videos/v_squat.mp4",
+    "default_gif_path": "images/v_squat.gif",
+    "default_image_path": "images/v_squat.jpg"
+  },
+  {
+    "name": "Smith Machine Squat",
+    "slug": "smith_machine_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "smith squat",
+      "smith machine back squat"
+    ],
+    "default_video_path": "videos/smith_machine_squat.mp4",
+    "default_gif_path": "images/smith_machine_squat.gif",
+    "default_image_path": "images/smith_machine_squat.jpg"
+  },
+  {
+    "name": "Leg Extension",
+    "slug": "leg_extension",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "leg ext",
+      "quad extension",
+      "leg extension machine"
+    ],
+    "default_video_path": "videos/leg_extension.mp4",
+    "default_gif_path": "images/leg_extension.gif",
+    "default_image_path": "images/leg_extension.jpg"
+  },
+  {
+    "name": "Single Leg Extension",
+    "slug": "single_leg_extension",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "one leg extension",
+      "unilateral leg extension"
+    ],
+    "default_video_path": "videos/single_leg_extension.mp4",
+    "default_gif_path": "images/single_leg_extension.gif",
+    "default_image_path": "images/single_leg_extension.jpg"
+  },
+  {
+    "name": "Sissy Squat",
+    "slug": "sissy_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bodyweight sissy squat"
+    ],
+    "default_video_path": "videos/sissy_squat.mp4",
+    "default_gif_path": "images/sissy_squat.gif",
+    "default_image_path": "images/sissy_squat.jpg"
+  },
+  {
+    "name": "Bulgarian Split Squat",
+    "slug": "bulgarian_split_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bss",
+      "rear foot elevated split squat",
+      "bulgarian split squats"
+    ],
+    "default_video_path": "videos/bulgarian_split_squat.mp4",
+    "default_gif_path": "images/bulgarian_split_squat.gif",
+    "default_image_path": "images/bulgarian_split_squat.jpg"
+  },
+  {
+    "name": "Dumbbell Bulgarian Split Squat",
+    "slug": "dumbbell_bulgarian_split_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db bulgarian split squat"
+    ],
+    "default_video_path": "videos/dumbbell_bulgarian_split_squat.mp4",
+    "default_gif_path": "images/dumbbell_bulgarian_split_squat.gif",
+    "default_image_path": "images/dumbbell_bulgarian_split_squat.jpg"
+  },
+  {
+    "name": "Walking Lunge",
+    "slug": "walking_lunge",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dumbbell walking lunge",
+      "bb walking lunge",
+      "lunges"
+    ],
+    "default_video_path": "videos/walking_lunge.mp4",
+    "default_gif_path": "images/walking_lunge.gif",
+    "default_image_path": "images/walking_lunge.jpg"
+  },
+  {
+    "name": "Reverse Lunge",
+    "slug": "reverse_lunge",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dumbbell reverse lunge",
+      "stepping lunge"
+    ],
+    "default_video_path": "videos/reverse_lunge.mp4",
+    "default_gif_path": "images/reverse_lunge.gif",
+    "default_image_path": "images/reverse_lunge.jpg"
+  },
+  {
+    "name": "Stationary Lunge",
+    "slug": "stationary_lunge",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "split squat",
+      "static lunge"
+    ],
+    "default_video_path": "videos/stationary_lunge.mp4",
+    "default_gif_path": "images/stationary_lunge.gif",
+    "default_image_path": "images/stationary_lunge.jpg"
+  },
+  {
+    "name": "Step Up",
+    "slug": "step_up",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dumbbell step up",
+      "barbell step up",
+      "box step up"
+    ],
+    "default_video_path": "videos/step_up.mp4",
+    "default_gif_path": "images/step_up.gif",
+    "default_image_path": "images/step_up.jpg"
+  },
+  {
+    "name": "Pistol Squat",
+    "slug": "pistol_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "single leg squat",
+      "one leg squat"
+    ],
+    "default_video_path": "videos/pistol_squat.mp4",
+    "default_gif_path": "images/pistol_squat.gif",
+    "default_image_path": "images/pistol_squat.jpg"
+  },
+  {
+    "name": "Wall Sit",
+    "slug": "wall_sit",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wall squat"
+    ],
+    "default_video_path": "videos/wall_sit.mp4",
+    "default_gif_path": "images/wall_sit.gif",
+    "default_image_path": "images/wall_sit.jpg"
+  },
+  {
+    "name": "Box Squat",
+    "slug": "box_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "box back squat"
+    ],
+    "default_video_path": "videos/box_squat.mp4",
+    "default_gif_path": "images/box_squat.gif",
+    "default_image_path": "images/box_squat.jpg"
+  },
+  {
+    "name": "Zercher Squat",
+    "slug": "zercher_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "zercher barbell squat"
+    ],
+    "default_video_path": "videos/zercher_squat.mp4",
+    "default_gif_path": "images/zercher_squat.gif",
+    "default_image_path": "images/zercher_squat.jpg"
+  },
+  {
+    "name": "Belt Squat",
+    "slug": "belt_squat",
+    "type": "legs",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "belt squat machine"
+    ],
+    "default_video_path": "videos/belt_squat.mp4",
+    "default_gif_path": "images/belt_squat.gif",
+    "default_image_path": "images/belt_squat.jpg"
+  },
+  {
+    "name": "Conventional Deadlift",
+    "slug": "conventional_deadlift",
+    "type": "pull",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "deadlift",
+      "barbell deadlift",
+      "bb deadlift"
+    ],
+    "default_video_path": "videos/conventional_deadlift.mp4",
+    "default_gif_path": "images/conventional_deadlift.gif",
+    "default_image_path": "images/conventional_deadlift.jpg"
+  },
+  {
+    "name": "Sumo Deadlift",
+    "slug": "sumo_deadlift",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "sumo bb deadlift",
+      "wide stance deadlift"
+    ],
+    "default_video_path": "videos/sumo_deadlift.mp4",
+    "default_gif_path": "images/sumo_deadlift.gif",
+    "default_image_path": "images/sumo_deadlift.jpg"
+  },
+  {
+    "name": "Romanian Deadlift",
+    "slug": "romanian_deadlift",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "rdl",
+      "barbell rdl",
+      "stiff leg deadlift"
+    ],
+    "default_video_path": "videos/romanian_deadlift.mp4",
+    "default_gif_path": "images/romanian_deadlift.gif",
+    "default_image_path": "images/romanian_deadlift.jpg"
+  },
+  {
+    "name": "Dumbbell RDL",
+    "slug": "dumbbell_rdl",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db rdl",
+      "dumbbell romanian deadlift",
+      "db romanian deadlift"
+    ],
+    "default_video_path": "videos/dumbbell_rdl.mp4",
+    "default_gif_path": "images/dumbbell_rdl.gif",
+    "default_image_path": "images/dumbbell_rdl.jpg"
+  },
+  {
+    "name": "Single Leg RDL",
+    "slug": "single_leg_rdl",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "single leg romanian deadlift",
+      "one leg rdl"
+    ],
+    "default_video_path": "videos/single_leg_rdl.mp4",
+    "default_gif_path": "images/single_leg_rdl.gif",
+    "default_image_path": "images/single_leg_rdl.jpg"
+  },
+  {
+    "name": "Trap Bar Deadlift",
+    "slug": "trap_bar_deadlift",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hex bar deadlift"
+    ],
+    "default_video_path": "videos/trap_bar_deadlift.mp4",
+    "default_gif_path": "images/trap_bar_deadlift.gif",
+    "default_image_path": "images/trap_bar_deadlift.jpg"
+  },
+  {
+    "name": "Deficit Deadlift",
+    "slug": "deficit_deadlift",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "elevated deadlift"
+    ],
+    "default_video_path": "videos/deficit_deadlift.mp4",
+    "default_gif_path": "images/deficit_deadlift.gif",
+    "default_image_path": "images/deficit_deadlift.jpg"
+  },
+  {
+    "name": "Good Morning",
+    "slug": "good_morning",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell good morning",
+      "good mornings"
+    ],
+    "default_video_path": "videos/good_morning.mp4",
+    "default_gif_path": "images/good_morning.gif",
+    "default_image_path": "images/good_morning.jpg"
+  },
+  {
+    "name": "Seated Leg Curl",
+    "slug": "seated_leg_curl",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "seated hamstring curl",
+      "leg curl machine",
+      "hamstring curl"
+    ],
+    "default_video_path": "videos/seated_leg_curl.mp4",
+    "default_gif_path": "images/seated_leg_curl.gif",
+    "default_image_path": "images/seated_leg_curl.jpg"
+  },
+  {
+    "name": "Lying Leg Curl",
+    "slug": "lying_leg_curl",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "prone leg curl",
+      "lying hamstring curl"
+    ],
+    "default_video_path": "videos/lying_leg_curl.mp4",
+    "default_gif_path": "images/lying_leg_curl.gif",
+    "default_image_path": "images/lying_leg_curl.jpg"
+  },
+  {
+    "name": "Standing Leg Curl",
+    "slug": "standing_leg_curl",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing hamstring curl"
+    ],
+    "default_video_path": "videos/standing_leg_curl.mp4",
+    "default_gif_path": "images/standing_leg_curl.gif",
+    "default_image_path": "images/standing_leg_curl.jpg"
+  },
+  {
+    "name": "Nordic Curl",
+    "slug": "nordic_curl",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "nordic hamstring curl",
+      "natural glute ham raise"
+    ],
+    "default_video_path": "videos/nordic_curl.mp4",
+    "default_gif_path": "images/nordic_curl.gif",
+    "default_image_path": "images/nordic_curl.jpg"
+  },
+  {
+    "name": "Glute Ham Raise",
+    "slug": "glute_ham_raise",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "ghr",
+      "glute hamstring raise"
+    ],
+    "default_video_path": "videos/glute_ham_raise.mp4",
+    "default_gif_path": "images/glute_ham_raise.gif",
+    "default_image_path": "images/glute_ham_raise.jpg"
+  },
+  {
+    "name": "Cable Pull Through",
+    "slug": "cable_pull_through",
+    "type": "legs",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "pull through",
+      "cable hip hinge"
+    ],
+    "default_video_path": "videos/cable_pull_through.mp4",
+    "default_gif_path": "images/cable_pull_through.gif",
+    "default_image_path": "images/cable_pull_through.jpg"
+  },
+  {
+    "name": "Hip Thrust",
+    "slug": "hip_thrust",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell hip thrust",
+      "weighted hip thrust",
+      "glute bridge barbell"
+    ],
+    "default_video_path": "videos/hip_thrust.mp4",
+    "default_gif_path": "images/hip_thrust.gif",
+    "default_image_path": "images/hip_thrust.jpg"
+  },
+  {
+    "name": "Glute Bridge",
+    "slug": "glute_bridge",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hip bridge",
+      "bodyweight glute bridge"
+    ],
+    "default_video_path": "videos/glute_bridge.mp4",
+    "default_gif_path": "images/glute_bridge.gif",
+    "default_image_path": "images/glute_bridge.jpg"
+  },
+  {
+    "name": "Single Leg Hip Thrust",
+    "slug": "single_leg_hip_thrust",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "one leg hip thrust"
+    ],
+    "default_video_path": "videos/single_leg_hip_thrust.mp4",
+    "default_gif_path": "images/single_leg_hip_thrust.gif",
+    "default_image_path": "images/single_leg_hip_thrust.jpg"
+  },
+  {
+    "name": "Cable Kickback",
+    "slug": "cable_kickback",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cable glute kickback",
+      "glute kickback"
+    ],
+    "default_video_path": "videos/cable_kickback.mp4",
+    "default_gif_path": "images/cable_kickback.gif",
+    "default_image_path": "images/cable_kickback.jpg"
+  },
+  {
+    "name": "Donkey Kick",
+    "slug": "donkey_kick",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "glute donkey kick"
+    ],
+    "default_video_path": "videos/donkey_kick.mp4",
+    "default_gif_path": "images/donkey_kick.gif",
+    "default_image_path": "images/donkey_kick.jpg"
+  },
+  {
+    "name": "Fire Hydrant",
+    "slug": "fire_hydrant",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hip abduction floor"
+    ],
+    "default_video_path": "videos/fire_hydrant.mp4",
+    "default_gif_path": "images/fire_hydrant.gif",
+    "default_image_path": "images/fire_hydrant.jpg"
+  },
+  {
+    "name": "Hip Abduction Machine",
+    "slug": "hip_abduction_machine",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "abduction machine",
+      "outer thigh machine"
+    ],
+    "default_video_path": "videos/hip_abduction_machine.mp4",
+    "default_gif_path": "images/hip_abduction_machine.gif",
+    "default_image_path": "images/hip_abduction_machine.jpg"
+  },
+  {
+    "name": "Hip Adduction Machine",
+    "slug": "hip_adduction_machine",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "adduction machine",
+      "inner thigh machine"
+    ],
+    "default_video_path": "videos/hip_adduction_machine.mp4",
+    "default_gif_path": "images/hip_adduction_machine.gif",
+    "default_image_path": "images/hip_adduction_machine.jpg"
+  },
+  {
+    "name": "Cable Hip Abduction",
+    "slug": "cable_hip_abduction",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing hip abduction"
+    ],
+    "default_video_path": "videos/cable_hip_abduction.mp4",
+    "default_gif_path": "images/cable_hip_abduction.gif",
+    "default_image_path": "images/cable_hip_abduction.jpg"
+  },
+  {
+    "name": "Frog Pump",
+    "slug": "frog_pump",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "frog glute bridge"
+    ],
+    "default_video_path": "videos/frog_pump.mp4",
+    "default_gif_path": "images/frog_pump.gif",
+    "default_image_path": "images/frog_pump.jpg"
+  },
+  {
+    "name": "Banded Walk",
+    "slug": "banded_walk",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "monster walk",
+      "lateral band walk",
+      "side band walk"
+    ],
+    "default_video_path": "videos/banded_walk.mp4",
+    "default_gif_path": "images/banded_walk.gif",
+    "default_image_path": "images/banded_walk.jpg"
+  },
+  {
+    "name": "Sumo Squat",
+    "slug": "sumo_squat",
+    "type": "legs",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wide stance squat",
+      "plie squat"
+    ],
+    "default_video_path": "videos/sumo_squat.mp4",
+    "default_gif_path": "images/sumo_squat.gif",
+    "default_image_path": "images/sumo_squat.jpg"
+  },
+  {
+    "name": "Standing Calf Raise",
+    "slug": "standing_calf_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "calf raise",
+      "machine calf raise",
+      "standing calf raise machine"
+    ],
+    "default_video_path": "videos/standing_calf_raise.mp4",
+    "default_gif_path": "images/standing_calf_raise.gif",
+    "default_image_path": "images/standing_calf_raise.jpg"
+  },
+  {
+    "name": "Seated Calf Raise",
+    "slug": "seated_calf_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "seated calf raise machine"
+    ],
+    "default_video_path": "videos/seated_calf_raise.mp4",
+    "default_gif_path": "images/seated_calf_raise.gif",
+    "default_image_path": "images/seated_calf_raise.jpg"
+  },
+  {
+    "name": "Leg Press Calf Raise",
+    "slug": "leg_press_calf_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "calf press",
+      "calf raise on leg press"
+    ],
+    "default_video_path": "videos/leg_press_calf_raise.mp4",
+    "default_gif_path": "images/leg_press_calf_raise.gif",
+    "default_image_path": "images/leg_press_calf_raise.jpg"
+  },
+  {
+    "name": "Donkey Calf Raise",
+    "slug": "donkey_calf_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "donkey calf"
+    ],
+    "default_video_path": "videos/donkey_calf_raise.mp4",
+    "default_gif_path": "images/donkey_calf_raise.gif",
+    "default_image_path": "images/donkey_calf_raise.jpg"
+  },
+  {
+    "name": "Single Leg Calf Raise",
+    "slug": "single_leg_calf_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "one leg calf raise",
+      "bodyweight calf raise"
+    ],
+    "default_video_path": "videos/single_leg_calf_raise.mp4",
+    "default_gif_path": "images/single_leg_calf_raise.gif",
+    "default_image_path": "images/single_leg_calf_raise.jpg"
+  },
+  {
+    "name": "Smith Machine Calf Raise",
+    "slug": "smith_machine_calf_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "smith calf raise"
+    ],
+    "default_video_path": "videos/smith_machine_calf_raise.mp4",
+    "default_gif_path": "images/smith_machine_calf_raise.gif",
+    "default_image_path": "images/smith_machine_calf_raise.jpg"
+  },
+  {
+    "name": "Tibialis Raise",
+    "slug": "tibialis_raise",
+    "type": "legs",
+    "body_part": "calves",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "tib raise",
+      "tibialis anterior raise"
+    ],
+    "default_video_path": "videos/tibialis_raise.mp4",
+    "default_gif_path": "images/tibialis_raise.gif",
+    "default_image_path": "images/tibialis_raise.jpg"
+  },
+  {
+    "name": "Crunch",
+    "slug": "crunch",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "crunches",
+      "basic crunch",
+      "ab crunch"
+    ],
+    "default_video_path": "videos/crunch.mp4",
+    "default_gif_path": "images/crunch.gif",
+    "default_image_path": "images/crunch.jpg"
+  },
+  {
+    "name": "Cable Crunch",
+    "slug": "cable_crunch",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "kneeling cable crunch",
+      "rope crunch"
+    ],
+    "default_video_path": "videos/cable_crunch.mp4",
+    "default_gif_path": "images/cable_crunch.gif",
+    "default_image_path": "images/cable_crunch.jpg"
+  },
+  {
+    "name": "Reverse Crunch",
+    "slug": "reverse_crunch",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "reverse crunches"
+    ],
+    "default_video_path": "videos/reverse_crunch.mp4",
+    "default_gif_path": "images/reverse_crunch.gif",
+    "default_image_path": "images/reverse_crunch.jpg"
+  },
+  {
+    "name": "Bicycle Crunch",
+    "slug": "bicycle_crunch",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bicycle crunches",
+      "bicycle ab crunch"
+    ],
+    "default_video_path": "videos/bicycle_crunch.mp4",
+    "default_gif_path": "images/bicycle_crunch.gif",
+    "default_image_path": "images/bicycle_crunch.jpg"
+  },
+  {
+    "name": "Sit-Up",
+    "slug": "sit_up",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "sit ups",
+      "situp",
+      "weighted sit up"
+    ],
+    "default_video_path": "videos/sit_up.mp4",
+    "default_gif_path": "images/sit_up.gif",
+    "default_image_path": "images/sit_up.jpg"
+  },
+  {
+    "name": "Plank",
+    "slug": "plank",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "front plank",
+      "forearm plank"
+    ],
+    "default_video_path": "videos/plank.mp4",
+    "default_gif_path": "images/plank.gif",
+    "default_image_path": "images/plank.jpg"
+  },
+  {
+    "name": "Side Plank",
+    "slug": "side_plank",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "lateral plank"
+    ],
+    "default_video_path": "videos/side_plank.mp4",
+    "default_gif_path": "images/side_plank.gif",
+    "default_image_path": "images/side_plank.jpg"
+  },
+  {
+    "name": "Hanging Leg Raise",
+    "slug": "hanging_leg_raise",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hanging leg raises",
+      "hanging raise"
+    ],
+    "default_video_path": "videos/hanging_leg_raise.mp4",
+    "default_gif_path": "images/hanging_leg_raise.gif",
+    "default_image_path": "images/hanging_leg_raise.jpg"
+  },
+  {
+    "name": "Hanging Knee Raise",
+    "slug": "hanging_knee_raise",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hanging knees",
+      "hanging knee raises",
+      "captain chair knee raise"
+    ],
+    "default_video_path": "videos/hanging_knee_raise.mp4",
+    "default_gif_path": "images/hanging_knee_raise.gif",
+    "default_image_path": "images/hanging_knee_raise.jpg"
+  },
+  {
+    "name": "Flat Bench Leg Raise",
+    "slug": "flat_bench_leg_raise",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "lying leg raise",
+      "bench leg raise",
+      "flat leg raise"
+    ],
+    "default_video_path": "videos/flat_bench_leg_raise.mp4",
+    "default_gif_path": "images/flat_bench_leg_raise.gif",
+    "default_image_path": "images/flat_bench_leg_raise.jpg"
+  },
+  {
+    "name": "Ab Wheel Rollout",
+    "slug": "ab_wheel_rollout",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "ab roller",
+      "ab wheel"
+    ],
+    "default_video_path": "videos/ab_wheel_rollout.mp4",
+    "default_gif_path": "images/ab_wheel_rollout.gif",
+    "default_image_path": "images/ab_wheel_rollout.jpg"
+  },
+  {
+    "name": "Dragon Flag",
+    "slug": "dragon_flag",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bruce lee dragon flag"
+    ],
+    "default_video_path": "videos/dragon_flag.mp4",
+    "default_gif_path": "images/dragon_flag.gif",
+    "default_image_path": "images/dragon_flag.jpg"
+  },
+  {
+    "name": "V-Up",
+    "slug": "v_up",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "v ups",
+      "v sit up",
+      "jackknife"
+    ],
+    "default_video_path": "videos/v_up.mp4",
+    "default_gif_path": "images/v_up.gif",
+    "default_image_path": "images/v_up.jpg"
+  },
+  {
+    "name": "Mountain Climber",
+    "slug": "mountain_climber",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "mountain climbers"
+    ],
+    "default_video_path": "videos/mountain_climber.mp4",
+    "default_gif_path": "images/mountain_climber.gif",
+    "default_image_path": "images/mountain_climber.jpg"
+  },
+  {
+    "name": "Dead Bug",
+    "slug": "dead_bug",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "dead bugs"
+    ],
+    "default_video_path": "videos/dead_bug.mp4",
+    "default_gif_path": "images/dead_bug.gif",
+    "default_image_path": "images/dead_bug.jpg"
+  },
+  {
+    "name": "Bird Dog",
+    "slug": "bird_dog",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "bird dogs"
+    ],
+    "default_video_path": "videos/bird_dog.mp4",
+    "default_gif_path": "images/bird_dog.gif",
+    "default_image_path": "images/bird_dog.jpg"
+  },
+  {
+    "name": "Pallof Press",
+    "slug": "pallof_press",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "pallof anti-rotation press",
+      "cable pallof press"
+    ],
+    "default_video_path": "videos/pallof_press.mp4",
+    "default_gif_path": "images/pallof_press.gif",
+    "default_image_path": "images/pallof_press.jpg"
+  },
+  {
+    "name": "Cable Woodchop",
+    "slug": "cable_woodchop",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wood chop",
+      "cable rotation",
+      "cable twist"
+    ],
+    "default_video_path": "videos/cable_woodchop.mp4",
+    "default_gif_path": "images/cable_woodchop.gif",
+    "default_image_path": "images/cable_woodchop.jpg"
+  },
+  {
+    "name": "Russian Twist",
+    "slug": "russian_twist",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "russian twists",
+      "weighted russian twist"
+    ],
+    "default_video_path": "videos/russian_twist.mp4",
+    "default_gif_path": "images/russian_twist.gif",
+    "default_image_path": "images/russian_twist.jpg"
+  },
+  {
+    "name": "Toe Touch",
+    "slug": "toe_touch",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "toe touches",
+      "lying toe touch"
+    ],
+    "default_video_path": "videos/toe_touch.mp4",
+    "default_gif_path": "images/toe_touch.gif",
+    "default_image_path": "images/toe_touch.jpg"
+  },
+  {
+    "name": "Flutter Kick",
+    "slug": "flutter_kick",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "flutter kicks",
+      "scissor kick"
+    ],
+    "default_video_path": "videos/flutter_kick.mp4",
+    "default_gif_path": "images/flutter_kick.gif",
+    "default_image_path": "images/flutter_kick.jpg"
+  },
+  {
+    "name": "L-Sit",
+    "slug": "l_sit",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "l sit hold",
+      "parallel bar l sit"
+    ],
+    "default_video_path": "videos/l_sit.mp4",
+    "default_gif_path": "images/l_sit.gif",
+    "default_image_path": "images/l_sit.jpg"
+  },
+  {
+    "name": "Decline Sit-Up",
+    "slug": "decline_sit_up",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "decline situp",
+      "decline crunch"
+    ],
+    "default_video_path": "videos/decline_sit_up.mp4",
+    "default_gif_path": "images/decline_sit_up.gif",
+    "default_image_path": "images/decline_sit_up.jpg"
+  },
+  {
+    "name": "Ab Machine Crunch",
+    "slug": "ab_machine_crunch",
+    "type": "core",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "machine crunch",
+      "crunch machine"
+    ],
+    "default_video_path": "videos/ab_machine_crunch.mp4",
+    "default_gif_path": "images/ab_machine_crunch.gif",
+    "default_image_path": "images/ab_machine_crunch.jpg"
+  },
+  {
+    "name": "Power Clean",
+    "slug": "power_clean",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "clean",
+      "barbell clean"
+    ],
+    "default_video_path": "videos/power_clean.mp4",
+    "default_gif_path": "images/power_clean.gif",
+    "default_image_path": "images/power_clean.jpg"
+  },
+  {
+    "name": "Clean and Press",
+    "slug": "clean_and_press",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "clean press",
+      "clean and jerk"
+    ],
+    "default_video_path": "videos/clean_and_press.mp4",
+    "default_gif_path": "images/clean_and_press.gif",
+    "default_image_path": "images/clean_and_press.jpg"
+  },
+  {
+    "name": "Clean and Jerk",
+    "slug": "clean_and_jerk",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "full clean and jerk",
+      "olympic clean"
+    ],
+    "default_video_path": "videos/clean_and_jerk.mp4",
+    "default_gif_path": "images/clean_and_jerk.gif",
+    "default_image_path": "images/clean_and_jerk.jpg"
+  },
+  {
+    "name": "Snatch",
+    "slug": "snatch",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell snatch",
+      "power snatch"
+    ],
+    "default_video_path": "videos/snatch.mp4",
+    "default_gif_path": "images/snatch.gif",
+    "default_image_path": "images/snatch.jpg"
+  },
+  {
+    "name": "Dumbbell Snatch",
+    "slug": "dumbbell_snatch",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "db snatch",
+      "single arm snatch"
+    ],
+    "default_video_path": "videos/dumbbell_snatch.mp4",
+    "default_gif_path": "images/dumbbell_snatch.gif",
+    "default_image_path": "images/dumbbell_snatch.jpg"
+  },
+  {
+    "name": "Thruster",
+    "slug": "thruster",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "barbell thruster",
+      "dumbbell thruster"
+    ],
+    "default_video_path": "videos/thruster.mp4",
+    "default_gif_path": "images/thruster.gif",
+    "default_image_path": "images/thruster.jpg"
+  },
+  {
+    "name": "Man Maker",
+    "slug": "man_maker",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "man makers",
+      "dumbbell man maker"
+    ],
+    "default_video_path": "videos/man_maker.mp4",
+    "default_gif_path": "images/man_maker.gif",
+    "default_image_path": "images/man_maker.jpg"
+  },
+  {
+    "name": "Turkish Get Up",
+    "slug": "turkish_get_up",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "tgu",
+      "kettlebell get up"
+    ],
+    "default_video_path": "videos/turkish_get_up.mp4",
+    "default_gif_path": "images/turkish_get_up.gif",
+    "default_image_path": "images/turkish_get_up.jpg"
+  },
+  {
+    "name": "Burpee",
+    "slug": "burpee",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "burpees"
+    ],
+    "default_video_path": "videos/burpee.mp4",
+    "default_gif_path": "images/burpee.gif",
+    "default_image_path": "images/burpee.jpg"
+  },
+  {
+    "name": "Battle Rope",
+    "slug": "battle_rope",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "battle ropes",
+      "rope slam"
+    ],
+    "default_video_path": "videos/battle_rope.mp4",
+    "default_gif_path": "images/battle_rope.gif",
+    "default_image_path": "images/battle_rope.jpg"
+  },
+  {
+    "name": "Kettlebell Swing",
+    "slug": "kettlebell_swing",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "kb swing",
+      "russian swing",
+      "american swing"
+    ],
+    "default_video_path": "videos/kettlebell_swing.mp4",
+    "default_gif_path": "images/kettlebell_swing.gif",
+    "default_image_path": "images/kettlebell_swing.jpg"
+  },
+  {
+    "name": "Kettlebell Clean",
+    "slug": "kettlebell_clean",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "kb clean"
+    ],
+    "default_video_path": "videos/kettlebell_clean.mp4",
+    "default_gif_path": "images/kettlebell_clean.gif",
+    "default_image_path": "images/kettlebell_clean.jpg"
+  },
+  {
+    "name": "Kettlebell Snatch",
+    "slug": "kettlebell_snatch",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "kb snatch"
+    ],
+    "default_video_path": "videos/kettlebell_snatch.mp4",
+    "default_gif_path": "images/kettlebell_snatch.gif",
+    "default_image_path": "images/kettlebell_snatch.jpg"
+  },
+  {
+    "name": "Sled Push",
+    "slug": "sled_push",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "prowler push"
+    ],
+    "default_video_path": "videos/sled_push.mp4",
+    "default_gif_path": "images/sled_push.gif",
+    "default_image_path": "images/sled_push.jpg"
+  },
+  {
+    "name": "Sled Pull",
+    "slug": "sled_pull",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "prowler pull"
+    ],
+    "default_video_path": "videos/sled_pull.mp4",
+    "default_gif_path": "images/sled_pull.gif",
+    "default_image_path": "images/sled_pull.jpg"
+  },
+  {
+    "name": "Tire Flip",
+    "slug": "tire_flip",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "tyre flip"
+    ],
+    "default_video_path": "videos/tire_flip.mp4",
+    "default_gif_path": "images/tire_flip.gif",
+    "default_image_path": "images/tire_flip.jpg"
+  },
+  {
+    "name": "Box Jump",
+    "slug": "box_jump",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "box jumps",
+      "plyometric box jump"
+    ],
+    "default_video_path": "videos/box_jump.mp4",
+    "default_gif_path": "images/box_jump.gif",
+    "default_image_path": "images/box_jump.jpg"
+  },
+  {
+    "name": "Jump Squat",
+    "slug": "jump_squat",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "squat jump",
+      "jump squats"
+    ],
+    "default_video_path": "videos/jump_squat.mp4",
+    "default_gif_path": "images/jump_squat.gif",
+    "default_image_path": "images/jump_squat.jpg"
+  },
+  {
+    "name": "Treadmill Walk",
+    "slug": "treadmill_walk",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "walking",
+      "incline walk",
+      "treadmill"
+    ],
+    "default_video_path": "videos/treadmill_walk.mp4",
+    "default_gif_path": "images/treadmill_walk.gif",
+    "default_image_path": "images/treadmill_walk.jpg"
+  },
+  {
+    "name": "Treadmill Run",
+    "slug": "treadmill_run",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "running",
+      "jogging",
+      "treadmill jog"
+    ],
+    "default_video_path": "videos/treadmill_run.mp4",
+    "default_gif_path": "images/treadmill_run.gif",
+    "default_image_path": "images/treadmill_run.jpg"
+  },
+  {
+    "name": "Incline Treadmill Walk",
+    "slug": "incline_treadmill_walk",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "incline walk",
+      "12-3-30",
+      "steep walk"
+    ],
+    "default_video_path": "videos/incline_treadmill_walk.mp4",
+    "default_gif_path": "images/incline_treadmill_walk.gif",
+    "default_image_path": "images/incline_treadmill_walk.jpg"
+  },
+  {
+    "name": "Cycling",
+    "slug": "cycling",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "stationary bike",
+      "bike",
+      "recumbent bike",
+      "spin bike"
+    ],
+    "default_video_path": "videos/cycling.mp4",
+    "default_gif_path": "images/cycling.gif",
+    "default_image_path": "images/cycling.jpg"
+  },
+  {
+    "name": "Rowing Machine",
+    "slug": "rowing_machine",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "rower",
+      "erg",
+      "concept 2",
+      "rowing"
+    ],
+    "default_video_path": "videos/rowing_machine.mp4",
+    "default_gif_path": "images/rowing_machine.gif",
+    "default_image_path": "images/rowing_machine.jpg"
+  },
+  {
+    "name": "Stair Climber",
+    "slug": "stair_climber",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "stair master",
+      "stair stepper",
+      "step mill"
+    ],
+    "default_video_path": "videos/stair_climber.mp4",
+    "default_gif_path": "images/stair_climber.gif",
+    "default_image_path": "images/stair_climber.jpg"
+  },
+  {
+    "name": "Elliptical",
+    "slug": "elliptical",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cross trainer",
+      "elliptical machine"
+    ],
+    "default_video_path": "videos/elliptical.mp4",
+    "default_gif_path": "images/elliptical.gif",
+    "default_image_path": "images/elliptical.jpg"
+  },
+  {
+    "name": "Jump Rope",
+    "slug": "jump_rope",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "skipping",
+      "skip rope",
+      "jump rope"
+    ],
+    "default_video_path": "videos/jump_rope.mp4",
+    "default_gif_path": "images/jump_rope.gif",
+    "default_image_path": "images/jump_rope.jpg"
+  },
+  {
+    "name": "Swimming",
+    "slug": "swimming",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "swim",
+      "pool laps"
+    ],
+    "default_video_path": "videos/swimming.mp4",
+    "default_gif_path": "images/swimming.gif",
+    "default_image_path": "images/swimming.jpg"
+  },
+  {
+    "name": "HIIT",
+    "slug": "hiit",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "high intensity interval training",
+      "interval training"
+    ],
+    "default_video_path": "videos/hiit.mp4",
+    "default_gif_path": "images/hiit.gif",
+    "default_image_path": "images/hiit.jpg"
+  },
+  {
+    "name": "Sprinting",
+    "slug": "sprinting",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "sprints",
+      "sprint intervals"
+    ],
+    "default_video_path": "videos/sprinting.mp4",
+    "default_gif_path": "images/sprinting.gif",
+    "default_image_path": "images/sprinting.jpg"
+  },
+  {
+    "name": "Foam Roll",
+    "slug": "foam_roll",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "foam rolling",
+      "myofascial release"
+    ],
+    "default_video_path": "videos/foam_roll.mp4",
+    "default_gif_path": "images/foam_roll.gif",
+    "default_image_path": "images/foam_roll.jpg"
+  },
+  {
+    "name": "Hip Flexor Stretch",
+    "slug": "hip_flexor_stretch",
+    "type": "other",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "hip stretch",
+      "psoas stretch"
+    ],
+    "default_video_path": "videos/hip_flexor_stretch.mp4",
+    "default_gif_path": "images/hip_flexor_stretch.gif",
+    "default_image_path": "images/hip_flexor_stretch.jpg"
+  },
+  {
+    "name": "Hamstring Stretch",
+    "slug": "hamstring_stretch",
+    "type": "other",
+    "body_part": "hamstrings",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing hamstring stretch",
+      "seated hamstring stretch"
+    ],
+    "default_video_path": "videos/hamstring_stretch.mp4",
+    "default_gif_path": "images/hamstring_stretch.gif",
+    "default_image_path": "images/hamstring_stretch.jpg"
+  },
+  {
+    "name": "Quad Stretch",
+    "slug": "quad_stretch",
+    "type": "other",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing quad stretch"
+    ],
+    "default_video_path": "videos/quad_stretch.mp4",
+    "default_gif_path": "images/quad_stretch.gif",
+    "default_image_path": "images/quad_stretch.jpg"
+  },
+  {
+    "name": "Shoulder Dislocate",
+    "slug": "shoulder_dislocate",
+    "type": "other",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "shoulder pass through",
+      "band dislocate"
+    ],
+    "default_video_path": "videos/shoulder_dislocate.mp4",
+    "default_gif_path": "images/shoulder_dislocate.gif",
+    "default_image_path": "images/shoulder_dislocate.jpg"
+  },
+  {
+    "name": "Cat Cow Stretch",
+    "slug": "cat_cow_stretch",
+    "type": "other",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "cat cow",
+      "spinal mobility"
+    ],
+    "default_video_path": "videos/cat_cow_stretch.mp4",
+    "default_gif_path": "images/cat_cow_stretch.gif",
+    "default_image_path": "images/cat_cow_stretch.jpg"
+  },
+  {
+    "name": "Child's Pose",
+    "slug": "child_s_pose",
+    "type": "other",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "childs pose"
+    ],
+    "default_video_path": "videos/child_s_pose.mp4",
+    "default_gif_path": "images/child_s_pose.gif",
+    "default_image_path": "images/child_s_pose.jpg"
+  },
+  {
+    "name": "Pigeon Stretch",
+    "slug": "pigeon_stretch",
+    "type": "other",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "pigeon pose"
+    ],
+    "default_video_path": "videos/pigeon_stretch.mp4",
+    "default_gif_path": "images/pigeon_stretch.gif",
+    "default_image_path": "images/pigeon_stretch.jpg"
+  },
+  {
+    "name": "World's Greatest Stretch",
+    "slug": "world_s_greatest_stretch",
+    "type": "other",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wgs",
+      "greatest stretch"
+    ],
+    "default_video_path": "videos/world_s_greatest_stretch.mp4",
+    "default_gif_path": "images/world_s_greatest_stretch.gif",
+    "default_image_path": "images/world_s_greatest_stretch.jpg"
+  },
+  {
+    "name": "90/90 Stretch",
+    "slug": "90_90_stretch",
+    "type": "other",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "90 90 hip stretch"
+    ],
+    "default_video_path": "videos/90_90_stretch.mp4",
+    "default_gif_path": "images/90_90_stretch.gif",
+    "default_image_path": "images/90_90_stretch.jpg"
+  },
+  {
+    "name": "Couch Stretch",
+    "slug": "couch_stretch",
+    "type": "other",
+    "body_part": "quads",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "wall quad stretch"
+    ],
+    "default_video_path": "videos/couch_stretch.mp4",
+    "default_gif_path": "images/couch_stretch.gif",
+    "default_image_path": "images/couch_stretch.jpg"
+  },
+  {
+    "name": "Thoracic Rotation",
+    "slug": "thoracic_rotation",
+    "type": "other",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "t-spine rotation",
+      "thoracic spine mobility"
+    ],
+    "default_video_path": "videos/thoracic_rotation.mp4",
+    "default_gif_path": "images/thoracic_rotation.gif",
+    "default_image_path": "images/thoracic_rotation.jpg"
+  },
+  {
+    "name": "Arm Circles",
+    "slug": "arm_circles",
+    "type": "other",
+    "body_part": "shoulders",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "shoulder circles",
+      "arm swings"
+    ],
+    "default_video_path": "videos/arm_circles.mp4",
+    "default_gif_path": "images/arm_circles.gif",
+    "default_image_path": "images/arm_circles.jpg"
+  },
+  {
+    "name": "Hip Circles",
+    "slug": "hip_circles",
+    "type": "other",
+    "body_part": "glutes",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing hip circles",
+      "hip rotations"
+    ],
+    "default_video_path": "videos/hip_circles.mp4",
+    "default_gif_path": "images/hip_circles.gif",
+    "default_image_path": "images/hip_circles.jpg"
+  },
+  {
+    "name": "Torso Twists",
+    "slug": "torso_twists",
+    "type": "other",
+    "body_part": "core",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "standing torso twist",
+      "trunk rotations"
+    ],
+    "default_video_path": "videos/torso_twists.mp4",
+    "default_gif_path": "images/torso_twists.gif",
+    "default_image_path": "images/torso_twists.jpg"
+  },
+  {
+    "name": "Cobra Stretch",
+    "slug": "cobra_stretch",
+    "type": "other",
+    "body_part": "back",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "prone cobra",
+      "upward dog stretch"
+    ],
+    "default_video_path": "videos/cobra_stretch.mp4",
+    "default_gif_path": "images/cobra_stretch.gif",
+    "default_image_path": "images/cobra_stretch.jpg"
+  },
+  {
+    "name": "Jumping Jacks",
+    "slug": "jumping_jacks",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "star jumps",
+      "side straddle hop"
+    ],
+    "default_video_path": "videos/jumping_jacks.mp4",
+    "default_gif_path": "images/jumping_jacks.gif",
+    "default_image_path": "images/jumping_jacks.jpg"
+  },
+  {
+    "name": "High Knees",
+    "slug": "high_knees",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "running in place high knees"
+    ],
+    "default_video_path": "videos/high_knees.mp4",
+    "default_gif_path": "images/high_knees.gif",
+    "default_image_path": "images/high_knees.jpg"
+  },
+  {
+    "name": "Butt Kicks",
+    "slug": "butt_kicks",
+    "type": "cardio",
+    "body_part": "full body",
+    "movement_pattern": "other",
+    "equipment": "free_weight",
+    "scoring_multiplier": 1,
+    "aliases": [
+      "heel kicks"
+    ],
+    "default_video_path": "videos/butt_kicks.mp4",
+    "default_gif_path": "images/butt_kicks.gif",
+    "default_image_path": "images/butt_kicks.jpg"
+  }
+]

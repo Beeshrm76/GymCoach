@@ -49,7 +49,26 @@ console.log("✅ [PASS] js/admin.js wires GIF uploads, video parsing, modal prev
 // 5. CSS badges and layout
 assert(adminCss.includes('.gif-badge'), "assets/admin.css must define .gif-badge");
 assert(adminCss.includes('.admin-media-preview-row'), "assets/admin.css must define .admin-media-preview-row");
-console.log("✅ [PASS] assets/admin.css includes responsive preview grid and .gif-badge");
+assert(adminCss.includes('.btn-preview-toggle'), "assets/admin.css must define .btn-preview-toggle");
+console.log("✅ [PASS] assets/admin.css includes responsive preview grid, .gif-badge, and .btn-preview-toggle");
+
+// 6. Video/GIF Toggle Option in Video Preview Section
+assert(adminHtml.includes('id="btnAdminToggleVideo"'), "admin.html must have btnAdminToggleVideo");
+assert(adminHtml.includes('id="btnAdminToggleGif"'), "admin.html must have btnAdminToggleGif");
+assert(adminJs.includes('btnAdminToggleVideo'), "js/admin.js must wire btnAdminToggleVideo");
+assert(adminJs.includes('btnAdminToggleGif'), "js/admin.js must wire btnAdminToggleGif");
+assert(adminJs.includes('adminVideoSectionMode'), "js/admin.js must track adminVideoSectionMode");
+assert(superadminHtml.includes('id="btnSuperModalToggleVideo"'), "superadmin.html must have btnSuperModalToggleVideo");
+assert(superadminHtml.includes('id="btnSuperModalToggleGif"'), "superadmin.html must have btnSuperModalToggleGif");
+assert(superadminJs.includes('superModalPreviewMode'), "js/superadmin.js must track superModalPreviewMode");
+console.log("✅ [PASS] Admin & Super Admin panels provide option to toggle between Video and GIF in video preview section");
+
+// 7. Exercise files existence and count
+assert(fs.existsSync(path.join(root, 'exercises.json')), "exercises.json must exist in root");
+assert(fs.existsSync(path.join(root, 'EXERCISES.md')), "EXERCISES.md must exist in root");
+const exData = JSON.parse(fs.readFileSync(path.join(root, 'exercises.json'), 'utf8'));
+assert(exData.length === 234, `exercises.json must contain 234 exercises, got ${exData.length}`);
+console.log(`✅ [PASS] exercises.json and EXERCISES.md generated with all ${exData.length} exercises`);
 
 console.log("==================================================");
 console.log("ALL ADMIN MEDIA PREVIEW TESTS PASSED!");

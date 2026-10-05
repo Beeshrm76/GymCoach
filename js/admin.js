@@ -731,11 +731,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ── Exercise Media Management ──────────────────────────────
   let selectedMediaSlug = null;
 
+  const GITHUB_REPO_OWNER = "Beeshrm76";
+  const GITHUB_REPO_NAME = "GymCoach";
+  const GITHUB_REPO_BRANCH = "main";
+  const GITHUB_MEDIA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}`;
+
+  function getGitHubMediaBase() {
+    try {
+      const custom = localStorage.getItem("gym_github_media_base");
+      if (custom && custom.trim()) return custom.trim().replace(/\/$/, "");
+    } catch (_) {}
+    return GITHUB_MEDIA_BASE;
+  }
+
   function slugFromName(name) {
     if (!name) return "";
     return name.trim().toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_|_$/g, "");
+  }
+
+  function githubVideoUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getGitHubMediaBase()}/videos/${slug}.mp4` : "";
+  }
+
+  function githubGifUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getGitHubMediaBase()}/gifs/${slug}.gif` : "";
+  }
+
+  function githubImageUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getGitHubMediaBase()}/images/${slug}.jpg` : "";
   }
 
   const searchInput = document.getElementById("adminMediaSearch");
@@ -825,10 +853,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // ── GitHub Raw Content Helper ──
+  function convertGitHubUrlToRaw(url) {
+    if (!url || typeof url !== 'string') return url;
+    const clean = url.trim();
+    const ghMatch = clean.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(?:blob|raw)\/([^\/]+)\/(.+)$/i);
+    if (ghMatch) {
+      const [, owner, repo, branch, filepath] = ghMatch;
+      const cleanPath = filepath.replace(/\?.*$/, '');
+      return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${cleanPath}`;
+    }
+    return clean;
+  }
+
   function extractVideoInfo(url) {
     if (!url || typeof url !== 'string') return null;
-    const clean = url.trim();
+    let clean = url.trim();
     if (!clean) return null;
+
+    // Convert GitHub blob/raw URLs to direct raw streaming endpoints
+    clean = convertGitHubUrlToRaw(clean);
 
     // YouTube matches (standard, shorts, embed, youtu.be)
     const ytMatch = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
@@ -863,6 +907,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return window.EXERCISE_DB.find(ex => slugFromName(ex.name) === slug);
   }
 
+  let adminVideoSectionMode = "video"; // "video" or "gif"
+
   async function selectExercise(name) {
     const slug = slugFromName(name);
     selectedMediaSlug = slug;
@@ -884,7 +930,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const imgPreview = document.getElementById("adminMediaImagePreview");
     const imgRemove = document.getElementById("adminMediaImageRemove");
     const customImgUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "image") : null;
-    const fallbackImgUrl = dbEx?.icon_url || dbEx?.image_url || "";
+    const fallbackImgUrl = dbEx?.icon_url || dbEx?.image_url || githubImageUrlFromName(selectedMediaSlug) || "";
     const imgUrl = customImgUrl || fallbackImgUrl;
 
     if (imgPreview) {
@@ -897,25 +943,56 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
 
-    // 2. Video preview
+    // 2. Video preview area (respects adminVideoSectionMode toggle: Video vs GIF)
     const vidPreview = document.getElementById("adminMediaVideoPreview");
     const vidRemove = document.getElementById("adminMediaVideoRemove");
-    const customVidUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "video") : null;
-    const fallbackVidUrl = dbEx?.video_file_url || dbEx?.video_url || "";
-    const vidUrl = customVidUrl || fallbackVidUrl;
+    const vidHeading = document.getElementById("adminMediaVideoTitle");
+    const btnToggleVid = document.getElementById("btnAdminToggleVideo");
+    const btnToggleGif = document.getElementById("btnAdminToggleGif");
+
+    if (btnToggleVid && btnToggleGif) {
+      if (adminVideoSectionMode === "video") {
+        btnToggleVid.classList.add("active");
+        btnToggleGif.classList.remove("active");
+        if (vidHeading) vidHeading.textContent = "🎬 Video";
+      } else {
+        btnToggleVid.classList.remove("active");
+        btnToggleGif.classList.add("active");
+        if (vidHeading) vidHeading.textContent = "🎞️ Looping GIF";
+      }
+    }
 
     if (vidPreview) {
-      if (vidUrl) {
-        const info = extractVideoInfo(vidUrl);
-        if (info && (info.type === 'youtube' || info.type === 'vimeo')) {
-          vidPreview.innerHTML = `<iframe src="${info.embedUrl}" style="width:100%; height:180px; border:0; border-radius:8px;" allowfullscreen></iframe>`;
+      if (adminVideoSectionMode === "video") {
+        const customVidUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "video") : null;
+        const fallbackVidUrl = dbEx?.video_file_url || dbEx?.video_url || githubVideoUrlFromName(selectedMediaSlug) || "";
+        const vidUrl = customVidUrl || fallbackVidUrl;
+
+        if (vidUrl) {
+          const info = extractVideoInfo(vidUrl);
+          if (info && (info.type === 'youtube' || info.type === 'vimeo')) {
+            vidPreview.innerHTML = `<iframe src="${info.embedUrl}" style="width:100%; height:180px; border:0; border-radius:8px;" allowfullscreen></iframe>`;
+          } else {
+            vidPreview.innerHTML = `<video src="${esc(vidUrl)}" controls muted style="max-width:100%; max-height:180px; border-radius:8px;"></video>`;
+          }
+          if (vidRemove) vidRemove.style.display = customVidUrl ? "" : "none";
         } else {
-          vidPreview.innerHTML = `<video src="${esc(vidUrl)}" controls muted style="max-width:100%; max-height:180px; border-radius:8px;"></video>`;
+          vidPreview.innerHTML = `<span class="admin-media-placeholder">No video</span>`;
+          if (vidRemove) vidRemove.style.display = "none";
         }
-        if (vidRemove) vidRemove.style.display = customVidUrl ? "" : "none";
       } else {
-        vidPreview.innerHTML = `<span class="admin-media-placeholder">No video</span>`;
-        if (vidRemove) vidRemove.style.display = "none";
+        // Mode is "gif": display the looping demo GIF in this preview box!
+        const customGifUrl = window.MediaStore ? await MediaStore.getMediaBySlugURL(selectedMediaSlug, "gif") : null;
+        const fallbackGifUrl = dbEx?.gif_url || githubGifUrlFromName(selectedMediaSlug) || "";
+        const gifUrl = customGifUrl || fallbackGifUrl;
+
+        if (gifUrl) {
+          vidPreview.innerHTML = `<img src="${esc(gifUrl)}" alt="Exercise demo GIF" style="max-width:100%; max-height:180px; border-radius:8px; object-fit:contain;">`;
+          if (vidRemove) vidRemove.style.display = customGifUrl ? "" : "none";
+        } else {
+          vidPreview.innerHTML = `<span class="admin-media-placeholder">No GIF uploaded</span>`;
+          if (vidRemove) vidRemove.style.display = "none";
+        }
       }
     }
 
@@ -1054,13 +1131,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Fetch media URLs
     const customVid = window.MediaStore ? await MediaStore.getMediaBySlugURL(slug, "video") : null;
-    const vidUrl = customVid || dbEx?.video_file_url || dbEx?.video_url || "";
+    const vidUrl = customVid || dbEx?.video_file_url || dbEx?.video_url || githubVideoUrlFromName(slug) || "";
 
     const customGif = window.MediaStore ? await MediaStore.getMediaBySlugURL(slug, "gif") : null;
-    const gifUrl = customGif || dbEx?.gif_url || "";
+    const gifUrl = customGif || dbEx?.gif_url || githubGifUrlFromName(slug) || "";
 
     const customImg = window.MediaStore ? await MediaStore.getMediaBySlugURL(slug, "image") : null;
-    const imgUrl = customImg || dbEx?.icon_url || dbEx?.image_url || "";
+    const imgUrl = customImg || dbEx?.icon_url || dbEx?.image_url || githubImageUrlFromName(slug) || "";
 
     // 1. Video Box
     if (vidBox) {
@@ -1109,6 +1186,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (imgBox) imgBox.innerHTML = "";
   }
 
+  // Wire video/gif preview toggle buttons
+  document.getElementById("btnAdminToggleVideo")?.addEventListener("click", () => {
+    adminVideoSectionMode = "video";
+    refreshMediaPreviews();
+  });
+  document.getElementById("btnAdminToggleGif")?.addEventListener("click", () => {
+    adminVideoSectionMode = "gif";
+    refreshMediaPreviews();
+  });
+
   // Wire modal preview events
   document.getElementById("btnAdminPreviewMedia")?.addEventListener("click", () => {
     if (selectedMediaSlug) openAdminMediaPreviewModal(selectedMediaSlug);
@@ -1122,6 +1209,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.key === "Escape" && document.getElementById("adminMediaPreviewModal")?.style.display === "flex") {
       closeAdminMediaPreviewModal();
     }
+  });
+
+  // Modal tab switching
+  function switchAdminModalTab(tab) {
+    const vCard = document.getElementById("adminModalVideoCard");
+    const gCard = document.getElementById("adminModalGifCard");
+    const iCard = document.getElementById("adminModalImageCard");
+    const tabList = [
+      { id: "adminModalTabAll", key: "all" },
+      { id: "adminModalTabVideo", key: "video" },
+      { id: "adminModalTabGif", key: "gif" },
+      { id: "adminModalTabImage", key: "image" }
+    ];
+
+    tabList.forEach(t => {
+      const el = document.getElementById(t.id);
+      if (el) {
+        if (t.key === tab) {
+          el.classList.add("active");
+          el.style.background = "var(--accent, #00f2fe)";
+          el.style.color = "#000";
+        } else {
+          el.classList.remove("active");
+          el.style.background = "";
+          el.style.color = "";
+        }
+      }
+    });
+
+    if (tab === "video") {
+      if (vCard) vCard.style.display = "block";
+      if (gCard) gCard.style.display = "none";
+      if (iCard) iCard.style.display = "none";
+    } else if (tab === "gif") {
+      if (vCard) vCard.style.display = "none";
+      if (gCard) gCard.style.display = "block";
+      if (iCard) iCard.style.display = "none";
+    } else if (tab === "image") {
+      if (vCard) vCard.style.display = "none";
+      if (gCard) gCard.style.display = "none";
+      if (iCard) iCard.style.display = "block";
+    } else {
+      if (vCard) vCard.style.display = "block";
+      if (gCard) gCard.style.display = "block";
+      if (iCard) iCard.style.display = "block";
+    }
+  }
+
+  document.getElementById("adminModalTabAll")?.addEventListener("click", () => switchAdminModalTab("all"));
+  document.getElementById("adminModalTabVideo")?.addEventListener("click", () => switchAdminModalTab("video"));
+  document.getElementById("adminModalTabGif")?.addEventListener("click", () => switchAdminModalTab("gif"));
+  document.getElementById("adminModalTabImage")?.addEventListener("click", () => switchAdminModalTab("image"));
+
+  // Export full exercise library as JSON
+  document.getElementById("btnExportExercisesAdmin")?.addEventListener("click", () => {
+    const list = (window.EXERCISE_DB || []).map(ex => {
+      const slug = slugFromName(ex.name);
+      return {
+        name: ex.name,
+        slug: slug,
+        type: ex.type || "other",
+        body_part: ex.body_part || "general",
+        aliases: ex.aliases || [],
+        default_video_path: `videos/${slug}.mp4`,
+        default_gif_path: `images/${slug}.gif`,
+        default_image_path: `images/${slug}.jpg`
+      };
+    });
+
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "gymcoach_all_exercises.json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+    toast(`Exported all ${list.length} exercises as JSON!`);
   });
 
   // List exercises with media

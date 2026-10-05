@@ -985,27 +985,83 @@
 
       <div class="modal-body">
         <div class="detail-media">
-          <div class="media-frame">
+          <!-- ── Live Preview Section ── -->
+          <div class="detail-preview-header">
+            <div class="detail-preview-badge-row">
+              <span class="preview-title-text">🎬 Demo Preview</span>
+              <span class="preview-badge" id="detailPreviewBadge">GitHub Video</span>
+            </div>
+            <button type="button" class="btn small-btn" id="btnRefreshDetailPreview" title="Refresh Live Preview" style="padding:2px 8px; font-size:11px;">👁️ Refresh</button>
+          </div>
+
+          <div class="media-frame" id="detailMediaFrame">
             <iframe id="detailVideoFrame" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen hidden></iframe>
             <video id="detailVideo" controls muted playsinline preload="metadata" hidden></video>
-            <img id="detailImage" alt="" hidden>
+            <img id="detailImage" alt="Exercise Demo Preview" hidden>
             <div class="media-fallback" id="detailMediaFallback">
-              <span>▦</span>
-              <small>No image or demo video yet</small>
+              <span style="font-size:32px; opacity:0.6;">🎬</span>
+              <small id="detailFallbackText">No media chosen yet</small>
             </div>
           </div>
 
           <div id="detailIntensity"></div>
 
-          <div class="media-actions">
-            <label class="btn file-btn">Upload image<input id="detailImageUpload" type="file" accept="image/*"
-                hidden></label>
-            <label class="btn file-btn">Upload demo video<input id="detailVideoUpload" type="file" accept="video/*"
-                hidden></label>
-            <label class="btn file-btn">Upload GIF<input id="detailGifUpload" type="file" accept="image/gif"
-                hidden></label>
-            <button class="btn danger" data-action="remove-media">Remove media</button>
+          <!-- ── Media Type Selector List ── -->
+          <div class="media-picker-card">
+            <div class="media-picker-label">
+              <span style="font-size:12px; font-weight:700; color:#fff;">Choose Demo Media Source:</span>
+              <span class="muted small" style="font-size:10px;">Select &amp; save to apply</span>
+            </div>
+
+            <!-- List Selector for GIF, YouTube, GitHub -->
+            <div class="media-type-list" role="tablist">
+              <button type="button" class="media-type-btn active" id="btnMediaChoiceGithub" data-media-type="github">
+                <span class="type-icon">🐙</span>
+                <span class="type-name">GitHub</span>
+              </button>
+              <button type="button" class="media-type-btn" id="btnMediaChoiceYoutube" data-media-type="youtube">
+                <span class="type-icon">🎬</span>
+                <span class="type-name">YouTube</span>
+              </button>
+              <button type="button" class="media-type-btn" id="btnMediaChoiceGif" data-media-type="gif">
+                <span class="type-icon">🎞️</span>
+                <span class="type-name">GIF</span>
+              </button>
+            </div>
+
+            <!-- Panel: GitHub Video -->
+            <div class="media-type-panel" id="panelMediaGithub">
+              <label for="detailGithubUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">GitHub Video URL (raw streaming):</label>
+              <input type="url" id="detailGithubUrl" class="setting-input compact" placeholder="https://raw.githubusercontent.com/.../videos/exercise.mp4">
+            </div>
+
+            <!-- Panel: YouTube Video -->
+            <div class="media-type-panel" id="panelMediaYoutube" style="display:none;">
+              <label for="detailYoutubeUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">YouTube Video / Shorts Link:</label>
+              <input type="url" id="detailYoutubeUrl" class="setting-input compact" placeholder="https://www.youtube.com/watch?v=... or youtu.be/...">
+            </div>
+
+            <!-- Panel: Looping Demo GIF -->
+            <div class="media-type-panel" id="panelMediaGif" style="display:none;">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">Looping Demo GIF (upload or URL):</label>
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                <label class="btn small-btn file-btn" style="margin:0; font-size:11px; padding:4px 10px; cursor:pointer;">
+                  Upload .gif file<input id="detailGifUpload" type="file" accept="image/gif" hidden>
+                </label>
+                <span id="detailGifUploadStatus" class="muted small" style="font-size:10px;"></span>
+              </div>
+              <input type="url" id="detailGifUrl" class="setting-input compact" placeholder="https://.../demo.gif or GitHub GIF URL">
+            </div>
+
+            <!-- Clear Media Action -->
+            <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+              <button type="button" class="btn small-btn btn-danger-subtle" id="btnRemoveDetailMedia" data-action="remove-media">✕ Clear media</button>
+            </div>
           </div>
+
+          <!-- Hidden legacy upload inputs to preserve any external file handlers -->
+          <input id="detailImageUpload" type="file" accept="image/*" hidden>
+          <input id="detailVideoUpload" type="file" accept="video/*" hidden>
 
           <div class="timer-options">
             <label>Countdown (sec)<input id="timerCountdown" type="number" min="0" step="1" value="30"></label>
@@ -1094,12 +1150,10 @@
               </label>
               <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1" autocomplete="off"></label>
               <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells" autocomplete="off"></label>
-              <label class="span-2">Image path<input id="detailImagePath"
-                  placeholder="e.g. images/bench_press.jpg" autocomplete="off"></label>
-              <label class="span-2">Video path / URL<input id="detailVideoPath"
-                  placeholder="e.g. videos/bench_press.mp4 or YouTube URL" autocomplete="off"></label>
-              <label class="span-2">GIF path / URL<input id="detailGifPath"
-                  placeholder="e.g. images/bench_press.gif or https://...gif" autocomplete="off"></label>
+              <!-- Synced background inputs to preserve backward compatibility & tests -->
+              <input type="hidden" id="detailImagePath">
+              <input type="hidden" id="detailVideoPath">
+              <input type="hidden" id="detailGifPath">
               <label>Pulley system
                 <select id="detailPulleySystem">
                   <option value="single">Single pulley</option>
