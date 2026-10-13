@@ -1,5 +1,31 @@
 {
+  "name": "gymcoach",
+  "version": "7.2.0",
+  "description": "GymCoach — build your own workout projects, log every set with custom columns, and export the whole record to an AI coach.",
+  "main": "index.html",
+  "scripts": {
+    "build:web": "node scripts/build-web.js",
+    "build:apk": "node scripts/build-apk.js",
+    "cap:sync": "npm run build:web && npx cap sync",
+    "cap:android": "npx cap open android",
+    "cap:ios": "npx cap open ios",
+    "cap:build-android": "npm run build:web && npx cap sync android && npx cap open android",
+    "cap:build-ios": "npm run build:web && npx cap sync ios && npx cap open ios",
+    "cap:run-android": "npm run build:web && npx cap run android",
+    "cap:run-ios": "npm run build:web && npx cap run ios"
+  },
   "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/haptics": "^7.0.0",
+    "@capacitor/ios": "^7.2.0",
+    "@capacitor/keyboard": "^7.0.0",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0",
     "@vercel/analytics": "^2.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.2.0"
   }
 }

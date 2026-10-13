@@ -127,6 +127,154 @@ window.MediaStore = (() => {
     }
   }
 
+  // ── Remote Media Offline Cache Manager ──
+  // Caches remote demonstration videos, GIFs, and images into IndexedDB & Cache API
+  // so athletes can view them completely offline in gym basements with no Wi-Fi.
+  async function cacheRemoteMedia(remoteUrl, slug = "", kind = "") {
+    if (!remoteUrl || typeof remoteUrl !== "string") return null;
+    const trimmed = remoteUrl.trim();
+    if (!/^https?:\/\//i.test(trimmed)) return null;
+    if (trimmed.includes("youtube.com") || trimmed.includes("youtu.be") || trimmed.includes("vimeo.com")) return null;
+
+    const cacheKey = `remote::${trimmed}`;
+    if (urlCache.has(cacheKey)) return urlCache.get(cacheKey);
+
+    const existingBlob = await get(cacheKey);
+    if (existingBlob) {
+      return url(cacheKey);
+    }
+
+    try {
+      const resp = await fetch(trimmed, { mode: "cors" });
+      if (!resp.ok) return null;
+      const blob = await resp.blob();
+      await put(cacheKey, blob);
+      if (slug && kind) {
+        await put(`remote_slug::${slug}::${kind}`, blob);
+      }
+      if ("caches" in window) {
+        try {
+          const cache = await caches.open("gymcoach-media-cache-v1");
+          cache.put(trimmed, new Response(blob, {
+            headers: {
+              "Content-Type": blob.type || (kind === "video" ? "video/mp4" : (kind === "gif" ? "image/gif" : "image/jpeg")),
+              "Content-Length": String(blob.size)
+            }
+          })).catch(() => {});
+        } catch (_) {}
+      }
+      return url(cacheKey);
+    } catch (err) {
+      console.info("[MediaStore] Could not cache remote media offline:", err.message);
+      return null;
+    }
+  }
+
+  async function getCachedRemoteMediaURL(remoteUrl, slug = "", kind = "") {
+    if (!remoteUrl || typeof remoteUrl !== "string") return null;
+    const trimmed = remoteUrl.trim();
+    const cacheKey = `remote::${trimmed}`;
+
+    if (urlCache.has(cacheKey)) return urlCache.get(cacheKey);
+
+    const blob = await get(cacheKey);
+    if (blob) {
+      return url(cacheKey);
+    }
+
+    if (slug && kind) {
+      const slugKey = `remote_slug::${slug}::${kind}`;
+      if (urlCache.has(slugKey)) return urlCache.get(slugKey);
+      const slugBlob = await get(slugKey);
+      if (slugBlob) {
+        return url(slugKey);
+      }
+    }
+
+    // Check Service Worker Cache API
+    if ("caches" in window && /^https?:\/\//i.test(trimmed)) {
+      try {
+        const cache = await caches.open("gymcoach-media-cache-v1");
+        const hit = await cache.match(trimmed);
+        if (hit) {
+          const hitBlob = await hit.blob();
+          await put(cacheKey, hitBlob);
+          return url(cacheKey);
+        }
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  async function evictRemoteCache(urlOrSlug) {
+    if (!urlOrSlug) return;
+    const s = String(urlOrSlug).trim();
+    if (/^https?:\/\//i.test(s)) {
+      await remove(`remote::${s}`);
+      if ("caches" in window) {
+        try {
+          const cache = await caches.open("gymcoach-media-cache-v1");
+          await cache.delete(s);
+        } catch (_) {}
+      }
+    } else {
+      await Promise.all([
+        remove(`remote_slug::${s}::video`),
+        remove(`remote_slug::${s}::gif`),
+        remove(`remote_slug::${s}::image`)
+      ]);
+    }
+    return true;
+  }
+
+  async function getOfflineCacheStats() {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const t = db.transaction(STORE, "readonly");
+      const store = t.objectStore(STORE);
+      const req = store.getAllKeys();
+      req.onsuccess = async () => {
+        const allKeys = req.result || [];
+        const remoteKeys = allKeys.filter(k => String(k).startsWith("remote::"));
+        let totalBytes = 0;
+        for (const k of remoteKeys) {
+          try {
+            const b = await get(k);
+            if (b && b.size) totalBytes += b.size;
+          } catch (_) {}
+        }
+        resolve({
+          count: remoteKeys.length,
+          totalBytes,
+          totalMB: (totalBytes / (1024 * 1024)).toFixed(1)
+        });
+      };
+      req.onerror = () => resolve({ count: 0, totalBytes: 0, totalMB: "0.0" });
+    });
+  }
+
+  async function clearOfflineCache() {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const t = db.transaction(STORE, "readwrite");
+      const store = t.objectStore(STORE);
+      const req = store.getAllKeys();
+      req.onsuccess = () => {
+        (req.result || [])
+          .filter(k => String(k).startsWith("remote::") || String(k).startsWith("remote_slug::"))
+          .forEach(k => { dropCached(k); store.delete(k); });
+      };
+      t.oncomplete = async () => {
+        if ("caches" in window) {
+          try { await caches.delete("gymcoach-media-cache-v1"); } catch (_) {}
+        }
+        resolve(true);
+      };
+      t.onerror = () => resolve(false);
+    });
+  }
+
   return {
     saveImage: (projectId, exId, blob) => put(mediaKey(projectId, exId, "image"), blob),
     getImageURL: (projectId, exId) => url(mediaKey(projectId, exId, "image")),
@@ -173,6 +321,11 @@ window.MediaStore = (() => {
         return false;
       }
     },
+    cacheRemoteMedia,
+    getCachedRemoteMediaURL,
+    evictRemoteCache,
+    getOfflineCacheStats,
+    clearOfflineCache,
     copyAudio,
     copyPlaylistMedia,
     applyLogo, purgeProject, listKeys

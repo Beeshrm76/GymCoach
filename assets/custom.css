@@ -4025,7 +4025,7 @@ body,
   filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.8));
 }
 
-/* --- 5. Non-Editable Exercise Progression Charts Grid --- */
+/* --- 5. Exercise Progression Charts Grid --- */
 .exercise-select-bar {
   display: flex;
   align-items: center;
@@ -4273,4 +4273,277 @@ body,
   display: flex;
   align-items: center;
 }
+
+/* =============================================================
+   6. 7-Date Body Composition & Metric Predictor Styles
+   ============================================================= */
+.prediction-eval-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.prediction-eval-badge.calibrated {
+  background: rgba(56, 239, 125, 0.15);
+  color: #38ef7d;
+  border: 1px solid rgba(56, 239, 125, 0.4);
+  box-shadow: 0 0 10px rgba(56, 239, 125, 0.2);
+}
+.prediction-eval-badge.evaluating {
+  background: rgba(0, 242, 254, 0.15);
+  color: var(--accent, #00f2fe);
+  border: 1px solid rgba(0, 242, 254, 0.4);
+}
+.prediction-eval-badge.empty {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.prediction-eval-badge-mini {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.prediction-eval-badge-mini.calibrated {
+  background: rgba(56, 239, 125, 0.15);
+  color: #38ef7d;
+  border: 1px solid rgba(56, 239, 125, 0.35);
+}
+.prediction-eval-badge-mini.evaluating {
+  background: rgba(0, 242, 254, 0.15);
+  color: var(--accent, #00f2fe);
+  border: 1px solid rgba(0, 242, 254, 0.35);
+}
+
+.prediction-timeline-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin: 16px 0;
+  scrollbar-width: thin;
+}
+.pred-timeline-node {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 80px;
+  text-align: center;
+}
+.pred-timeline-node.forecast-node {
+  background: rgba(245, 175, 25, 0.1);
+  border: 1px dashed rgba(245, 175, 25, 0.5);
+}
+.pred-node-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.forecast-node .pred-node-num {
+  color: #f5af19;
+}
+.pred-node-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 2px 0;
+}
+.pred-node-val {
+  font-size: 11px;
+  color: var(--accent, #00f2fe);
+  font-weight: 500;
+}
+.pred-timeline-arrow {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+.pred-timeline-arrow.forecast-arrow {
+  color: #f5af19;
+  font-weight: bold;
+}
+
+.prediction-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.prediction-kpi-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--glass-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.prediction-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.prediction-kpi-card.card-active {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.15);
+}
+
+.pred-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.pred-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.pred-card-values {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+}
+.pred-val-group {
+  display: flex;
+  flex-direction: column;
+}
+.pred-val-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.pred-val-main {
+  font-size: 18px;
+  font-weight: 800;
+}
+.pred-val-target {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f5af19;
+}
+.pred-val-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pred-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+.pred-slope-pill {
+  font-weight: 600;
+}
+.pred-30d-pill {
+  color: var(--text-secondary);
+}
+.pred-30d-pill b {
+  color: #ffffff;
+}
+
+.prediction-insight-box {
+  margin-top: 16px;
+}
+.pred-insight-card {
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.04) 0%, rgba(157, 78, 221, 0.06) 100%);
+  border: 1px solid rgba(0, 242, 254, 0.15);
+}
+.pred-insight-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.pred-insight-icon {
+  font-size: 24px;
+}
+.pred-status-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(56, 239, 125, 0.15);
+  color: #38ef7d;
+  border: 1px solid rgba(56, 239, 125, 0.3);
+}
+.pred-insight-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+  margin: 0 0 10px 0;
+}
+.pred-next-forecast-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.pred-next-forecast-summary b {
+  color: #ffffff;
+}
+
+.prediction-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.pred-data-dot {
+  transition: r 0.15s ease;
+}
+
+.home-pred-pills-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.home-pred-pill {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+.home-pred-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.home-pred-val {
+  font-size: 13px;
+  color: #ffffff;
+  margin-top: 2px;
+}
+
 

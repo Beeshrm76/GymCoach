@@ -8,3 +8,14 @@ music/
 node_modules/
 server/data/
 server/sessions/
+
+# Capacitor native projects (generated)
+android/
+ios/
+www/
+.capacitor/
+.idea/
+
+# Large binaries (exceeds GitHub 100MB limit)
+*.apk
+downloads/*.apk

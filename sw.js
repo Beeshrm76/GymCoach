@@ -35,7 +35,8 @@ const FILES = [
   "./js/manage.js",
   "./js/report.js",
   "./js/wearable.js",
-  "./js/home.js"
+  "./js/home.js",
+  "./js/native-bridge.js"
 ];
 
 self.addEventListener("install", event => {
@@ -94,7 +95,9 @@ self.addEventListener("fetch", event => {
       const cache = await caches.open(RUNTIME);
       const hit = await cache.match(req);
       const network = fetch(req).then(res => {
-        if (res.ok || res.type === "opaque") cache.put(req, res.clone());
+        if ((res.ok && res.status === 200) || res.type === "opaque") {
+          try { cache.put(req, res.clone()).catch(() => {}); } catch (_) {}
+        }
         return res;
       }).catch(() => null);
       return hit || (await network) || Response.error();

@@ -675,6 +675,35 @@
   }
 
   let detailActiveMediaType = "github"; // "github" | "youtube" | "gif"
+  let detailVideoAutoplay = localStorage.getItem("gym_video_autoplay") !== "false";
+
+  function updateDetailAutoplayBtn() {
+    const btn = $("btnToggleDetailAutoplay");
+    if (!btn) return;
+    btn.textContent = detailVideoAutoplay ? "▶️ Autoplay: ON" : "⏸️ Autoplay: OFF";
+    btn.style.color = detailVideoAutoplay ? "var(--accent, #00f2fe)" : "var(--text-secondary, #94a3b8)";
+    btn.style.borderColor = detailVideoAutoplay ? "rgba(0, 242, 254, 0.4)" : "rgba(255, 255, 255, 0.15)";
+  }
+
+  function toggleDetailAutoplay() {
+    detailVideoAutoplay = !detailVideoAutoplay;
+    try { localStorage.setItem("gym_video_autoplay", detailVideoAutoplay); } catch (_) {}
+    updateDetailAutoplayBtn();
+    const vid = $("detailVideo");
+    if (vid && !vid.hidden && vid.src) {
+      if (detailVideoAutoplay) {
+        vid.muted = true;
+        vid.play().catch(() => {});
+      } else {
+        vid.pause();
+      }
+    }
+    const frame = $("detailVideoFrame");
+    if (frame && !frame.hidden && frame.src) {
+      previewActiveMedia();
+    }
+    UI.toast(detailVideoAutoplay ? "Autoplay enabled" : "Autoplay paused");
+  }
 
   function selectDetailMediaType(type, ex, triggerPreview = true) {
     detailActiveMediaType = type || "github";
@@ -753,9 +782,16 @@
         badge.style.color = "#10b981";
         badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
       }
-      let gifUrl = ($("detailGifUrl")?.value || "").trim() || (exObj.gif ? await mediaSrc(exObj, "gif") : defaultGhGif);
-      gifUrl = convertGitHubUrlToRaw(gifUrl);
+      const localGif = await mediaSrc(exObj, "gif");
+      const typedGif = ($("detailGifUrl")?.value || "").trim();
+      let gifUrl = (localGif && (!typedGif || typedGif.startsWith("images/") || typedGif.startsWith("gifs/")))
+        ? localGif
+        : (typedGif ? convertGitHubUrlToRaw(typedGif) : (localGif || defaultGhGif));
+
       if (gifUrl && img) {
+        if (badge && String(gifUrl).startsWith("blob:")) {
+          badge.textContent = "🎞️ GIF (Uploaded / Ready)";
+        }
         img.src = gifUrl;
         img.hidden = false;
         if (fall) fall.hidden = true;
@@ -772,12 +808,25 @@
       badge.style.color = "var(--accent, #00f2fe)";
       badge.style.borderColor = "rgba(0, 242, 254, 0.3)";
     }
-    let ghUrl = ($("detailGithubUrl")?.value || "").trim() || (exObj.video && !extractVideoInfo(exObj.video)?.type.match(/youtube|vimeo/) ? exObj.video : defaultGhVid);
-    ghUrl = convertGitHubUrlToRaw(ghUrl);
+    const localVid = await mediaSrc(exObj, "video");
+    const typedVid = ($("detailGithubUrl")?.value || "").trim();
+    let ghUrl = (localVid && (!typedVid || typedVid.startsWith("videos/")))
+      ? localVid
+      : (typedVid ? convertGitHubUrlToRaw(typedVid) : (localVid || defaultGhVid));
+
     if (ghUrl && vid) {
+      if (badge && String(ghUrl).startsWith("blob:")) {
+        badge.textContent = "⚡ Video (Uploaded / Ready)";
+        badge.style.background = "rgba(16, 185, 129, 0.15)";
+        badge.style.color = "#10b981";
+        badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+      }
       vid.src = ghUrl;
       vid.muted = true;
       vid.hidden = false;
+      if (detailVideoAutoplay) {
+        vid.play().catch(() => {});
+      }
       vid.onerror = () => {
         const fn = ghUrl.split('/').pop() || 'video.mp4';
         vid.hidden = true;
@@ -853,10 +902,11 @@
     const ytMatch = trimmed.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
     if (ytMatch && ytMatch[1]) {
       const videoId = ytMatch[1];
+      const autoplayParam = detailVideoAutoplay ? `&autoplay=1&mute=1&loop=1&playlist=${videoId}` : "";
       return {
         type: "youtube",
         id: videoId,
-        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&enablejsapi=1`,
+        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&enablejsapi=1${autoplayParam}`,
         url: trimmed
       };
     }
@@ -954,18 +1004,45 @@
       // upload required on their end.
       if (nameSlug && Array.isArray(window.EXERCISE_DB)) {
         const dbEntry = window.EXERCISE_DB.find(e => slugFromName(e.name) === nameSlug);
-        if (kind === "gif" && dbEntry?.gif_url) return dbEntry.gif_url;
+        if (kind === "gif" && dbEntry?.gif_url) {
+          const cached = window.MediaStore?.getCachedRemoteMediaURL ? await MediaStore.getCachedRemoteMediaURL(dbEntry.gif_url, nameSlug, kind) : null;
+          if (cached) return cached;
+          if (navigator.onLine && window.MediaStore?.cacheRemoteMedia) MediaStore.cacheRemoteMedia(dbEntry.gif_url, nameSlug, kind).catch(() => {});
+          return dbEntry.gif_url;
+        }
         // Uploaded files take priority over URL links
         const adminUrl = kind === "video"
           ? (dbEntry?.video_file_url || dbEntry?.video_url)
           : (dbEntry?.icon_url || dbEntry?.image_url);
-        if (adminUrl) return adminUrl;
+        if (adminUrl) {
+          const isDirect = !adminUrl.includes("youtube") && !adminUrl.includes("vimeo");
+          if (isDirect && window.MediaStore?.getCachedRemoteMediaURL) {
+            const cached = await MediaStore.getCachedRemoteMediaURL(adminUrl, nameSlug, kind);
+            if (cached) return cached;
+            if (navigator.onLine && window.MediaStore?.cacheRemoteMedia) MediaStore.cacheRemoteMedia(adminUrl, nameSlug, kind).catch(() => {});
+          }
+          return adminUrl;
+        }
       }
     } catch { /* IndexedDB unavailable (private mode) - fall back to the static path */ }
-    if (kind === "gif") return normalizeImagePath(ex.gif) || githubGifUrlFromName(ex.name) || null;
-    if (kind === "video") return normalizeVideoPath(ex.video) || githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name) || null;
-    if (kind === "image") return normalizeImagePath(ex.image) || githubImageUrlFromName(ex.name) || imagePathFromName(ex.name) || null;
-    return null;
+
+    let defUrl = null;
+    if (kind === "gif") defUrl = normalizeImagePath(ex.gif) || githubGifUrlFromName(ex.name) || null;
+    else if (kind === "video") defUrl = normalizeVideoPath(ex.video) || githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name) || null;
+    else if (kind === "image") defUrl = normalizeImagePath(ex.image) || githubImageUrlFromName(ex.name) || imagePathFromName(ex.name) || null;
+
+    if (defUrl && /^https?:\/\//i.test(defUrl)) {
+      const isDirect = !defUrl.includes("youtube") && !defUrl.includes("vimeo");
+      const nameSlug = slugFromName(ex.name);
+      if (isDirect && window.MediaStore?.getCachedRemoteMediaURL) {
+        const cached = await MediaStore.getCachedRemoteMediaURL(defUrl, nameSlug, kind);
+        if (cached) return cached;
+        if (navigator.onLine && window.MediaStore?.cacheRemoteMedia) {
+          MediaStore.cacheRemoteMedia(defUrl, nameSlug, kind).catch(() => {});
+        }
+      }
+    }
+    return defUrl;
   }
 
   function toggleComplete(exId) {
@@ -1090,6 +1167,7 @@
     if ($("detailGifPath")) $("detailGifPath").value = currentGif || "";
 
     selectDetailMediaType(chosenType, ex, false);
+    updateDetailAutoplayBtn();
 
     const firstTimerSet = nextRecordableRow(ex);
     timerSetIndex = firstTimerSet?.index || 0;
@@ -1158,6 +1236,9 @@
     if (type === "gif") {
       const gSrc = await mediaSrc(ex, "gif");
       if (gSrc) {
+        if (badge && gSrc.startsWith("blob:")) {
+          badge.textContent = "🎞️ GIF (Offline Ready)";
+        }
         img.src = gSrc;
         img.hidden = false;
         if (fall) fall.hidden = true;
@@ -1183,9 +1264,18 @@
       if (vSrc) {
         const info = extractVideoInfo(vSrc);
         if (info && info.type === "direct") {
+          if (badge && vSrc.startsWith("blob:")) {
+            badge.textContent = "⚡ Offline Ready";
+            badge.style.background = "rgba(16, 185, 129, 0.15)";
+            badge.style.color = "#10b981";
+            badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+          }
           vid.src = vSrc;
           vid.muted = true;
           vid.hidden = false;
+          if (detailVideoAutoplay) {
+            vid.play().catch(() => {});
+          }
           vid.onerror = () => {
             vid.hidden = true;
             if (fall) {
@@ -1221,6 +1311,9 @@
         vid.src = vSrc;
         vid.muted = true;
         vid.hidden = false;
+        if (detailVideoAutoplay) {
+          vid.play().catch(() => {});
+        }
         if (fall) fall.hidden = true;
         return;
       }
@@ -1655,12 +1748,15 @@
         if (kind === "video") {
           await MediaStore.saveVideo(project().id, ex.id, renamedFile);
           if (slug && MediaStore.saveMediaBySlug) await MediaStore.saveMediaBySlug(slug, "video", renamedFile);
+          if (slug && MediaStore.evictRemoteCache) await MediaStore.evictRemoteCache(slug);
         } else if (kind === "gif") {
           await MediaStore.saveGif(project().id, ex.id, renamedFile);
           if (slug && MediaStore.saveMediaBySlug) await MediaStore.saveMediaBySlug(slug, "gif", renamedFile);
+          if (slug && MediaStore.evictRemoteCache) await MediaStore.evictRemoteCache(slug);
         } else {
           await MediaStore.saveImage(project().id, ex.id, renamedFile);
           if (slug && MediaStore.saveMediaBySlug) await MediaStore.saveMediaBySlug(slug, "image", renamedFile);
+          if (slug && MediaStore.evictRemoteCache) await MediaStore.evictRemoteCache(slug);
         }
 
         // Auto-update the path field and the exercise data
@@ -1706,7 +1802,8 @@
       MediaStore.deleteGif(project().id, ex.id),
       slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "image") : Promise.resolve(),
       slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "video") : Promise.resolve(),
-      slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "gif") : Promise.resolve()
+      slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "gif") : Promise.resolve(),
+      slug && MediaStore.evictRemoteCache ? MediaStore.evictRemoteCache(slug) : Promise.resolve()
     ]);
     ex.image = ""; ex.video = ""; ex.gif = "";
     ex.mediaType = "";
@@ -2197,18 +2294,24 @@
 
     const prof = Store.profile();
     if ($("pWeight")) $("pWeight").value = prof.current.weight || "";
+    if ($("pBodyFat")) $("pBodyFat").value = prof.current.bodyFat || "";
     if ($("pWaist")) $("pWaist").value = prof.current.waist || "";
     if ($("pChest")) $("pChest").value = prof.current.chest || "";
-    if ($("pArm")) $("pArm").value = prof.current.arm || "";
+    const bicepVal = prof.current.biceps ?? prof.current.arm ?? "";
+    if ($("pBiceps")) $("pBiceps").value = bicepVal;
+    if ($("pArm")) $("pArm").value = bicepVal;
+    if ($("pForearm")) $("pForearm").value = prof.current.forearm || "";
     if ($("profileStamp")) $("profileStamp").textContent = prof.current.date ? `Last saved ${UI.fmtDate(prof.current.date, { month: "short", day: "numeric", year: "numeric" })}` : "Not recorded yet";
 
     const previous = prof.history?.[1] || null;
     if ($("previousProfileDate")) $("previousProfileDate").textContent = previous?.date ? UI.fmtDate(previous.date, { month: "short", day: "numeric", year: "numeric" }) : "- record";
     if ($("previousProfileValues")) $("previousProfileValues").innerHTML = `
       <label>Weight (kg)<input disabled value="${esc(previous?.weight || "")}" placeholder="—"></label>
+      <label>Body Fat (%)<input disabled value="${esc(previous?.bodyFat || "")}" placeholder="—"></label>
       <label>Waist (cm)<input disabled value="${esc(previous?.waist || "")}" placeholder="—"></label>
       <label>Chest (cm)<input disabled value="${esc(previous?.chest || "")}" placeholder="—"></label>
-      <label>Arm (cm)<input disabled value="${esc(previous?.arm || "")}" placeholder="—"></label>
+      <label>Biceps (cm)<input disabled value="${esc(previous?.biceps ?? previous?.arm ?? "")}" placeholder="—"></label>
+      <label>Forearm (cm)<input disabled value="${esc(previous?.forearm || "")}" placeholder="—"></label>
     `;
     if ($("projectIntensityProgress")) $("projectIntensityProgress").innerHTML = intensityMarkup(Store.projectIntensity(p), "Workout Intensity");
 
@@ -2236,11 +2339,16 @@
 
   async function saveProfile() {
     const w = $("pWeight")?.value.trim() || "";
+    const bicepInput = $("pBiceps")?.value.trim() ?? $("pArm")?.value.trim() ?? "";
+    const forearmInput = $("pForearm")?.value.trim() || "";
     Store.saveProfile({
       weight: w,
+      bodyFat: $("pBodyFat")?.value.trim() || "",
       waist: $("pWaist")?.value.trim() || "",
       chest: $("pChest")?.value.trim() || "",
-      arm: $("pArm")?.value.trim() || ""
+      biceps: bicepInput,
+      arm: bicepInput,
+      forearm: forearmInput
     });
     renderProgress();
     // The body-weight forecast and the "Body-weight trend" signal both read the
@@ -2820,11 +2928,17 @@
 
       // Synchronize weight to Store.profile() and Home view
       if (weightKg) {
+        const curProf = Store.profile().current || {};
+        const bicepVal = $("pBiceps")?.value?.trim() || $("pArm")?.value?.trim() || curProf.biceps || curProf.arm || "";
+        const forearmVal = $("pForearm")?.value?.trim() || curProf.forearm || "";
         Store.saveProfile({
           weight: String(weightKg),
-          waist: $("pWaist")?.value?.trim() || Store.profile().current.waist || "",
-          chest: $("pChest")?.value?.trim() || Store.profile().current.chest || "",
-          arm: $("pArm")?.value?.trim() || Store.profile().current.arm || ""
+          bodyFat: $("pBodyFat")?.value?.trim() || curProf.bodyFat || "",
+          waist: $("pWaist")?.value?.trim() || curProf.waist || "",
+          chest: $("pChest")?.value?.trim() || curProf.chest || "",
+          biceps: bicepVal,
+          arm: bicepVal,
+          forearm: forearmVal
         });
         if ($("pWeight")) $("pWeight").value = String(weightKg);
         renderProgress();
@@ -3186,6 +3300,10 @@
       previewActiveMedia();
       UI.toast("Preview refreshed");
     });
+
+    // Autoplay toggle button
+    $("btnToggleDetailAutoplay")?.addEventListener("click", toggleDetailAutoplay);
+    updateDetailAutoplayBtn();
 
     [$("timerCountdown"), $("timerBalance")].forEach(input => {
       input?.addEventListener("input", () => {

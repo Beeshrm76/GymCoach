@@ -662,6 +662,7 @@ window.Home = (() => {
       ["records", renderRecords],
       ["consistency", renderConsistency],
       ["pipeline", renderPipeline],
+      ["prediction", () => window.StatsDashboard?.renderBodyPredictionPanel?.()],
       ["install", renderInstall]
     ];
     // One broken section must not blank the whole page - Home is the landing view.

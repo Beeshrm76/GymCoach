@@ -107,6 +107,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       throw new Error("Invalid role: " + newRole);
     }
 
+    // Guard: Prevent one Super Admin from modifying another Super Admin's role
+    const currentUserId = window.Auth?.getUser()?.id;
+    const targetUser = cachedUsers.find(x => x.id === userId);
+    if (targetUser && targetUser.role === 'SUPER_ADMIN' && userId !== currentUserId) {
+      throw new Error("Access Denied: One Super Administrator cannot modify another Super Administrator's role.");
+    }
+
     // 1. Try RPC set_user_role first (bypasses client RLS via SECURITY DEFINER)
     try {
       const { data, error: rpcErr } = await supabase.rpc('set_user_role', {
@@ -169,8 +176,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             <td>
               <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                 ${!isSelf ? `
-                  <button class="btn small-btn primary" onclick="changeRolePrompt('${a.id}', '${a.role}', '${esc(a.username)}', '${esc(a.email)}')">Change Role</button>
-                  ${!isSuper ? `<button class="btn small-btn danger" onclick="demoteAdmin('${a.id}', '${esc(a.username)}')">Demote to User</button>` : ''}
+                  ${!isSuper ? `
+                    <button class="btn small-btn primary" onclick="changeRolePrompt('${a.id}', '${a.role}', '${esc(a.username)}', '${esc(a.email)}')">Change Role</button>
+                    <button class="btn small-btn danger" onclick="demoteAdmin('${a.id}', '${esc(a.username)}')">Demote to User</button>
+                  ` : `
+                    <button class="btn small-btn" disabled title="Super Admin accounts are protected. Cannot change other Super Admin roles." style="opacity:0.5;cursor:not-allowed;">Protected</button>
+                  `}
                   <button class="btn small-btn" onclick="suspendUser('${a.id}')">${a.status === 'SUSPENDED' ? 'Activate' : 'Suspend'}</button>
                 ` : `<small class="muted" style="font-weight:600;">(Current Account)</small>`}
               </div>
@@ -219,6 +230,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   window.demoteAdmin = async (id, username) => {
+    const u = cachedUsers.find(x => x.id === id);
+    if (u?.role === 'SUPER_ADMIN') {
+      toast("Super Admin accounts cannot be demoted.", "error");
+      return;
+    }
     if (!confirm(`Demote @${username} from Admin back to standard User?`)) return;
     try {
       await setUserRole(id, 'USER');
@@ -230,7 +246,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   window.changeRolePrompt = (userId, currentRole = 'USER', username = '', email = '') => {
+    const currentUserId = window.Auth?.getUser()?.id;
     const u = cachedUsers.find(x => x.id === userId) || {};
+    if ((currentRole === 'SUPER_ADMIN' || u.role === 'SUPER_ADMIN') && userId !== currentUserId) {
+      toast("Super Admin accounts are protected. You cannot modify another Super Admin's role.", "error");
+      return;
+    }
+
     const un = username || u.username || 'User';
     const em = email || u.email || '';
 
@@ -279,6 +301,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!userId) {
       toast("Please select a user.", "error");
+      return;
+    }
+
+    const currentUserId = window.Auth?.getUser()?.id;
+    const target = cachedUsers.find(x => x.id === userId);
+    if (target && target.role === 'SUPER_ADMIN' && userId !== currentUserId) {
+      toast("Super Admin accounts are protected. You cannot modify another Super Admin's role.", "error");
       return;
     }
 
@@ -697,10 +726,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const ytMatch = trimmed.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
     if (ytMatch && ytMatch[1]) {
       const videoId = ytMatch[1];
+      const autoplayParam = superVideoAutoplay ? `&autoplay=1&mute=1&loop=1&playlist=${videoId}` : '';
       return {
         type: 'youtube',
         id: videoId,
-        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&enablejsapi=1`,
+        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&enablejsapi=1${autoplayParam}`,
         url: trimmed
       };
     }
@@ -735,6 +765,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     return null;
+  }
+
+  let superVideoAutoplay = localStorage.getItem('gym_super_autoplay') !== 'false';
+
+  function updateSuperAutoplayBtn() {
+    const btn = $('btnSuperToggleAutoplay');
+    if (!btn) return;
+    btn.textContent = superVideoAutoplay ? '▶️ Autoplay: ON' : '⏸️ Autoplay: OFF';
+    btn.style.color = superVideoAutoplay ? 'var(--accent, #00f2fe)' : 'var(--text-secondary, #94a3b8)';
+    btn.style.borderColor = superVideoAutoplay ? 'rgba(0, 242, 254, 0.4)' : 'rgba(255, 255, 255, 0.15)';
+  }
+
+  function toggleSuperAutoplay() {
+    superVideoAutoplay = !superVideoAutoplay;
+    try { localStorage.setItem('gym_super_autoplay', superVideoAutoplay); } catch (_) {}
+    updateSuperAutoplayBtn();
+    updateVideoPreview();
   }
 
   let superModalPreviewMode = 'video'; // 'video' or 'gif'
@@ -827,6 +874,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (vid) {
         vid.src = file ? URL.createObjectURL(file) : (existing?.video_file_url || esc(existing?.video_path));
         vid.style.display = 'block';
+        if (superVideoAutoplay) {
+          vid.play().catch(() => {});
+        } else {
+          vid.pause();
+        }
       }
       $('btnRemoveVideo').style.display = 'block';
       if (status) {
@@ -859,6 +911,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (vid) {
           vid.src = info.url;
           vid.style.display = 'block';
+          if (superVideoAutoplay) {
+            vid.play().catch(() => {});
+          } else {
+            vid.pause();
+          }
           vid.onerror = () => {
             const isGitHub = info.url.includes('raw.githubusercontent.com') || info.url.includes('github.com');
             const fn = info.url.split('/').pop() || 'video.mp4';
@@ -902,7 +959,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (hasExistingUpload && !file) {
       if (wrap) wrap.style.display = 'block';
       if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
-      if (vid) { vid.src = existing.video_file_url || esc(existing.video_path); vid.style.display = 'block'; }
+      if (vid) {
+        vid.src = existing.video_file_url || esc(existing.video_path);
+        vid.style.display = 'block';
+        if (superVideoAutoplay) {
+          vid.play().catch(() => {});
+        } else {
+          vid.pause();
+        }
+      }
       $('btnRemoveVideo').style.display = 'block';
       return;
     }
@@ -962,6 +1027,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     window._removeExistingVideo = false;
     window._removeExistingIcon = false;
     window._removeExistingGif = false;
+    updateSuperAutoplayBtn();
 
     if (editIdx >= 0) {
       const ex = defaultExercises[editIdx];
@@ -1236,6 +1302,55 @@ document.addEventListener("DOMContentLoaded", async () => {
   $('btnSuperModalToggleGif')?.addEventListener('click', () => {
     superModalPreviewMode = 'gif';
     updateVideoPreview();
+  });
+  $('btnSuperToggleAutoplay')?.addEventListener('click', toggleSuperAutoplay);
+
+  // Live Icon and Image URL preview handlers in Exercise Modal
+  function updateExerciseIconPreview() {
+    const file = $('exModalIcon')?.files?.[0];
+    const imgUrl = ($('exModalImageUrl')?.value || '').trim();
+    const prev = $('exModalIconPreview');
+    const rmBtn = $('btnRemoveIcon');
+    if (!prev) return;
+
+    if (file) {
+      prev.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--accent);">`;
+      if (rmBtn) rmBtn.style.display = 'block';
+    } else if (imgUrl) {
+      prev.innerHTML = `<img src="${esc(imgUrl)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--accent);" onerror="this.style.display='none'">`;
+      if (rmBtn) rmBtn.style.display = 'block';
+    } else {
+      const editIdx = parseInt($('exerciseEditIndex')?.value ?? '-1', 10);
+      const ex = editIdx >= 0 ? defaultExercises[editIdx] : null;
+      if (ex?.icon_url && !window._removeExistingIcon) {
+        prev.innerHTML = `<img src="${esc(ex.icon_url)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;">`;
+        if (rmBtn) rmBtn.style.display = 'block';
+      } else {
+        prev.innerHTML = '';
+        if (rmBtn) rmBtn.style.display = 'none';
+      }
+    }
+  }
+
+  $('exModalIcon')?.addEventListener('change', () => {
+    window._removeExistingIcon = false;
+    updateExerciseIconPreview();
+  });
+  $('exModalImageUrl')?.addEventListener('input', updateExerciseIconPreview);
+  $('exModalImageUrl')?.addEventListener('change', updateExerciseIconPreview);
+  $('btnRemoveIcon')?.addEventListener('click', () => {
+    if ($('exModalIcon')) $('exModalIcon').value = '';
+    if ($('exModalImageUrl')) $('exModalImageUrl').value = '';
+    window._removeExistingIcon = true;
+    updateExerciseIconPreview();
+  });
+
+  // Live logo upload preview handler
+  $('logoUploadInput')?.addEventListener('change', e => {
+    const file = e.target.files?.[0];
+    if (file && $('logoPreview')) {
+      $('logoPreview').innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:100%;height:100%;object-fit:cover;">`;
+    }
   });
 
   // Export full exercise library as JSON

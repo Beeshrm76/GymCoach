@@ -626,13 +626,16 @@
       <div id="exModalVideoPreviewWrap" class="form-group" style="margin-bottom:16px; display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
           <label style="font-size:12px; color:var(--text-secondary); margin-bottom:0;" id="lblExModalDemoPreview">Video Demonstration Preview</label>
-          <div class="media-toggle-pill-group">
-            <button type="button" class="btn-preview-toggle active" id="btnSuperModalToggleVideo" style="padding:2px 8px; font-size:11px;">🎬 Video</button>
-            <button type="button" class="btn-preview-toggle" id="btnSuperModalToggleGif" style="padding:2px 8px; font-size:11px;">🎞️ GIF</button>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" class="btn small-btn" id="btnSuperToggleAutoplay" style="padding:2px 8px; font-size:11px;">▶️ Autoplay: ON</button>
+            <div class="media-toggle-pill-group">
+              <button type="button" class="btn-preview-toggle active" id="btnSuperModalToggleVideo" style="padding:2px 8px; font-size:11px;">🎬 Video</button>
+              <button type="button" class="btn-preview-toggle" id="btnSuperModalToggleGif" style="padding:2px 8px; font-size:11px;">🎞️ GIF</button>
+            </div>
           </div>
         </div>
         <iframe id="exModalVideoIframe" style="width:100%; height:200px; border-radius:12px; background:#111; border:1px solid var(--glass-border); display:none;" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        <video id="exModalVideoPreview" controls style="width:100%; height:200px; border-radius:12px; background:#111; border:1px solid var(--glass-border); display:none;"></video>
+        <video id="exModalVideoPreview" controls autoplay loop muted playsinline style="width:100%; height:200px; border-radius:12px; background:#111; border:1px solid var(--glass-border); display:none;"></video>
         <img id="exModalToggleGifPreview" style="max-width:100%; max-height:200px; border-radius:12px; background:#111; border:1px solid var(--glass-border); display:none; object-fit:contain; margin:0 auto;" alt="GIF Preview">
         <div id="exModalToggleEmpty" class="muted small" style="display:none; text-align:center; padding:20px; background:#111; border-radius:12px; border:1px solid var(--glass-border);">No media available for preview</div>
       </div>
