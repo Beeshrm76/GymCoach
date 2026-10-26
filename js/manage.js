@@ -11,13 +11,39 @@ window.Manage = (() => {
 
   // ------------------------------------------------------- project header
 
+  function syncProjectHeaderInputs(isFinal = false) {
+    const p = project();
+    if (!p) return;
+    const nameEl = $("projectName");
+    const goalEl = $("projectGoal");
+    const bandEl = $("projectIntensityBand");
+    const descEl = $("projectDescription");
+    const notesEl = $("projectNotes");
+
+    if (nameEl) {
+      const val = isFinal ? (nameEl.value.trim() || "My Project") : nameEl.value;
+      p.name = val;
+    }
+    if (goalEl) p.goal = isFinal ? goalEl.value.trim() : goalEl.value;
+    if (bandEl) p.intensityBand = bandEl.value;
+    if (descEl) p.description = isFinal ? descEl.value.trim() : descEl.value;
+    if (notesEl) p.notes = notesEl.value;
+  }
+
   function renderProjectSettings() {
     const p = project();
-    $("projectName").value = p.name || "";
-    $("projectGoal").value = p.goal || "";
-    $("projectIntensityBand").value = p.intensityBand || "";
-    $("projectDescription").value = p.description || "";
-    $("projectNotes").value = p.notes || "";
+    if (!p) return;
+    const nameEl = $("projectName");
+    const goalEl = $("projectGoal");
+    const bandEl = $("projectIntensityBand");
+    const descEl = $("projectDescription");
+    const notesEl = $("projectNotes");
+
+    if (nameEl && document.activeElement !== nameEl) nameEl.value = p.name || "";
+    if (goalEl && document.activeElement !== goalEl) goalEl.value = p.goal || "";
+    if (bandEl && document.activeElement !== bandEl) bandEl.value = p.intensityBand || "";
+    if (descEl && document.activeElement !== descEl) descEl.value = p.description || "";
+    if (notesEl && document.activeElement !== notesEl) notesEl.value = p.notes || "";
 
     const prog = Store.projectProgress(p);
     const workoutDays = p.days.filter(d => d.type === "workout").length;
@@ -27,23 +53,21 @@ window.Manage = (() => {
       `${p.days.length} days (${workoutDays} workout / ${restDays} rest) · ${exCount} exercises · ${prog.pct}% complete`;
   }
 
-  function saveProjectSettings() {
+  function saveProjectSettings(showToast = true) {
     const p = project();
-    p.name = $("projectName").value.trim() || "My Project";
-    p.goal = $("projectGoal").value.trim();
-    p.intensityBand = $("projectIntensityBand").value;
-    p.description = $("projectDescription").value.trim();
-    p.notes = $("projectNotes").value;
+    if (!p) return;
+    syncProjectHeaderInputs(true);
     save();
     window.GymCoach?.renderToday();
     render();
-    UI.toast("Project saved");
+    if (showToast) UI.toast("Project saved");
   }
 
   // ---------------------------------------------------------------- days
 
   function render() {
     if ($("manageView")?.hidden && !$("manageDays")) return;
+    syncProjectHeaderInputs(false);
     renderProjectSettings();
 
     const p = project();
@@ -167,6 +191,11 @@ window.Manage = (() => {
 
     // meta inputs
     meta.querySelectorAll("[data-meta]").forEach(inp => {
+      inp.addEventListener("input", () => {
+        const key = inp.dataset.meta;
+        d[key] = inp.value;
+        save({ silent: true });
+      });
       inp.onchange = () => {
         const key = inp.dataset.meta;
         d[key] = inp.value;
@@ -360,6 +389,8 @@ window.Manage = (() => {
         </div>`;
 
       item.querySelector("[data-open]").onclick = () => {
+        syncProjectHeaderInputs(true);
+        save({ silent: true });
         Store.setActive(p.id);
         window.GymCoach.setCurrentDay(p.days[0]?.id || null);
         UI.closeModal("projectModal");
@@ -367,6 +398,8 @@ window.Manage = (() => {
         window.GymCoach.showToday();
       };
       item.querySelector("[data-copy]").onclick = () => {
+        syncProjectHeaderInputs(true);
+        save({ silent: true });
         const copy = Store.duplicateProject(p.id);
         window.GymCoach.setCurrentDay(copy.days[0]?.id || null);
         renderProjectModal();
@@ -411,7 +444,7 @@ window.Manage = (() => {
     const p = Store.createProject({
       name,
       goal: $("newProjectGoal").value.trim() || template?.goal || "",
-      intensityBand: $("newProjectIntensityBand").value,
+      intensityBand: $("newProjectIntensityBand")?.value || "",
       template
     });
     $("newProjectName").value = "";
@@ -423,7 +456,12 @@ window.Manage = (() => {
     UI.toast(`Created "${p.name}" with ${p.days.length} days`);
   }
 
-  function openChooser() { renderProjectModal(); UI.openModal("projectModal"); }
+  function openChooser() {
+    syncProjectHeaderInputs(true);
+    save({ silent: true });
+    renderProjectModal();
+    UI.openModal("projectModal");
+  }
 
   // ------------------------------------------------------ backup / restore
 
@@ -495,6 +533,45 @@ window.Manage = (() => {
       e.target.value = "";
       if (f) importBackup(f);
     });
+
+    const headerFields = [
+      { id: "projectName", key: "name", trim: true, fallback: "My Project" },
+      { id: "projectGoal", key: "goal", trim: true },
+      { id: "projectIntensityBand", key: "intensityBand" },
+      { id: "projectDescription", key: "description", trim: true },
+      { id: "projectNotes", key: "notes" }
+    ];
+
+    let headerDebounce = null;
+    headerFields.forEach(({ id, key, trim, fallback }) => {
+      const el = $(id);
+      if (!el) return;
+
+      const update = (isFinal = false) => {
+        const p = project();
+        if (!p) return;
+        let val = el.value;
+        if (trim && isFinal) val = val.trim();
+        if (fallback && isFinal && !val) val = fallback;
+        p[key] = val;
+
+        if (isFinal) {
+          if (headerDebounce) clearTimeout(headerDebounce);
+          save({ silent: true });
+          if (key === "name" || key === "goal") window.GymCoach?.renderToday?.();
+        } else {
+          if (headerDebounce) clearTimeout(headerDebounce);
+          headerDebounce = setTimeout(() => {
+            save({ silent: true });
+          }, 250);
+        }
+      };
+
+      el.addEventListener("input", () => update(false));
+      el.addEventListener("change", () => update(true));
+      el.addEventListener("blur", () => update(true));
+    });
+
     render();
   }
 

@@ -608,14 +608,15 @@ window.Store = (() => {
     return d ? d.exercises.find(e => e.id === exId) || null : null;
   }
 
-  function createProject({ name, goal = "", template = null } = {}) {
+  function createProject({ name, goal = "", intensityBand = "", description = "", notes = "", template = null } = {}) {
     hydrate();
     const p = normalize({
       id: uid("project"),
       name: name || "New Workout Project",
       goal,
-      description: "",
-      notes: "",
+      intensityBand,
+      description,
+      notes,
       days: []
     });
 

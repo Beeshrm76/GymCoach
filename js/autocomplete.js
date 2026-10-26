@@ -166,6 +166,7 @@ window.ExerciseAutocomplete = (() => {
     const dropdown = createDropdown();
     let activeIndex = -1;
     let currentResults = [];
+    let isSelecting = false;
 
     // Position the dropdown relative to the input's parent
     const wrap = input.closest("label") || input.parentElement;
@@ -192,6 +193,7 @@ window.ExerciseAutocomplete = (() => {
     }
 
     function show(query) {
+      if (isSelecting) return;
       currentResults = search(query);
       activeIndex = -1;
       updatePosition();
@@ -200,15 +202,20 @@ window.ExerciseAutocomplete = (() => {
 
     function hide() {
       dropdown.hidden = true;
+      dropdown.innerHTML = "";
+      currentResults = [];
       activeIndex = -1;
     }
 
     function pick(name) {
+      isSelecting = true;
       input.value = name;
       hide();
-      // Trigger input event so path auto-fill etc. reacts
+      // Trigger input event so path auto-fill etc. reacts without reopening dropdown
       input.dispatchEvent(new Event("input", { bubbles: true }));
       input.dispatchEvent(new Event("change", { bubbles: true }));
+      isSelecting = false;
+      hide();
       if (onSelect) onSelect(name);
     }
 
@@ -222,10 +229,12 @@ window.ExerciseAutocomplete = (() => {
     }
 
     input.addEventListener("input", () => {
+      if (isSelecting) return;
       show(input.value);
     });
 
     input.addEventListener("focus", () => {
+      if (isSelecting) return;
       setTimeout(() => { try { input.select(); } catch (_) {} }, 10);
       if (input.value.trim().length >= MIN_CHARS) show(input.value);
     });
@@ -240,6 +249,13 @@ window.ExerciseAutocomplete = (() => {
       // Slight delay so click on option registers before hiding
       setTimeout(hide, 150);
     });
+
+    const onDocPointerDown = e => {
+      if (!dropdown.contains(e.target) && e.target !== input) {
+        hide();
+      }
+    };
+    document.addEventListener("pointerdown", onDocPointerDown);
 
     input.addEventListener("keydown", e => {
       if (dropdown.hidden || !currentResults.length) return;
@@ -263,6 +279,7 @@ window.ExerciseAutocomplete = (() => {
     // Return a controller so we can clean up if needed
     return {
       destroy() {
+        document.removeEventListener("pointerdown", onDocPointerDown);
         dropdown.remove();
       },
       hide
