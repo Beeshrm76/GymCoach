@@ -264,7 +264,7 @@
     const exNames = Array.isArray(d.exercises) ? d.exercises.map(e => e.name || "").join(" ").toLowerCase() : "";
     const text = `${cat} ${type} ${title} ${name} ${focus} ${muscles} ${exNames}`;
 
-    if (type === "rest" || cat === "rest" || /rest|recovery|off|sleep|break/.test(text)) {
+    if (type === "rest" || (type !== "workout" && (cat === "rest" || /rest|recovery|off|sleep|break/.test(text)))) {
       // Rest Day: Crescent moon + stars on vanta night badge
       return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="28" height="28" rx="7" fill="#121212" stroke="#262626" stroke-width="1"/>
@@ -279,7 +279,7 @@
     // 1. Explicit d.category ("push", "pull", "leg", "other")
     // 2. Name matching: Wednesday & Friday -> PULL; Thursday & Sunday -> LEG; Tuesday -> PUSH
     // 3. Keyword matching in title / focus / exercises
-    let dayType = cat;
+    let dayType = (type === "workout" && cat === "rest") ? "" : cat;
     if (!dayType) {
       if (name.includes("wednesday") || name.includes("friday")) {
         dayType = "pull";

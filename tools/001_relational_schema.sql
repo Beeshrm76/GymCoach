@@ -195,13 +195,13 @@ BEGIN
         )
         VALUES (
           d->>'id', NEW.user_id, proj->>'id', d->>'name', d->>'title',
-          COALESCE(d->>'type', 'workout'), (d->>'weekday')::INT,
+          COALESCE(d->>'type', 'workout'), NULLIF(d->>'weekday', '')::INT,
           d->>'focus', d->>'muscles',
-          (d->>'number')::INT, d->>'subtitle', (d->>'completionPct')::NUMERIC,
+          NULLIF(d->>'number', '')::INT, d->>'subtitle', NULLIF(d->>'completionPct', '')::NUMERIC,
           d->>'intensityBand', d->>'workoutStart', d->>'workoutEnd',
-          (d->>'workoutDurationMin')::NUMERIC, (d->>'bodyWeight')::NUMERIC,
-          (d->>'bodyWaist')::NUMERIC, (d->>'bodyChest')::NUMERIC,
-          (d->>'bodyArm')::NUMERIC, d->>'bodyMeasuredOn', d->>'restNotes'
+          NULLIF(d->>'workoutDurationMin', '')::NUMERIC, NULLIF(d->>'bodyWeight', '')::NUMERIC,
+          NULLIF(d->>'bodyWaist', '')::NUMERIC, NULLIF(d->>'bodyChest', '')::NUMERIC,
+          NULLIF(d->>'bodyArm', '')::NUMERIC, d->>'bodyMeasuredOn', d->>'restNotes'
         );
 
         IF d->'exercises' IS NOT NULL AND jsonb_typeof(d->'exercises') = 'array' THEN
@@ -216,12 +216,12 @@ BEGIN
             VALUES (
               ex->>'id', NEW.user_id, proj->>'id', d->>'id', ex->>'name',
               ex->>'weight', COALESCE(ex->>'weightUnit', 'kg'),
-              ex->>'reps', (ex->>'sets')::INT,
-              (ex->>'number')::INT, ex->>'intensityBand', ex->>'pulleySystem',
-              (ex->>'pulleyRatio')::NUMERIC, (ex->>'targetWeightKg')::NUMERIC,
-              (ex->>'targetEffectiveWeightKg')::NUMERIC, (ex->>'targetRepsMin')::INT,
-              (ex->>'targetRepsMax')::INT, (ex->>'targetRir')::INT,
-              (ex->>'loggedSets')::INT, (ex->>'recordedTotalSec')::INT,
+              ex->>'reps', NULLIF(ex->>'sets', '')::INT,
+              NULLIF(ex->>'number', '')::INT, ex->>'intensityBand', ex->>'pulleySystem',
+              NULLIF(ex->>'pulleyRatio', '')::NUMERIC, NULLIF(ex->>'targetWeightKg', '')::NUMERIC,
+              NULLIF(ex->>'targetEffectiveWeightKg', '')::NUMERIC, NULLIF(ex->>'targetRepsMin', '')::INT,
+              NULLIF(ex->>'targetRepsMax', '')::INT, NULLIF(ex->>'targetRir', '')::INT,
+              NULLIF(ex->>'loggedSets', '')::INT, NULLIF(ex->>'recordedTotalSec', '')::INT,
               ex->>'equipment', ex->>'tempo', ex->>'plannedRest', ex->>'notes', ex->>'cues'
             );
 
@@ -244,22 +244,22 @@ BEGIN
                   log_entry->'values'->>'reps',
                   log_entry->'values'->>'time',
                   log_entry->>'rir',
-                  COALESCE((log_entry->>'completed')::BOOLEAN, false),
-                  (COALESCE(log_entry->>'number', log_entry->>'setNumber'))::INT,
-                  (COALESCE(log_entry->'values'->>'weightRaw', log_entry->>'weightRaw'))::NUMERIC,
-                  (COALESCE(log_entry->'values'->>'weightKg', log_entry->>'weightKg'))::NUMERIC,
-                  (COALESCE(log_entry->'values'->>'effectiveWeightKg', log_entry->>'effectiveWeightKg'))::NUMERIC,
-                  (COALESCE(log_entry->'values'->>'volumeKg', log_entry->>'volumeKg'))::NUMERIC,
+                  COALESCE(NULLIF(log_entry->>'completed', '')::BOOLEAN, false),
+                  NULLIF(COALESCE(log_entry->>'number', log_entry->>'setNumber'), '')::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'weightRaw', log_entry->>'weightRaw'), '')::NUMERIC,
+                  NULLIF(COALESCE(log_entry->'values'->>'weightKg', log_entry->>'weightKg'), '')::NUMERIC,
+                  NULLIF(COALESCE(log_entry->'values'->>'effectiveWeightKg', log_entry->>'effectiveWeightKg'), '')::NUMERIC,
+                  NULLIF(COALESCE(log_entry->'values'->>'volumeKg', log_entry->>'volumeKg'), '')::NUMERIC,
                   COALESCE(log_entry->'values'->>'recordedTime', log_entry->>'recordedTime'),
-                  (COALESCE(log_entry->'values'->>'recordedSeconds', log_entry->>'recordedSeconds'))::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'recordedSeconds', log_entry->>'recordedSeconds'), '')::INT,
                   CASE WHEN COALESCE(log_entry->'values'->>'timeRecordedAt', log_entry->>'timeRecordedAt') IS NOT NULL AND COALESCE(log_entry->'values'->>'timeRecordedAt', log_entry->>'timeRecordedAt') != ''
                        THEN (COALESCE(log_entry->'values'->>'timeRecordedAt', log_entry->>'timeRecordedAt'))::TIMESTAMPTZ ELSE NULL END,
                   COALESCE(log_entry->'values'->>'customFields', log_entry->>'customFields'),
-                  (COALESCE(log_entry->'values'->>'restPlannedSec', log_entry->>'restPlannedSec'))::INT,
-                  (COALESCE(log_entry->'values'->>'restExtraSec', log_entry->>'restExtraSec'))::INT,
-                  (COALESCE(log_entry->'values'->>'restBalanceSec', log_entry->>'restBalanceSec'))::INT,
-                  (COALESCE(log_entry->'values'->>'restDefaultDelaySec', log_entry->>'restDefaultDelaySec'))::INT,
-                  (COALESCE(log_entry->'values'->>'restTotalAfterBalancingSec', log_entry->>'restTotalAfterBalancingSec'))::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'restPlannedSec', log_entry->>'restPlannedSec'), '')::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'restExtraSec', log_entry->>'restExtraSec'), '')::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'restBalanceSec', log_entry->>'restBalanceSec'), '')::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'restDefaultDelaySec', log_entry->>'restDefaultDelaySec'), '')::INT,
+                  NULLIF(COALESCE(log_entry->'values'->>'restTotalAfterBalancingSec', log_entry->>'restTotalAfterBalancingSec'), '')::INT,
                   COALESCE(log_entry->'values'->>'note', log_entry->>'note', log_entry->>'setNote')
                 );
                 set_idx := set_idx + 1;

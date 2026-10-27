@@ -1,0 +1,3306 @@
+// app.js - Today view, the sidebar, the exercise-details panel and the custom set table.
+//Front list contract: an exercise row shows a MEDIA THUMBNAIL, the name, and target chips. Demo, RIR, rest, tempo, equipment, cues and the set table all live inside the details panel.
+
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = v => UI.esc(v);
+
+  let currentDayId = null;
+  let currentExerciseId = null;
+  let cardioDraft = [];
+  let preWorkoutDraft = [];
+  let postWorkoutDraft = [];
+  let timerSeconds = 0, timerRunning = false, timerId = null, timerStartedAt = null, timerSetIndex = 0, timerSetId = null, timerMode = "idle", timerElapsedGross = 0, timerTargetSeconds = 30, timerBalanceSeconds = 5;
+
+  const project = () => Store.active();
+
+
+  function intensityPercent(score) {
+    return Math.max(0, Math.min(100, Math.round((Number(score) || 0) / 5 * 100)));
+  }
+
+  function intensityLevel(score) {
+    // Scale direction: green = rest/light, red = heaviest workout — Score runs 0 (rest) to 5 (heaviest)
+    if (score >= 4) return { label: "Red", cls: "red" };
+    if (score >= 3) return { label: "Orange", cls: "orange" };
+    if (score >= 2) return { label: "Yellow", cls: "yellow" };
+    if (score >= 1) return { label: "Light green", cls: "lightgreen" };
+    return { label: "Green", cls: "green" };
+  }
+
+  function intensityMarkup(score, title = "Intensity") {
+    const value = Math.max(0, Math.min(5, Number(score) || 0));
+    const level = intensityLevel(value);
+    return `<div class="intensity-card level-${level.cls}">
+      <div class="intensity-head"><span class="intensity-title">${esc(title)}</span></div>
+      <div class="intensity-bar" style="--intensity-position:${intensityPercent(value)}%" aria-label="Workout intensity scale"><span class="intensity-indicator" aria-hidden="true"></span></div>
+    </div>`;
+  }
+
+  function parseTimeSeconds(value) {
+    const text = String(value ?? "").trim();
+    if (!text) return 0;
+    if (/^\d+(?::\d{1,2}){1,2}$/.test(text)) {
+      const parts = text.split(":").map(Number);
+      if (parts.length === 2) return parts[0] * 60 + parts[1];
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    const n = Number(text);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : 0;
+  }
+
+  function formatTime(total) {
+    const sec = Math.max(0, Math.round(Number(total) || 0));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return h > 0
+      ? `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+      : `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function timeColumn(ex) {
+    return (ex?.setColumns || []).find(c => c.key === "time" || /time/i.test(c.label || "")) || null;
+  }
+
+  function nextRecordableRow(ex) {
+    const rows = Store.currentSessionRows(ex);
+    if (!rows.length) return null;
+    const index = rows.findIndex(r => !r.completed);
+    return index >= 0 ? { row: rows[index], index } : null;
+  }
+
+  function renderSetTimer(ex) {
+    if (!ex) return;
+    const rows = Store.currentSessionRows(ex);
+    if (!rows.length) return;
+    const current = timerSetId ? rows.find(r => r.id === timerSetId) : null;
+    let rowIndex = current && !current.completed ? rows.findIndex(r => r.id === current.id) : -1;
+    if (rowIndex < 0) {
+      const next = nextRecordableRow(ex);
+      rowIndex = next ? next.index : Math.max(0, rows.length - 1);
+    }
+    timerSetIndex = rowIndex;
+    timerSetId = rows[rowIndex]?.id || null;
+    const label = $("timerRecordingSet");
+    if (label) label.textContent = `Set ${rowIndex + 1}`;
+    renderTimer();
+  }
+
+  function updateSelectedSetTime(ex, value = timerSeconds, recordedAt = new Date().toISOString()) {
+    const col = timeColumn(ex), rows = Store.currentSessionRows(ex);
+    const rowIndex = ex.logs.findIndex(x => x.id === timerSetId);
+    const row = rowIndex >= 0 ? ex.logs[rowIndex] : rows[timerSetIndex];
+    if (!col || !row) return false;
+    const resolvedIndex = ex.logs.findIndex(x => x.id === row.id);
+    if (resolvedIndex < 0) return false;
+
+    // The timestamp is written only after the final calculated time is known.
+    ex.logs[resolvedIndex].values[col.key] = formatTime(value);
+    ex.logs[resolvedIndex].timeRecordedAt = recordedAt;
+    ex.logs[resolvedIndex].date = recordedAt;
+    save({ silent: true });
+    renderSetTable();
+    renderSetTimer(ex);
+    return true;
+  }
+
+  function renderTopIntensity(d) {
+    const score = d?.type === "workout" ? Store.dayIntensity(d) : 0;
+    const wrap = $("topIntensity");
+    if (wrap) wrap.style.setProperty("--intensity-position", `${intensityPercent(score)}%`);
+  }
+
+  function renderIntensity(d) {
+    const score = d?.type === "workout" ? Store.dayIntensity(d) : 0;
+    renderTopIntensity(d);
+    const detail = $("detailIntensity");
+    if (detail && d?.type === "workout" && currentExerciseId) {
+      const ex = exercise();
+      if (ex) {
+        const prevRows = Store.previousSessionRows(ex);
+        const currRows = Store.currentSessionRows(ex);
+        const prevData = summariseSessionRows(ex, prevRows);
+        const currData = summariseSessionRows(ex, currRows);
+        detail.innerHTML = `<div class="detail-prev-current">
+          <div class="pc-card">
+            <div class="pc-card-title">Previous</div>
+            <div class="pc-vals">
+              <div class="pc-val"><span class="pc-val-label">Weight</span><span class="pc-val-data">${esc(prevData.weight || "—")}</span></div>
+              <div class="pc-val"><span class="pc-val-label">Reps</span><span class="pc-val-data">${esc(prevData.reps || "—")}</span></div>
+              <div class="pc-val"><span class="pc-val-label">Sets</span><span class="pc-val-data">${esc(prevData.sets || "—")}</span></div>
+              <div class="pc-val"><span class="pc-val-label">RIR</span><span class="pc-val-data">${esc(prevData.rir || "—")}</span></div>
+            </div>
+          </div>
+          <div class="pc-card is-current">
+            <div class="pc-card-title">Current</div>
+            <div class="pc-vals">
+              <div class="pc-val"><span class="pc-val-label">Weight</span><span class="pc-val-data">${esc(currData.weight || "—")}</span></div>
+              <div class="pc-val"><span class="pc-val-label">Reps</span><span class="pc-val-data">${esc(currData.reps || "—")}</span></div>
+              <div class="pc-val"><span class="pc-val-label">Sets</span><span class="pc-val-data">${esc(currData.sets || "—")}</span></div>
+              <div class="pc-val"><span class="pc-val-label">RIR</span><span class="pc-val-data">${esc(currData.rir || "—")}</span></div>
+            </div>
+          </div>
+        </div>`;
+      } else {
+        detail.innerHTML = "";
+      }
+    } else if (detail) {
+      detail.innerHTML = "";
+    }
+    if ($("projectIntensityProgress")) $("projectIntensityProgress").innerHTML = intensityMarkup(Store.projectIntensity(project()), "Workout Intensity");
+  }
+
+  function summariseSessionRows(ex, rows) {
+    if (!rows.length) return { weight: "", reps: "", sets: "", rir: "" };
+    const wCol = (ex.setColumns || []).find(c => c.key === "weight" || /weight/i.test(c.label || ""));
+    const rCol = (ex.setColumns || []).find(c => c.key === "reps" || /rep/i.test(c.label || ""));
+    const weights = rows.map(r => r.values?.[wCol?.key] ?? "").filter(Boolean);
+    const reps = rows.map(r => r.values?.[rCol?.key] ?? "").filter(Boolean);
+    const rirs = rows.map(r => r.rir ?? r.values?.rir ?? "").filter(v => v !== "" && v !== undefined && v !== null);
+    const completedSets = rows.filter(r => r.completed).length;
+    return {
+      weight: weights.length ? weights.join(", ") : "",
+      reps: reps.length ? reps.join(", ") : "",
+      sets: `${completedSets}/${rows.length}`,
+      rir: rirs.length ? rirs.join(", ") : ""
+    };
+  }
+
+  function day() {
+    const p = project();
+    if (!p.days.length) return null;
+    return p.days.find(d => d.id === currentDayId)
+      || p.days.find(d => d.type === "workout")
+      || p.days[0];
+  }
+
+  const exercise = () => day()?.exercises.find(e => e.id === currentExerciseId) || null;
+  const save = (opts) => Store.save(opts);
+
+  // views
+
+  const VIEWS = ["homeView", "todayView", "manageView", "statsView", "aiView"];
+  function showView(id) {
+    VIEWS.forEach(v => { const el = $(v); if (el) el.hidden = v !== id; });
+    document.querySelectorAll("[data-view-btn]").forEach(b =>
+      b.classList.toggle("active", b.dataset.viewBtn === id));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    UI.toggleDrawer(false);
+  }
+
+  const showHome = () => {
+    history.replaceState(null, "", "#home");
+    showView("homeView");
+    renderProgress();
+    window.Home?.render?.();
+    UI.toggleDrawer(false);
+  };
+  const showToday = () => {
+    history.replaceState(null, "", "#today");
+    const scheduled = Store.dayForWeekday
+      ? Store.dayForWeekday(Store.active(), new Date().getDay())
+      : Store.active().days.find(d => Number.isInteger(d.weekday) && d.weekday === new Date().getDay());
+    if (scheduled) currentDayId = scheduled.id;
+    showView("todayView");
+    renderToday();
+    UI.toggleDrawer(false);
+  };
+  const showManage = () => {
+    history.replaceState(null, "", "#build");
+    showView("manageView");
+    window.Manage?.render();
+    UI.toggleDrawer(false);
+  };
+  const showStats = () => {
+    history.replaceState(null, "", "#stats");
+    showView("statsView");
+    window.StatsDashboard?.render();
+    UI.toggleDrawer(false);
+  };
+  // Kept as an alias so any older link, bookmark or data-action still lands
+  const showProgress = showHome;
+  const showAI = () => {
+    history.replaceState(null, "", "#ai");
+    showView("aiView");
+    window.ReportCoach?.render();
+    UI.toggleDrawer(false);
+  };
+
+  // sidebar
+
+  function renderProjectNav() {
+    const box = $("projectNav");
+    if (!box) return;
+    box.innerHTML = "";
+    const activeProject = project();
+    Store.all().forEach(p => {
+      const prog = Store.projectProgress(p);
+      const b = document.createElement("button");
+      b.className = "nav-btn" + (p.id === activeProject.id ? " active" : "");
+      b.title = p.name;
+      b.innerHTML = `<span class="nav-icon">${esc(p.name.slice(0, 1).toUpperCase())}</span>
+        <span class="nav-text"><b>${esc(p.name)}</b><small>${p.days.length} days · ${prog.pct}%</small></span>`;
+      b.onclick = () => {
+        Store.setActive(p.id);
+        currentDayId = null;
+        currentExerciseId = null;
+        renderAll();
+        UI.toggleDrawer(false);
+      };
+      box.appendChild(b);
+    });
+  }
+
+  function getDayPicture(d) {
+    if (!d) return "";
+    const id = (d.id || Math.random().toString(36).slice(2, 7)).replace(/[^a-zA-Z0-9]/g, "_");
+    const cat = (d.category || "").toLowerCase();
+    const type = (d.type || "").toLowerCase();
+    const title = (d.title || "").toLowerCase();
+    const name = (d.name || "").toLowerCase();
+    const focus = (d.focus || "").toLowerCase();
+    const muscles = (d.muscles || "").toLowerCase();
+    const exNames = Array.isArray(d.exercises) ? d.exercises.map(e => e.name || "").join(" ").toLowerCase() : "";
+    const text = `${cat} ${type} ${title} ${name} ${focus} ${muscles} ${exNames}`;
+
+    if (type === "rest" || (type !== "workout" && (cat === "rest" || /rest|recovery|off|sleep|break/.test(text)))) {
+      // Rest Day: Crescent moon + stars on vanta night badge
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="#121212" stroke="#262626" stroke-width="1"/>
+        <path d="M17 13a5 5 0 01-6-6 5.5 5.5 0 106 6z" fill="#38bdf8"/>
+        <circle cx="18" cy="7" r="1.2" fill="#7dd3fc"/>
+        <circle cx="21" cy="12" r=".8" fill="#7dd3fc" opacity=".7"/>
+        <circle cx="12" cy="18" r=".7" fill="#7dd3fc" opacity=".5"/>
+      </svg>`;
+    }
+
+    // Determine Day Type:
+    // 1. Explicit d.category ("push", "pull", "leg", "other")
+    // 2. Name matching: Wednesday & Friday -> PULL; Thursday & Sunday -> LEG; Tuesday -> PUSH
+    // 3. Keyword matching in title / focus / exercises
+    let dayType = (type === "workout" && cat === "rest") ? "" : cat;
+    if (!dayType) {
+      if (name.includes("wednesday") || name.includes("friday")) {
+        dayType = "pull";
+      } else if (name.includes("thursday") || name.includes("sunday")) {
+        dayType = "leg";
+      } else if (name.includes("tuesday")) {
+        dayType = "push";
+      } else if (/pull|row|lat|back|chin|deadlift/.test(title)) {
+        dayType = "pull";
+      } else if (/leg|squat|quad|hamstring|lower|lunge|calves/.test(title)) {
+        dayType = "leg";
+      } else if (/push|chest|bench|press|shoulder|tricep/.test(title)) {
+        dayType = "push";
+      } else if (/cardio|run|hiit/.test(text)) {
+        dayType = "cardio";
+      } else if (/arm|bicep|tricep/.test(text)) {
+        dayType = "arms";
+      } else {
+        dayType = "other";
+      }
+    }
+
+    // PULL DAY (Wednesday & Friday, or any Pull day):
+    // Bent-over barbell row / pull athlete pulling bar up to torso (clearly different from Push)
+    if (dayType === "pull") {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="#0369a1"/>
+        <circle cx="18.5" cy="7.5" r="2.2" fill="#ffffff"/>
+        <line x1="18" y1="9.5" x2="11.5" y2="15.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="15" y1="12" x2="9" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="5" y1="18" x2="15" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <rect x="4" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/>
+        <rect x="14" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/>
+        <line x1="11.5" y1="15.5" x2="13.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="13.5" y1="20.5" x2="15" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="11.5" y1="15.5" x2="8.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="8.5" y1="20.5" x2="8" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    // PUSH DAY (Tuesday, or any Push day):
+    // Athlete in upright power stance pressing loaded barbell overhead
+    if (dayType === "push") {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="#2563eb"/>
+        <line x1="6" y1="5" x2="22" y2="5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <rect x="4.5" y="3" width="2" height="4.5" rx=".8" fill="#ffffff"/>
+        <rect x="21.5" y="3" width="2" height="4.5" rx=".8" fill="#ffffff"/>
+        <circle cx="14" cy="10" r="2.3" fill="#ffffff"/>
+        <line x1="14" y1="12.5" x2="8.5" y2="5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="14" y1="12.5" x2="19.5" y2="5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="14" y1="12" x2="14" y2="18.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="14" y1="18.5" x2="10" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="14" y1="18.5" x2="18" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    // LEG DAY (Thursday & Sunday, or any Leg day):
+    // Athlete in deep barbell back squat
+    if (dayType === "leg") {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="#6b21a8"/>
+        <circle cx="14" cy="5.2" r="2.3" fill="#ffffff"/>
+        <line x1="5" y1="9" x2="23" y2="9" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <rect x="3.5" y="7" width="2" height="4.5" rx=".8" fill="#ffffff"/>
+        <rect x="22.5" y="7" width="2" height="4.5" rx=".8" fill="#ffffff"/>
+        <line x1="14" y1="9" x2="14" y2="15" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="14" y1="15" x2="9" y2="19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="14" y1="15" x2="19" y2="19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="9" y1="19" x2="7" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="19" y1="19" x2="21" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    if (dayType === "cardio") {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="#b91c4a"/>
+        <circle cx="16" cy="6" r="2.2" fill="#fff"/>
+        <line x1="14" y1="8.5" x2="12" y2="15" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="15" x2="8" y2="12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="14" y1="10" x2="19" y2="12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <line x1="12" y1="15" x2="16" y2="20" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="20" x2="20" y2="25" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="15" x2="8" y2="25" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+    }
+
+    if (dayType === "arms") {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="#b45309"/>
+        <path d="M8 20c0-3 2-6 5-7l2-5c1-2 3-2 4-1l-1 5c3 1 4 4 3 7H8z" fill="#fff" fill-opacity=".9"/>
+      </svg>`;
+    }
+
+    // Default / General Workout: Dumbbell
+    return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="28" height="28" rx="7" fill="#181818" stroke="#282828" stroke-width="1"/>
+      <line x1="7" y1="10" x2="7" y2="18" stroke="#4c8dff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="10.5" y1="11" x2="10.5" y2="17" stroke="#4c8dff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="17.5" y1="11" x2="17.5" y2="17" stroke="#4c8dff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="21" y1="10" x2="21" y2="18" stroke="#4c8dff" stroke-width="2" stroke-linecap="round"/>
+      <line x1="10.5" y1="14" x2="17.5" y2="14" stroke="#4c8dff" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  function renderDayNav() {
+    const box = $("dayNav");
+    if (!box) return;
+    box.innerHTML = "";
+    const p = project();
+    const active = day();
+
+    if (!p.days.length) {
+      box.innerHTML = `<div class="nav-empty">No days yet.<br>Open Manage to add one.</div>`;
+      return;
+    }
+
+    p.days.forEach(d => {
+      const prog = Store.dayProgress(d);
+      const b = document.createElement("button");
+      b.className = "nav-btn day-btn" + (d.id === active?.id ? " active" : "") + (d.type === "rest" ? " is-rest" : "");
+      b.title = `${d.name} — ${d.type === "rest" ? "Rest" : d.title}`;
+      b.innerHTML = `<span class="nav-icon has-picture">${getDayPicture(d)}</span>
+        <span class="nav-text"><b>${esc(d.name)}</b><small>${d.type === "rest" ? "Rest" : `${esc(d.title || "Workout")} · ${prog.done}/${prog.total}`}</small></span>`;
+      b.onclick = () => {
+        currentDayId = d.id;
+        showView("todayView");
+        renderToday();
+        UI.toggleDrawer(false);
+      };
+      box.appendChild(b);
+    });
+  }
+
+  // --------------------------------------------------------------- today
+
+  function renderToday() {
+    const p = project();
+    const d = day();
+
+    $("sessionProject").textContent = p.name;
+    const now = new Date();
+    $("dateLabel").textContent = now.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    $("currentDateTime") && ($("currentDateTime").textContent = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }));
+
+    // A project with no days used to leave the whole view showing stale data.
+    if (!d) {
+      currentDayId = null;
+      $("pageTitle").textContent = p.name;
+      $("pageSubtitle").textContent = "This project has no days yet.";
+      $("sessionDay").textContent = "—";
+      $("exerciseCount").textContent = "0";
+      $("completion").textContent = "0%";
+      $("focus").textContent = "No days";
+      $("muscles").textContent = "";
+      // $("dayFocusShort").textContent = "—";
+      $("progressBar").style.width = "0%";
+      $("exerciseList").innerHTML = `<div class="empty-state">
+          <b>Nothing scheduled yet</b>
+          <p>Add your first day, then choose whether it's a workout or a rest day.</p>
+          <button class="btn primary" data-action="create-day">+ Add a day</button>
+        </div>`;
+      renderProjectNav(); renderDayNav();
+      return;
+    }
+
+    currentDayId = d.id;
+    const isRest = d.type === "rest";
+    const prog = Store.dayProgress(d);
+
+    $("sessionDay").textContent = d.name;
+    // "+ Exercise" / "Clear log" make no sense on a rest day.
+    $("heroActions").hidden = isRest;
+    $("exerciseCount").textContent = isRest ? "—" : d.exercises.length;
+    $("completion").textContent = isRest ? "Rest" : `${prog.pct}%`;
+    $("pageTitle").textContent = isRest ? (d.title || d.name) : (d.title || "Workout");
+    $("pageSubtitle").textContent = isRest ? (d.restNotes || "Recovery day") : (d.subtitle || "");
+    $("focus").textContent = isRest ? "Recovery / Rest" : (d.focus || d.title || "Workout");
+    $("muscles").textContent = isRest ? (d.restNotes || "No training scheduled") : (d.muscles || "");
+    // $("dayFocusShort").textContent = (isRest ? d.restNotes : d.focus) || d.title || "—";
+    $("progressBar").style.width = `${isRest ? 0 : prog.pct}%`;
+    $("dayProgressLabel").textContent = isRest ? "Rest day" : `${prog.done} of ${prog.total} done`;
+    renderWorkTime(d);
+    renderIntensity(d);
+    renderCardioSummary(d);
+
+    // Hide pre/post workout strips on rest days
+    const preStrip = $("preWorkoutStrip");
+    const postStrip = $("postWorkoutStrip");
+    if (preStrip) preStrip.hidden = isRest;
+    if (postStrip) postStrip.hidden = isRest;
+
+    renderExercises(d);
+    renderProjectNav();
+    renderDayNav();
+    window.WorkoutPlayer?.render?.();
+  }
+
+
+  function renderWorkTime(d) {
+    const row = $("workTimeRow");
+    if (!row) return;
+    row.hidden = d.type === "rest";
+    if (row.hidden) return;
+    const wt = Store.getWorkTime(d);
+    $("workStartTime").value = wt.startTime || "";
+    $("workStartAmPm").value = wt.startAmPm || "AM";
+    $("workEndTime").value = wt.endTime || "";
+    $("workEndAmPm").value = wt.endAmPm || "AM";
+  }
+
+  function saveWorkTime(patch) {
+    const d = day();
+    if (!d) return;
+    Store.setWorkTime(d, patch);
+    save({ silent: true });
+  }
+
+  function renderExercises(d) {
+    const box = $("exerciseList");
+    box.innerHTML = "";
+
+    if (d.type === "rest") {
+      box.innerHTML = `<div class="rest-day-body">
+          <div class="rest-icon">◍</div>
+          <h3>${esc(d.title || "Rest Day")}</h3>
+          <p>${esc(d.restNotes || "Use this day for recovery.")}</p>
+          <div class="rest-actions">
+            <button class="btn" data-action="manage-project">Edit this day</button>
+            <button class="btn" data-action="show-progress">Log weekly check</button>
+          </div>
+        </div>`;
+      return;
+    }
+
+    if (!d.exercises.length) {
+      box.innerHTML = `<div class="empty-state">
+          <b>No exercises on ${esc(d.name)}</b>
+          <p>Add one here, or switch this day to Rest in Manage.</p>
+          <button class="btn primary" data-action="add-exercise">+ Add exercise</button>
+        </div>`;
+      return;
+    }
+
+    d.exercises.forEach(ex => {
+      const done = Store.isExerciseDone(ex);
+      const started = !done && Store.isExerciseStarted(ex);
+      const loggedSets = ex.logs.filter(l => l.completed).length;
+
+      const phaseBadge = ex.phase === "pre"
+        ? `<span class="exercise-phase-badge pre">🔥 Pre-Workout</span>`
+        : ex.phase === "post"
+        ? `<span class="exercise-phase-badge post">🧊 Post-Workout</span>`
+        : "";
+
+      const row = document.createElement("div");
+      row.className = "exercise-row" + (done ? " completed" : "") + (started ? " started" : "");
+      row.dataset.exId = ex.id;
+      row.innerHTML = `
+        <div class="exercise-thumb" data-thumb="${ex.id}">
+          <div class="thumb-fallback">${getExerciseIcon(ex.name, ex.phase)}</div>
+        </div>
+        <div class="exercise-main">
+          <div class="exercise-name">${esc(ex.name)}${phaseBadge}</div>
+        </div>
+        <div class="row-status">
+          <button class="check-btn ${done ? "checked" : ""}" data-complete="${ex.id}"
+                  title="${done ? "Mark not done" : "Mark all sets done"}"
+                  aria-label="${done ? "Mark not done" : "Mark all sets done"}">${done ? "✓" : "○"}</button>
+        </div>`;
+
+      row.addEventListener("click", ev => {
+        if (ev.target.closest("[data-complete]")) return;
+        openDetails(ex.id);
+      });
+      box.appendChild(row);
+      paintThumb(ex);
+    });
+  }
+
+  function getExerciseIcon(name, phase) {
+    if (phase === "pre") return "🔥";
+    if (phase === "post") return "🧊";
+    const n = (name || "").toLowerCase();
+    if (n.includes("stretch") || n.includes("warm") || n.includes("mobility") || n.includes("hang") || n.includes("roll")) {
+      return "🧘";
+    }
+    if (n.includes("pull") || n.includes("row") || n.includes("chin") || n.includes("lat")) {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#0369a1"/><circle cx="18.5" cy="7.5" r="2.2" fill="#ffffff"/><line x1="18" y1="9.5" x2="11.5" y2="15.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="15" y1="12" x2="9" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="5" y1="18" x2="15" y2="18" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="4" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/><rect x="14" y="15.5" width="2" height="5" rx=".8" fill="#ffffff"/><line x1="11.5" y1="15.5" x2="13.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="13.5" y1="20.5" x2="15" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="15.5" x2="8.5" y2="20.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="8.5" y1="20.5" x2="8" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+    } else if (n.includes("push") || n.includes("press") || n.includes("bench")) {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#2563eb"/><line x1="6" y1="5" x2="22" y2="5" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="4.5" y="3" width="2" height="4.5" rx=".8" fill="#ffffff"/><rect x="21.5" y="3" width="2" height="4.5" rx=".8" fill="#ffffff"/><circle cx="14" cy="10" r="2.3" fill="#ffffff"/><line x1="14" y1="12.5" x2="8.5" y2="5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="12.5" x2="19.5" y2="5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="12" x2="14" y2="18.5" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="18.5" x2="10" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="18.5" x2="18" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+    } else if (n.includes("squat") || n.includes("leg") || n.includes("curl") || n.includes("calf")) {
+      return `<svg viewBox="0 0 28 28" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="7" fill="#6b21a8"/><circle cx="14" cy="5.2" r="2.3" fill="#ffffff"/><line x1="5" y1="9" x2="23" y2="9" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><rect x="3.5" y="7" width="2" height="4.5" rx=".8" fill="#ffffff"/><rect x="22.5" y="7" width="2" height="4.5" rx=".8" fill="#ffffff"/><line x1="14" y1="9" x2="14" y2="15" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="15" x2="9" y2="19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="15" x2="19" y2="19" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="19" x2="7" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="19" x2="21" y2="25" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+    }
+    return "▦";
+  }
+
+  async function paintThumb(ex) {
+    const holder = document.querySelector(`[data-thumb="${ex.id}"]`);
+    if (!holder) return;
+    const kind = ex.mediaType === "gif" ? "gif" : "image";
+    let src = await mediaSrc(ex, kind);
+    if (!src && kind === "gif") src = await mediaSrc(ex, "image");
+    if (!src || !holder.isConnected) return;
+    const img = document.createElement("img");
+    img.alt = "";
+    img.onload = () => {
+      if (holder.isConnected) {
+        holder.innerHTML = "";
+        holder.appendChild(img);
+      }
+    };
+    img.onerror = () => {
+      // image doesn't exist on disk, keep the fallback icon
+    };
+    img.src = src;
+  }
+
+  // Derives a slug from any name: "Shoulder Press Machine" → "shoulder_press_machine"
+  // GitHub Media Base & URL helpers
+  const GITHUB_REPO_OWNER = "Beeshrm76";
+  const GITHUB_REPO_NAME = "GymCoach";
+  const GITHUB_REPO_BRANCH = "main";
+  const GITHUB_MEDIA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}`;
+
+  function getGitHubMediaBase() {
+    try {
+      const custom = localStorage.getItem("gym_github_media_base");
+      if (custom && custom.trim()) return custom.trim().replace(/\/$/, "");
+    } catch (_) {}
+    return GITHUB_MEDIA_BASE;
+  }
+
+  function slugFromName(name) {
+    if (!name) return "";
+    return name.trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")   // non-alphanum → underscore
+      .replace(/^_|_$/g, "");         // trim leading/trailing _
+  }
+
+  function githubVideoUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getGitHubMediaBase()}/videos/${slug}.mp4` : "";
+  }
+
+  function githubGifUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getGitHubMediaBase()}/gifs/${slug}.gif` : "";
+  }
+
+  function githubImageUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getGitHubMediaBase()}/images/${slug}.jpg` : "";
+  }
+
+  // Derives a default video path from exercise name:
+  //   "Seated Chest Press" → "videos/seated_chest_press.mp4"
+  function videoPathFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `videos/${slug}.mp4` : "";
+  }
+
+  // Derives a default image path from exercise name:
+  //   "Seated Chest Press" → "images/seated_chest_press.jpg"
+  function imagePathFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `images/${slug}.jpg` : "";
+  }
+
+  // Checks whether a path is empty or matches the auto-generated pattern for
+  // *any* exercise name (i.e. "videos/<slug>.mp4" or "images/<slug>.jpg" or GitHub video URL).
+  // Returns true if the path should be auto-updated when the name changes.
+  function isAutoGeneratedPath(path, kind) {
+    if (!path) return true;
+    const p = path.replace(/\\/g, "/").trim();
+    if (!p) return true;
+    if (kind === "video") {
+      if (/^videos\/[a-z0-9_]+(\.mp4)?$/i.test(p)) return true;
+      if (/^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^\/]+\/[^\/]+\/(?:blob\/|raw\/)?[^\/]+\/videos\/[a-z0-9_]+(?:\.mp4)?$/i.test(p)) return true;
+      return false;
+    }
+    if (kind === "image") {
+      if (/^images\/[a-z0-9_]+(\.(?:jpg|jpeg|png|webp))?$/i.test(p)) return true;
+      if (/^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^\/]+\/[^\/]+\/(?:blob\/|raw\/)?[^\/]+\/images\/[a-z0-9_]+(?:\.(?:jpg|jpeg|png|webp))?$/i.test(p)) return true;
+      return false;
+    }
+    if (kind === "gif") {
+      if (/^(?:gifs|images)\/[a-z0-9_]+(?:\.gif)?$/i.test(p)) return true;
+      if (/^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^\/]+\/[^\/]+\/(?:blob\/|raw\/)?[^\/]+\/gifs\/[a-z0-9_]+(?:\.gif)?$/i.test(p)) return true;
+      return false;
+    }
+    return false;
+  }
+
+  let detailActiveMediaType = "github"; // "github" | "youtube" | "gif"
+
+  function selectDetailMediaType(type, ex, triggerPreview = true) {
+    detailActiveMediaType = type || "github";
+    const btnGh = $("btnMediaChoiceGithub");
+    const btnYt = $("btnMediaChoiceYoutube");
+    const btnGif = $("btnMediaChoiceGif");
+
+    const panelGh = $("panelMediaGithub");
+    const panelYt = $("panelMediaYoutube");
+    const panelGif = $("panelMediaGif");
+
+    [btnGh, btnYt, btnGif].forEach(b => b?.classList.remove("active"));
+    if (panelGh) panelGh.style.display = "none";
+    if (panelYt) panelYt.style.display = "none";
+    if (panelGif) panelGif.style.display = "none";
+
+    if (detailActiveMediaType === "youtube") {
+      btnYt?.classList.add("active");
+      if (panelYt) panelYt.style.display = "block";
+    } else if (detailActiveMediaType === "gif") {
+      btnGif?.classList.add("active");
+      if (panelGif) panelGif.style.display = "block";
+    } else {
+      detailActiveMediaType = "github";
+      btnGh?.classList.add("active");
+      if (panelGh) panelGh.style.display = "block";
+    }
+
+    if (triggerPreview) {
+      previewActiveMedia(ex || exercise());
+    }
+  }
+
+  async function previewActiveMedia(ex) {
+    const exObj = ex || exercise();
+    if (!exObj) return;
+
+    const badge = $("detailPreviewBadge");
+    const img = $("detailImage"), vid = $("detailVideo"), frame = $("detailVideoFrame"), fall = $("detailMediaFallback");
+    const fallbackText = $("detailFallbackText");
+
+    if (frame) { frame.hidden = true; frame.removeAttribute("src"); }
+    if (vid) { vid.hidden = true; vid.pause(); vid.removeAttribute("src"); }
+    if (img) { img.hidden = true; img.removeAttribute("src"); }
+    if (fall) fall.hidden = false;
+
+    const currentName = $("detailName")?.value.trim() || exObj.name;
+    const defaultGhVid = githubVideoUrlFromName(currentName);
+    const defaultGhGif = githubGifUrlFromName(currentName);
+
+    if (detailActiveMediaType === "youtube") {
+      if (badge) {
+        badge.textContent = "🎬 YouTube";
+        badge.style.background = "rgba(239, 68, 68, 0.15)";
+        badge.style.color = "#f87171";
+        badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+      }
+      const ytUrl = ($("detailYoutubeUrl")?.value || "").trim();
+      if (ytUrl) {
+        const info = extractVideoInfo(ytUrl);
+        if (info && (info.type === "youtube" || info.type === "vimeo") && frame) {
+          frame.src = info.embedUrl;
+          frame.hidden = false;
+          if (fall) fall.hidden = true;
+          return;
+        }
+      }
+      if (fallbackText) fallbackText.textContent = ytUrl ? "Invalid YouTube link" : "Enter a YouTube link below";
+      return;
+    }
+
+    if (detailActiveMediaType === "gif") {
+      if (badge) {
+        badge.textContent = "🎞️ Looping GIF";
+        badge.style.background = "rgba(16, 185, 129, 0.15)";
+        badge.style.color = "#10b981";
+        badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+      }
+      let gifUrl = ($("detailGifUrl")?.value || "").trim() || (exObj.gif ? await mediaSrc(exObj, "gif") : defaultGhGif);
+      gifUrl = convertGitHubUrlToRaw(gifUrl);
+      if (gifUrl && img) {
+        img.src = gifUrl;
+        img.hidden = false;
+        if (fall) fall.hidden = true;
+        return;
+      }
+      if (fallbackText) fallbackText.textContent = "Upload a .gif or enter a GIF URL";
+      return;
+    }
+
+    // GitHub Video (Default)
+    if (badge) {
+      badge.textContent = "🐙 GitHub Video";
+      badge.style.background = "rgba(0, 242, 254, 0.15)";
+      badge.style.color = "var(--accent, #00f2fe)";
+      badge.style.borderColor = "rgba(0, 242, 254, 0.3)";
+    }
+    let ghUrl = ($("detailGithubUrl")?.value || "").trim() || (exObj.video && !extractVideoInfo(exObj.video)?.type.match(/youtube|vimeo/) ? exObj.video : defaultGhVid);
+    ghUrl = convertGitHubUrlToRaw(ghUrl);
+    if (ghUrl && vid) {
+      vid.src = ghUrl;
+      vid.muted = true;
+      vid.hidden = false;
+      vid.onerror = () => {
+        const fn = ghUrl.split('/').pop() || 'video.mp4';
+        vid.hidden = true;
+        if (fall) {
+          fall.hidden = false;
+          if (fallbackText) fallbackText.innerHTML = `⚠️ <code>${esc(fn)}</code> not found on GitHub (404).<br><span style="font-size:10px;opacity:0.8;">Upload GIF/video or push it to repository.</span>`;
+        }
+      };
+      if (fall) fall.hidden = true;
+      return;
+    }
+    if (fallbackText) fallbackText.textContent = "No GitHub video URL available";
+  }
+
+  // Live-updates the video/image path fields and placeholders when the exercise
+  // name input changes, but only if the current path is empty or matches the
+  // auto-generated format (so manually typed custom paths are never overwritten).
+  function updatePathFieldsFromName(name) {
+    const vInput = $("detailVideoPath"), iInput = $("detailImagePath"), gInput = $("detailGifPath");
+    const ghInput = $("detailGithubUrl"), gifInput = $("detailGifUrl");
+    const ghVPath = githubVideoUrlFromName(name);
+    const iPath = imagePathFromName(name);
+    const ghGPath = githubGifUrlFromName(name);
+
+    if (ghInput) {
+      ghInput.placeholder = ghVPath || "https://raw.githubusercontent.com/.../videos/exercise.mp4";
+      if (isAutoGeneratedPath(ghInput.value, "video")) ghInput.value = ghVPath;
+    }
+    if (gifInput) {
+      gifInput.placeholder = ghGPath || "https://.../demo.gif or GitHub GIF URL";
+      if (isAutoGeneratedPath(gifInput.value, "gif") && gifInput.value) gifInput.value = ghGPath;
+    }
+
+    // Update placeholder always
+    if (vInput) vInput.placeholder = ghVPath || videoPathFromName(name) || "e.g. videos/bench_press.mp4";
+    if (iInput) iInput.placeholder = iPath || "e.g. images/bench_press.jpg";
+    if (gInput) gInput.placeholder = ghGPath || "e.g. images/" + (slugFromName(name) || "exercise") + ".gif";
+    // Update value only if it's auto-generated or empty
+    if (vInput && isAutoGeneratedPath(vInput.value, "video")) vInput.value = ghVPath;
+    if (iInput && isAutoGeneratedPath(iInput.value, "image")) iInput.value = iPath;
+    if (gInput && isAutoGeneratedPath(gInput.value, "gif") && gInput.value) gInput.value = ghGPath;
+
+    // Refresh live preview if detail modal is open
+    if ($("exerciseModal")?.classList.contains("open")) {
+      previewActiveMedia();
+    }
+  }
+
+  // ── GitHub Raw Content Helper ──
+  // Automatically transforms https://github.com/user/repo/blob/main/path/to/file into raw.githubusercontent.com
+  function convertGitHubUrlToRaw(url) {
+    if (!url || typeof url !== "string") return url;
+    const clean = url.trim();
+    const ghMatch = clean.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(?:blob|raw)\/([^\/]+)\/(.+)$/i);
+    if (ghMatch) {
+      const [, owner, repo, branch, filepath] = ghMatch;
+      const cleanPath = filepath.replace(/\?.*$/, "");
+      return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${cleanPath}`;
+    }
+    return clean;
+  }
+
+  // ── Video URL Extraction Helper ──
+  function extractVideoInfo(url) {
+    if (!url || typeof url !== "string") return null;
+    let trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Convert GitHub blob/raw URLs to direct raw streaming endpoints
+    trimmed = convertGitHubUrlToRaw(trimmed);
+
+    // YouTube matches (watch?v=, youtu.be/, shorts/, embed/, etc.)
+    const ytMatch = trimmed.match(/(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    if (ytMatch && ytMatch[1]) {
+      const videoId = ytMatch[1];
+      return {
+        type: "youtube",
+        id: videoId,
+        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&enablejsapi=1`,
+        url: trimmed
+      };
+    }
+
+    // Vimeo
+    const vimeoMatch = trimmed.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)([0-9]+)/i);
+    if (vimeoMatch && vimeoMatch[1]) {
+      return {
+        type: "vimeo",
+        id: vimeoMatch[1],
+        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
+        url: trimmed
+      };
+    }
+
+    // Direct video files
+    if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(trimmed) ||
+        trimmed.includes("/storage/v1/object/public/app-media/exercise-videos") ||
+        trimmed.includes("raw.githubusercontent.com") ||
+        trimmed.startsWith("blob:") || trimmed.startsWith("data:video")) {
+      return {
+        type: "direct",
+        url: trimmed
+      };
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+      return {
+        type: "direct",
+        url: trimmed
+      };
+    }
+
+    return null;
+  }
+
+  // Strips day/project subfolders, handles Windows backslashes, and replaces hyphens with underscores:
+  //   "videos\Tuesday_Push_A\seated-chest-press.mp4" → "videos/seated_chest_press.mp4"
+  function normalizeVideoPath(p) {
+    if (!p) return "";
+    let clean = p.replace(/\\/g, "/").trim();
+    clean = convertGitHubUrlToRaw(clean);
+    if (/^https?:\/\/|^data:|^blob:/i.test(clean)) return clean;
+    let filename = clean.split("/").pop();
+    if (!filename) return "";
+    filename = filename.replace(/-/g, "_");
+    if (!/\.[a-z0-9]+$/i.test(filename)) filename += ".mp4";
+    return `videos/${filename}`;
+  }
+
+  // Strips day/project subfolders, handles Windows backslashes, and replaces hyphens with underscores:
+  //   "images\Tuesday_Push_A\seated-chest-press.jpg" → "images/seated_chest_press.jpg"
+  function normalizeImagePath(p) {
+    if (!p) return "";
+    let clean = p.replace(/\\/g, "/").trim();
+    clean = convertGitHubUrlToRaw(clean);
+    if (/^https?:\/\/|^data:|^blob:/i.test(clean)) return clean;
+    let filename = clean.split("/").pop();
+    if (!filename) return "";
+    filename = filename.replace(/-/g, "_");
+    if (!/\.[a-z0-9]+$/i.test(filename)) filename += ".jpg";
+    return `images/${filename}`;
+  }
+
+  async function mediaSrc(ex, kind) {
+    const pid = project().id;
+    try {
+      // 1. Check media explicitly saved for this project + exercise
+      const stored = kind === "video"
+        ? await MediaStore.getVideoURL(pid, ex.id)
+        : (kind === "gif" ? await MediaStore.getGifURL(pid, ex.id) : await MediaStore.getImageURL(pid, ex.id));
+      if (stored) return stored;
+
+      // 2. Check media stored globally by exercise name slug (allows cross-project reuse without re-uploading)
+      const nameSlug = slugFromName(ex.name);
+      if (nameSlug && window.MediaStore?.getMediaBySlugURL) {
+        const shared = await MediaStore.getMediaBySlugURL(nameSlug, kind);
+        if (shared) return shared;
+      }
+      // 3. Also check slug derived from the assigned path (e.g. videos/shoulder_press_machine.mp4)
+      const pathVal = kind === "video" ? ex.video : (kind === "gif" ? ex.gif : ex.image);
+      if (pathVal && window.MediaStore?.getMediaBySlugURL) {
+        const clean = pathVal.replace(/\\/g, "/").trim();
+        const fileBase = (clean.split("/").pop() || "").replace(/\.[^.]+$/, "");
+        const pathSlug = slugFromName(fileBase);
+        if (pathSlug && pathSlug !== nameSlug) {
+          const sharedPath = await MediaStore.getMediaBySlugURL(pathSlug, kind);
+          if (sharedPath) return sharedPath;
+        }
+      }
+      // 4. Admin-set default media for this exercise name (uploaded in the Super
+      // Admin exercise library and merged into window.EXERCISE_DB at startup).
+      // This is what lets an admin set a default image/video once and have it
+      // show up for every user who adds a matching exercise, with no local
+      // upload required on their end.
+      if (nameSlug && Array.isArray(window.EXERCISE_DB)) {
+        const dbEntry = window.EXERCISE_DB.find(e => slugFromName(e.name) === nameSlug);
+        if (kind === "gif" && dbEntry?.gif_url) return dbEntry.gif_url;
+        // Uploaded files take priority over URL links
+        const adminUrl = kind === "video"
+          ? (dbEntry?.video_file_url || dbEntry?.video_url)
+          : (dbEntry?.icon_url || dbEntry?.image_url);
+        if (adminUrl) return adminUrl;
+      }
+    } catch { /* IndexedDB unavailable (private mode) - fall back to the static path */ }
+    if (kind === "gif") return normalizeImagePath(ex.gif) || githubGifUrlFromName(ex.name) || null;
+    if (kind === "video") return normalizeVideoPath(ex.video) || githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name) || null;
+    if (kind === "image") return normalizeImagePath(ex.image) || githubImageUrlFromName(ex.name) || imagePathFromName(ex.name) || null;
+    return null;
+  }
+
+  function toggleComplete(exId) {
+    const ex = day()?.exercises.find(e => e.id === exId);
+    if (!ex) return;
+    Store.setExerciseDone(ex, !Store.isExerciseDone(ex));
+    save();
+    renderToday();
+  }
+
+
+  function numericWeightText(value) {
+    const n = Store.parseWeightNumber(value);
+    return n === null ? "" : String(n);
+  }
+  function currentWeightColumn(ex) {
+    return ex.setColumns.find(c => c.key === "weight" || /weight/i.test(c.label || "")) || null;
+  }
+  function convertExerciseWeight(ex, newUnit) {
+    const oldUnit = Store.normalizeWeightUnit(ex.weightUnit || "kg");
+    if (oldUnit === newUnit) return;
+    if (Store.parseWeightNumber(ex.weight) !== null) ex.weight = Store.convertWeightValue(ex.weight, oldUnit, newUnit);
+    const wc = currentWeightColumn(ex);
+    if (wc) ex.logs.forEach(log => {
+      if (Store.parseWeightNumber(log.values?.[wc.key]) !== null)
+        log.values[wc.key] = Store.convertWeightValue(log.values[wc.key], oldUnit, newUnit);
+    });
+    ex.weightUnit = newUnit;
+  }
+  function convertExercisePulley(ex, newPulley) {
+    const old = Store.pulleyKey(ex.pulleySystem || "single"), next = Store.pulleyKey(newPulley);
+    if (old === next) return;
+    const unit = Store.normalizeWeightUnit(ex.weightUnit || "kg");
+    if (Store.parseWeightNumber(ex.weight) !== null) ex.weight = Store.convertPulleyWeight(ex.weight, unit, old, next);
+    const wc = currentWeightColumn(ex);
+    if (wc) ex.logs.forEach(log => {
+      if (Store.parseWeightNumber(log.values?.[wc.key]) !== null)
+        log.values[wc.key] = Store.convertPulleyWeight(log.values[wc.key], unit, old, next);
+    });
+    ex.pulleySystem = next;
+  }
+
+  // details panel
+
+  function renderExerciseMeta(ex) { /* no-op */ }
+
+  function repsRangeParts(reps) {
+    const m = String(reps || "").match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+    if (m) return [m[1], m[2]];
+    const single = String(reps || "").match(/\d+(?:\.\d+)?/);
+    return single ? [single[0], ""] : ["", ""];
+  }
+
+  function repsRangeValue() {
+    const min = $("detailRepsMin").value.trim();
+    const max = $("detailRepsMax").value.trim();
+    if (min && max) return `${min}-${max}`;
+    return min || max || "";
+  }
+
+  async function openDetails(exId) {
+    currentExerciseId = exId;
+    const ex = exercise();
+    if (!ex) return;
+
+    $("modalExerciseTitle").textContent = ex.name;
+    renderExerciseMeta(ex);
+
+    $("detailName").value = ex.name;
+    if ($("detailPhase")) $("detailPhase").value = ex.phase || "main";
+    $("detailWeight").value = numericWeightText(ex.weight);
+    $("detailWeightUnit").value = Store.normalizeWeightUnit(ex.weightUnit || "kg");
+    $("detailIntensityBand").value = ex.intensityBand || "";
+    $("detailPulleySystem").value = Store.pulleyKey(ex.pulleySystem || "single");
+    const [repsMin, repsMax] = repsRangeParts(ex.reps);
+    $("detailRepsMin").value = repsMin;
+    $("detailRepsMax").value = repsMax;
+    $("detailTempo").value = ex.details.tempo || "";
+    $("detailEquipment").value = ex.details.equipment || "";
+    $("detailNotes").value = ex.details.notes || "";
+    $("detailCues").value = (ex.details.cues || []).join("\n");
+    // Auto-fill image/video paths from exercise name if they're empty
+    const currentImage = normalizeImagePath(ex.image);
+    const currentVideo = normalizeVideoPath(ex.video);
+    const defaultVideo = githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name);
+    const defaultGif = githubGifUrlFromName(ex.name);
+    const currentGif = ex.gif ? normalizeImagePath(ex.gif) : "";
+
+    // Determine initial chosen media type
+    let chosenType = ex.mediaType;
+    if (!chosenType) {
+      if (ex.gif) {
+        chosenType = "gif";
+      } else if (ex.video) {
+        const info = extractVideoInfo(ex.video);
+        if (info && (info.type === "youtube" || info.type === "vimeo")) chosenType = "youtube";
+        else chosenType = "github";
+      } else {
+        chosenType = "github";
+      }
+    }
+
+    if ($("detailGithubUrl")) {
+      const isGh = ex.video && (ex.video.includes("raw.githubusercontent.com") || ex.video.startsWith("videos/"));
+      $("detailGithubUrl").value = isGh ? ex.video : (chosenType === "github" && ex.video ? ex.video : defaultVideo);
+      $("detailGithubUrl").placeholder = defaultVideo || "https://raw.githubusercontent.com/.../videos/exercise.mp4";
+    }
+
+    if ($("detailYoutubeUrl")) {
+      const isYt = ex.video && extractVideoInfo(ex.video)?.type === "youtube";
+      $("detailYoutubeUrl").value = isYt ? ex.video : "";
+      $("detailYoutubeUrl").placeholder = "https://www.youtube.com/watch?v=... or youtu.be/...";
+    }
+
+    if ($("detailGifUrl")) {
+      $("detailGifUrl").value = ex.gif || "";
+      $("detailGifUrl").placeholder = defaultGif || "https://.../demo.gif or GitHub GIF URL";
+    }
+
+    if ($("detailImagePath")) $("detailImagePath").value = currentImage || imagePathFromName(ex.name);
+    if ($("detailVideoPath")) $("detailVideoPath").value = currentVideo || defaultVideo;
+    if ($("detailGifPath")) $("detailGifPath").value = currentGif || "";
+
+    selectDetailMediaType(chosenType, ex, false);
+
+    const firstTimerSet = nextRecordableRow(ex);
+    timerSetIndex = firstTimerSet?.index || 0;
+    timerSetId = firstTimerSet?.row?.id || ex.logs?.[0]?.id || null;
+    timerSeconds = 0;
+    timerElapsedGross = 0;
+    timerMode = "idle";
+    timerRunning = false;
+    timerStartedAt = null;
+    clearInterval(timerId);
+    renderSetTable();
+    renderSetTimer(ex);
+    renderTimer();
+    await renderDetailMedia(ex);
+    renderIntensity(day());
+    UI.openModal("exerciseModal");
+  }
+
+  function closeDetails() {
+    clearInterval(timerId);
+    timerRunning = false;
+    timerStartedAt = null;
+    const vid = $("detailVideo");
+    if (vid) { vid.muted = true; vid.pause(); vid.removeAttribute("src"); }
+    const frame = $("detailVideoFrame");
+    if (frame) { frame.hidden = true; frame.removeAttribute("src"); }
+    const img = $("detailImage");
+    if (img) { img.hidden = true; img.removeAttribute("src"); }
+    UI.closeModal("exerciseModal");
+    currentExerciseId = null;
+  }
+
+  async function renderDetailMedia(ex) {
+    const img = $("detailImage"), vid = $("detailVideo"), frame = $("detailVideoFrame"), fall = $("detailMediaFallback");
+    if (!img || !vid || !frame) return;
+    img.hidden = true; vid.hidden = true;
+    frame.hidden = true; frame.removeAttribute("src");
+    if (fall) fall.hidden = false;
+    img.removeAttribute("src");
+    vid.removeAttribute("src");
+
+    // Use ex.mediaType (which was chosen and saved last)
+    const type = ex.mediaType || (ex.gif ? "gif" : (extractVideoInfo(ex.video)?.type === "youtube" ? "youtube" : "github"));
+
+    // Update preview badge if it exists
+    const badge = $("detailPreviewBadge");
+    if (badge) {
+      if (type === "youtube") {
+        badge.textContent = "🎬 YouTube";
+        badge.style.background = "rgba(239, 68, 68, 0.15)";
+        badge.style.color = "#f87171";
+        badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+      } else if (type === "gif") {
+        badge.textContent = "🎞️ Looping GIF";
+        badge.style.background = "rgba(16, 185, 129, 0.15)";
+        badge.style.color = "#10b981";
+        badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+      } else {
+        badge.textContent = "🐙 GitHub Video";
+        badge.style.background = "rgba(0, 242, 254, 0.15)";
+        badge.style.color = "var(--accent, #00f2fe)";
+        badge.style.borderColor = "rgba(0, 242, 254, 0.3)";
+      }
+    }
+
+    if (type === "gif") {
+      const gSrc = await mediaSrc(ex, "gif");
+      if (gSrc) {
+        img.src = gSrc;
+        img.hidden = false;
+        if (fall) fall.hidden = true;
+        img.classList.remove("as-secondary");
+        return;
+      }
+    } else if (type === "youtube") {
+      const vSrc = await mediaSrc(ex, "video");
+      if (vSrc) {
+        const info = extractVideoInfo(vSrc);
+        if (info && (info.type === "youtube" || info.type === "vimeo")) {
+          frame.src = info.embedUrl;
+          frame.hidden = false;
+          if (fall) fall.hidden = true;
+          vid.hidden = true;
+          img.hidden = true;
+          return;
+        }
+      }
+    } else {
+      // GitHub / Direct video
+      const vSrc = await mediaSrc(ex, "video");
+      if (vSrc) {
+        const info = extractVideoInfo(vSrc);
+        if (info && info.type === "direct") {
+          vid.src = vSrc;
+          vid.muted = true;
+          vid.hidden = false;
+          vid.onerror = () => {
+            vid.hidden = true;
+            if (fall) {
+              fall.hidden = false;
+              const fn = vSrc.split('/').pop() || 'video.mp4';
+              const t = $("detailFallbackText");
+              if (t) t.textContent = `"${fn}" not found on GitHub (404).`;
+            }
+          };
+          if (fall) fall.hidden = true;
+          vid.onvolumechange = null;
+          img.hidden = true;
+          img.classList.remove("as-secondary");
+          return;
+        }
+      }
+    }
+
+    // General fallback: if preferred media isn't present, try video, then gif, then image
+    const [vSrc, gSrc, iSrc] = await Promise.all([
+      mediaSrc(ex, "video"),
+      mediaSrc(ex, "gif"),
+      mediaSrc(ex, "image")
+    ]);
+    if (vSrc) {
+      const info = extractVideoInfo(vSrc);
+      if (info && (info.type === "youtube" || info.type === "vimeo")) {
+        frame.src = info.embedUrl;
+        frame.hidden = false;
+        if (fall) fall.hidden = true;
+        return;
+      } else {
+        vid.src = vSrc;
+        vid.muted = true;
+        vid.hidden = false;
+        if (fall) fall.hidden = true;
+        return;
+      }
+    }
+    if (gSrc) {
+      img.src = gSrc;
+      img.hidden = false;
+      if (fall) fall.hidden = true;
+      return;
+    }
+    if (iSrc) {
+      img.src = iSrc;
+      img.hidden = false;
+      if (fall) fall.hidden = true;
+    }
+  }
+
+  // --- the custom set table: rows AND columns are both user-defined --------
+
+
+
+
+  function renderSetTable() {
+    const ex = exercise();
+    const wrap = $("detailSetTable");
+    if (!ex || !wrap) return;
+
+    const cols = ex.setColumns;
+    const todayRows = Store.currentSessionRows(ex);
+    const rows = todayRows.length ? todayRows : ex.logs.slice(0, 1);
+    const timeCol = timeColumn(ex);
+
+    // Build RIR previous data from previous session
+    const prevRows = Store.previousSessionRows(ex);
+
+    wrap.innerHTML = `
+      <div class="set-table-wrap-inner">
+        <table class="set-table">
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              <th class="col-done"></th>
+              ${cols.map(c => `<th>${esc(c.label)}</th>`).join("")}
+              <th>RIR</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row, i) => {
+      const rowIndex = ex.logs.findIndex(x => x.id === row.id);
+      const prevRir = prevRows[i]?.rir ?? prevRows[i]?.values?.rir ?? "";
+      return `<tr class="${row.completed ? "completed" : ""}">
+                <td class="col-num">${i + 1}</td>
+                <td class="col-done">
+                  <button class="mini-check ${row.completed ? "checked" : ""}" data-row-done="${rowIndex}" aria-label="Set ${i + 1} done">${row.completed ? "✓" : ""}</button>
+                </td>
+                ${cols.map(c => {
+        const isTime = c.key === timeCol?.key;
+        const type = /weight/i.test(c.label || "") ? 'type="number" step="0.01" inputmode="decimal"' : /rep/i.test(c.label || "") ? 'type="number" step="1" inputmode="numeric"' : '';
+        return `<td><input ${type} class="${isTime ? "time-cell" : ""}" value="${esc(row.values?.[c.key] ?? "")}" data-cell-row="${rowIndex}" data-cell-key="${esc(c.key)}" ${isTime ? `data-time-row="${rowIndex}"` : ""} placeholder="${esc(c.label)}" aria-label="${esc(c.label)} set ${i + 1}" autocomplete="off"></td>`;
+      }).join("")}
+                <td><input type="number" step="0.5" min="0" inputmode="decimal" value="${esc(row.rir ?? "")}" data-rir-row="${rowIndex}" placeholder="RIR" aria-label="RIR set ${i + 1}" autocomplete="off"></td>
+                <td class="col-actions">
+                  <button class="table-action" data-row-dup="${rowIndex}" title="Duplicate set">⧉</button>
+                  <button class="table-action danger" data-row-remove="${rowIndex}" title="Remove set" ${rows.length <= 1 ? "disabled" : ""}>×</button>
+                </td>
+              </tr>`;
+    }).join("")}
+          </tbody>
+        </table>
+      </div>`;
+
+    wrap.querySelectorAll("[data-cell-row]").forEach(inp => {
+      // Editing the Time column never selects a timer set. The timer always targets
+      // the first incomplete set, so there is no hidden/manual set-selection mode.
+      inp.oninput = () => {
+        const r = +inp.dataset.cellRow;
+        if (!ex.logs[r]) return;
+        ex.logs[r].values[inp.dataset.cellKey] = inp.value;
+        // A row can still carry an older date (from a previous session, or from
+        // Fill Down/duplication). currentSessionRows() — and therefore both the
+        // editable "Current" section and the Recorded total — only include rows
+        // dated today, so an edit that doesn't restamp the date silently lands
+        // on a row that's invisible to both.
+        if (Store.dateKey(ex.logs[r].date) !== Store.todayKey()) {
+          ex.logs[r].date = new Date().toISOString();
+        }
+        save({ silent: true });
+        renderIntensity(day());
+        renderSetTimer(ex);
+      };
+      inp.onchange = () => save({ silent: true });
+    });
+
+    wrap.querySelectorAll("[data-rir-row]").forEach(inp => {
+      inp.oninput = () => {
+        const r = +inp.dataset.rirRow;
+        if (!ex.logs[r]) return;
+        ex.logs[r].rir = inp.value;
+        if (Store.dateKey(ex.logs[r].date) !== Store.todayKey()) {
+          ex.logs[r].date = new Date().toISOString();
+        }
+        save({ silent: true });
+        renderIntensity(day());
+      };
+      inp.onchange = () => save({ silent: true });
+    });
+
+    wrap.querySelectorAll("[data-row-done]").forEach(btn => {
+      btn.onclick = () => {
+        const row = ex.logs[+btn.dataset.rowDone];
+        if (!row) return;
+        row.completed = !row.completed;
+        row.date = row.completed ? new Date().toISOString() : "";
+        if (row.completed) {
+          clearInterval(timerId);
+          timerRunning = false;
+          timerStartedAt = null;
+          setTimerToNextIncomplete(ex);
+        } else {
+          timerSetId = row.id;
+          timerSetIndex = ex.logs.findIndex(x => x.id === row.id);
+          timerElapsedGross = 0;
+          timerSeconds = 0;
+          timerMode = "idle";
+        }
+        save();
+        renderSetTable();
+        renderSetTimer(ex);
+        renderToday();
+        renderIntensity(day());
+      };
+    });
+
+    wrap.querySelectorAll("[data-row-dup]").forEach(btn => {
+      btn.onclick = () => {
+        if (Store.duplicateRow(ex, +btn.dataset.rowDup)) {
+          syncSets(ex); save(); renderSetTable(); renderSetTimer(ex); renderToday(); renderIntensity(day());
+        }
+      };
+    });
+
+    wrap.querySelectorAll("[data-row-remove]").forEach(btn => {
+      btn.onclick = () => {
+        if (Store.removeRow(ex, +btn.dataset.rowRemove)) {
+          syncSets(ex); timerSetIndex = Math.max(0, Math.min(timerSetIndex, ex.logs.length - 1)); save(); renderSetTable(); renderSetTimer(ex); renderToday(); renderIntensity(day());
+        }
+      };
+    });
+
+    wrap.querySelectorAll("[data-col-label]").forEach(inp => {
+      inp.onchange = () => {
+        const i = +inp.dataset.colLabel;
+        if (ex.setColumns[i]) {
+          const oldKey = ex.setColumns[i].key;
+          const newLabel = inp.value.trim() || ex.setColumns[i].label;
+          if (/^rir$/i.test(newLabel)) {
+            ex.setColumns[i].key = "time";
+            ex.setColumns[i].label = "Time";
+            ex.logs.forEach(log => { const legacy = log.values?.[oldKey]; delete log.values[oldKey]; log.values.time ??= /^\d{1,3}:\d{2}(?::\d{2})?$/.test(String(legacy || "")) ? legacy : ""; });
+          } else {
+            ex.setColumns[i].label = newLabel;
+          }
+          save(); renderSetTable(); renderSetTimer(ex); renderIntensity(day());
+        }
+      };
+    });
+
+    wrap.querySelectorAll("[data-col-left]").forEach(btn => {
+      btn.onclick = () => {
+        const i = +btn.dataset.colLeft;
+        if (i > 0) { [ex.setColumns[i - 1], ex.setColumns[i]] = [ex.setColumns[i], ex.setColumns[i - 1]]; save(); renderSetTable(); renderSetTimer(ex); }
+      };
+    });
+    wrap.querySelectorAll("[data-col-right]").forEach(btn => {
+      btn.onclick = () => {
+        const i = +btn.dataset.colRight;
+        if (i < ex.setColumns.length - 1) { [ex.setColumns[i + 1], ex.setColumns[i]] = [ex.setColumns[i], ex.setColumns[i + 1]]; save(); renderSetTable(); renderSetTimer(ex); }
+      };
+    });
+    wrap.querySelectorAll("[data-col-remove]").forEach(btn => {
+      btn.onclick = () => {
+        const i = +btn.dataset.colRemove;
+        if (ex.setColumns.length <= 1) return UI.toast("Keep at least one column.", "error");
+        if (ex.setColumns[i]?.key === "time") return UI.toast("Time is required for the set timer.", "error");
+        ex.setColumns.splice(i, 1);
+        ex.logs.forEach(log => { if (log.values) delete log.values[cols[i]?.key]; });
+        save(); renderSetTable(); renderSetTimer(ex);
+      };
+    });
+
+    $("setCountLabel").textContent = `${rows.length} sets · ${cols.length} columns`;
+    renderSetTimer(ex);
+  }
+
+  // `sets` is derived from the row count.
+  function syncSets(ex) { ex.sets = ex.logs.length; }
+
+  function addSetRow() {
+    const ex = exercise(); if (!ex) return;
+    Store.addRow(ex); syncSets(ex); save(); renderSetTable(); renderToday();
+  }
+
+  async function addSetColumn() {
+    const ex = exercise(); if (!ex) return;
+    const presets = (window.COLUMN_PRESETS || []).filter(p => !ex.setColumns.some(c => c.key === p.key));
+    const res = await UI.dialog({
+      title: "Add set column",
+      body: "Pick a common one or type your own name.",
+      confirmLabel: "Add column",
+      fields: [
+        {
+          name: "preset", label: "Preset", type: "select",
+          options: [{ value: "", label: "— custom name —" }, ...presets.map(p => ({ value: p.label, label: p.label }))]
+        },
+        { name: "custom", label: "Custom name", placeholder: "e.g. Band tension" }
+      ]
+    });
+    if (!res) return;
+    const label = (res.custom || res.preset || "").trim();
+    if (!label) { UI.toast("Give the column a name.", "error"); return; }
+    Store.addColumn(ex, label);
+    save();
+    renderSetTable();
+    UI.toast(`Added "${label}"`);
+  }
+
+  async function fillDownSets() {
+    const ex = exercise(); if (!ex || ex.logs.length < 2) return;
+    if (!await UI.confirm("Copy set 1 to every set?", "Overwrites the other rows' values.", { confirmLabel: "Copy", danger: false })) return;
+    Store.fillDown(ex, 0); save(); renderSetTable(); UI.toast("Copied down");
+  }
+
+  async function applyColumnsToDay() {
+    const ex = exercise(), d = day();
+    if (!ex || !d) return;
+    if (!await UI.confirm(`Use these ${ex.setColumns.length} columns for all of ${d.name}?`,
+      "Other exercises keep values whose column names match.", { confirmLabel: "Apply", danger: false })) return;
+    Store.applyColumnsToDay(d, ex.setColumns);
+    save();
+    UI.toast("Columns applied to the whole day");
+  }
+
+  function saveDetails() {
+    const ex = exercise(); if (!ex) return;
+    ex.name = $("detailName").value.trim() || "Exercise";
+    if ($("detailPhase")) ex.phase = $("detailPhase").value || "main";
+    ex.weight = $("detailWeight").value.trim();
+    ex.weightUnit = Store.normalizeWeightUnit($("detailWeightUnit").value);
+    ex.intensityBand = $("detailIntensityBand").value;
+    ex.pulleySystem = Store.pulleyKey($("detailPulleySystem").value);
+    ex.reps = repsRangeValue();
+    ex.details.tempo = $("detailTempo").value.trim();
+    ex.details.equipment = $("detailEquipment").value.trim();
+    ex.details.notes = $("detailNotes").value.trim();
+    ex.details.cues = $("detailCues").value.split("\n").map(s => s.trim()).filter(Boolean);
+
+    // Save and use the media type chosen by the user ("github" | "youtube" | "gif")
+    ex.mediaType = detailActiveMediaType || "github";
+
+    const ghVal = $("detailGithubUrl") ? $("detailGithubUrl").value.trim() : "";
+    const ytVal = $("detailYoutubeUrl") ? $("detailYoutubeUrl").value.trim() : "";
+    const gifVal = $("detailGifUrl") ? $("detailGifUrl").value.trim() : "";
+    const defaultGhVid = githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name);
+    const defaultGhGif = githubGifUrlFromName(ex.name) || "";
+
+    if (ex.mediaType === "youtube") {
+      ex.video = normalizeVideoPath(ytVal);
+      if ($("detailVideoPath")) $("detailVideoPath").value = ex.video;
+    } else if (ex.mediaType === "gif") {
+      const chosenGif = gifVal || defaultGhGif;
+      ex.gif = normalizeImagePath(chosenGif);
+      if ($("detailGifPath")) $("detailGifPath").value = ex.gif;
+    } else { // "github"
+      const chosenVid = ghVal || defaultGhVid;
+      ex.video = normalizeVideoPath(chosenVid);
+      if ($("detailVideoPath")) $("detailVideoPath").value = ex.video;
+    }
+
+    // Auto-fill empty paths from the exercise name before saving
+    let imgPath = $("detailImagePath") ? $("detailImagePath").value.trim() : "";
+    if (!imgPath) imgPath = imagePathFromName(ex.name);
+    ex.image = normalizeImagePath(imgPath);
+
+    syncSets(ex);
+    save();
+    $("modalExerciseTitle").textContent = ex.name;
+    renderExerciseMeta(ex);
+    renderToday();
+    window.Manage?.render();
+    renderDetailMedia(ex);
+    const mediaLabel = ex.mediaType === "youtube" ? "YouTube" : (ex.mediaType === "gif" ? "Looping GIF" : "GitHub Video");
+    UI.toast(`Saved! Using ${mediaLabel} for demo`);
+  }
+
+  async function deleteCurrentExercise() {
+    const ex = exercise(), d = day();
+    if (!ex || !d) return;
+    if (!await UI.confirm(`Delete "${ex.name}"?`, "Its set log and uploaded media go too.")) return;
+    MediaStore.deleteImage(project().id, ex.id);
+    MediaStore.deleteVideo(project().id, ex.id);
+    MediaStore.deleteGif(project().id, ex.id);
+    d.exercises.splice(d.exercises.findIndex(e => e.id === ex.id), 1);
+    save();
+    closeDetails();
+    renderToday();
+    window.Manage?.render();
+    UI.toast("Exercise deleted");
+  }
+
+  function addExercise() {
+    const d = day();
+    if (!d) { UI.toast("Add a day first.", "error"); return; }
+    if (d.type !== "workout") { UI.toast("This is a rest day — switch it to Workout in Manage.", "error"); return; }
+    const ex = Store.newExercise();
+    d.exercises.push(ex);
+    save();
+    renderToday();
+    window.Manage?.render();
+    openDetails(ex.id);
+  }
+
+  async function createDay() {
+    const res = await UI.dialog({
+      title: "Add a day",
+      body: "Days are just an ordered list — name them anything.",
+      confirmLabel: "Add day",
+      fields: [
+        { name: "name", label: "Day name", placeholder: "e.g. Monday, Upper A, Day 1" },
+        {
+          name: "type", label: "Type", type: "select", value: "workout",
+          options: [{ value: "workout", label: "Workout day" }, { value: "rest", label: "Rest day" }]
+        },
+        {
+          name: "category", label: "Split / Icon", type: "select", value: "push",
+          options: [
+            { value: "push", label: "Push Day" },
+            { value: "pull", label: "Pull Day" },
+            { value: "leg", label: "Leg Day" },
+            { value: "other", label: "Other / Cardio / Arms" }
+          ]
+        },
+        { name: "title", label: "Title", placeholder: "e.g. Push A / Pull A / Legs A" }
+      ]
+    });
+    if (!res) return;
+    if (!res.name) { UI.toast("Give the day a name.", "error"); return; }
+    const p = project();
+    const cat = res.type === "rest" ? "rest" : (res.category || "push");
+    const fallbackTitle = res.type === "rest" ? "Rest Day" : (cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : "Workout");
+    const d = Store.newDay({
+      name: res.name,
+      type: res.type,
+      category: cat,
+      title: res.title || fallbackTitle
+    });
+    if (d.type === "workout") d.exercises.push(Store.newExercise({ name: "Exercise 1" }));
+    p.days.push(d);
+    currentDayId = d.id;
+    save();
+    renderAll();
+    UI.toast(`Added ${d.name}`);
+  }
+
+  // media uploads
+
+  // Checks whether a static file exists on disk at the given relative path.
+  // Used to detect pre-existing videos/images before uploading a replacement.
+  async function fileExistsOnDisk(relativePath) {
+    try {
+      const resp = await fetch(relativePath, { method: "HEAD" });
+      return resp.ok;
+    } catch { return false; }
+  }
+
+  function wireUpload(inputId, kind) {
+    $(inputId)?.addEventListener("change", async e => {
+      const file = e.target.files?.[0];
+      const ex = exercise();
+      e.target.value = "";
+      if (!file || !ex) return;
+      if (!file.type.startsWith(kind === "video" ? "video/" : "image/")) {
+        UI.toast(`That's not a ${kind} file.`, "error");
+        return;
+      }
+
+      // Security Validation
+      if (window.Security?.validateUpload) {
+        const validation = await window.Security.validateUpload(file, kind);
+        if (!validation.valid) {
+          UI.toast(validation.error, "error");
+          return;
+        }
+      }
+
+
+      // Derive the expected filename from the exercise name
+      const exName = $("detailName")?.value.trim() || ex.name;
+      const slug = slugFromName(exName);
+      const ext = kind === "video" ? ".mp4" : (kind === "gif" ? ".gif" : ("." + (file.name.split(".").pop() || "jpg")));
+      const autoFileName = slug ? `${slug}${ext}` : file.name;
+      const autoPath = kind === "video" ? `videos/${autoFileName}` : `images/${autoFileName}`;
+
+      // Check for existing file on disk
+      const existsOnDisk = await fileExistsOnDisk(autoPath);
+      // Check for existing blob in IndexedDB (per-exercise or shared by slug)
+      let existsInDB = false;
+      try {
+        const hasProjMedia = kind === "video"
+          ? await MediaStore.hasMedia(project().id, ex.id, "video")
+          : (kind === "gif" ? await MediaStore.hasMedia(project().id, ex.id, "gif") : await MediaStore.hasMedia(project().id, ex.id, "image"));
+        const hasSlugMedia = slug && MediaStore.hasMediaBySlug
+          ? await MediaStore.hasMediaBySlug(slug, kind)
+          : false;
+        existsInDB = hasProjMedia || hasSlugMedia;
+      } catch { /* IndexedDB unavailable */ }
+
+      if (existsOnDisk || existsInDB) {
+        const where = existsOnDisk ? "on disk" : "in storage";
+        const label = kind === "video" ? "Video" : (kind === "gif" ? "GIF" : "Image");
+        const ok = await UI.confirm(
+          `${label} already exists`,
+          `A file for "${autoFileName}" already exists ${where}. Do you want to replace it?`,
+          { confirmLabel: "Replace", danger: true }
+        );
+        if (!ok) return;
+      }
+
+      try {
+        // Rename the uploaded file to match the exercise name slug
+        const renamedFile = new File([file], autoFileName, { type: file.type });
+        if (kind === "video") {
+          await MediaStore.saveVideo(project().id, ex.id, renamedFile);
+          if (slug && MediaStore.saveMediaBySlug) await MediaStore.saveMediaBySlug(slug, "video", renamedFile);
+        } else if (kind === "gif") {
+          await MediaStore.saveGif(project().id, ex.id, renamedFile);
+          if (slug && MediaStore.saveMediaBySlug) await MediaStore.saveMediaBySlug(slug, "gif", renamedFile);
+        } else {
+          await MediaStore.saveImage(project().id, ex.id, renamedFile);
+          if (slug && MediaStore.saveMediaBySlug) await MediaStore.saveMediaBySlug(slug, "image", renamedFile);
+        }
+
+        // Auto-update the path field and the exercise data
+        const pathInput = kind === "video" ? $("detailVideoPath") : (kind === "gif" ? $("detailGifPath") : $("detailImagePath"));
+        if (pathInput) pathInput.value = autoPath;
+        if (kind === "video") {
+          ex.video = autoPath;
+          if ($("detailGithubUrl")) $("detailGithubUrl").value = autoPath;
+          ex.mediaType = "github";
+          selectDetailMediaType("github", ex, true);
+        } else if (kind === "gif") {
+          ex.gif = autoPath;
+          if ($("detailGifUrl")) $("detailGifUrl").value = autoPath;
+          if ($("detailGifUploadStatus")) $("detailGifUploadStatus").textContent = `✓ Uploaded ${autoFileName}`;
+          ex.mediaType = "gif";
+          selectDetailMediaType("gif", ex, true);
+        } else {
+          ex.image = autoPath;
+        }
+        save({ silent: true });
+
+        await renderDetailMedia(ex);
+        previewActiveMedia(ex);
+        renderIntensity(day());
+        renderToday();
+        window.Manage?.render();
+        const label = kind === "video" ? "Video" : (kind === "gif" ? "GIF" : "Image");
+        UI.toast(`${label} saved as "${autoFileName}"`);
+      } catch (err) {
+        console.error(err);
+        UI.toast("Could not store that file.", "error");
+      }
+    });
+  }
+
+  async function removeMedia() {
+    const ex = exercise(); if (!ex) return;
+    if (!await UI.confirm("Remove media for this exercise?", "Deletes the uploaded image, video, and GIF.")) return;
+    const slug = slugFromName(ex.name);
+    await Promise.all([
+      MediaStore.deleteImage(project().id, ex.id),
+      MediaStore.deleteVideo(project().id, ex.id),
+      MediaStore.deleteGif(project().id, ex.id),
+      slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "image") : Promise.resolve(),
+      slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "video") : Promise.resolve(),
+      slug && MediaStore.deleteMediaBySlug ? MediaStore.deleteMediaBySlug(slug, "gif") : Promise.resolve()
+    ]);
+    ex.image = ""; ex.video = ""; ex.gif = "";
+    ex.mediaType = "";
+    if ($("detailImagePath")) $("detailImagePath").value = "";
+    if ($("detailVideoPath")) $("detailVideoPath").value = "";
+    if ($("detailGifPath")) $("detailGifPath").value = "";
+    if ($("detailGithubUrl")) $("detailGithubUrl").value = "";
+    if ($("detailYoutubeUrl")) $("detailYoutubeUrl").value = "";
+    if ($("detailGifUrl")) $("detailGifUrl").value = "";
+    if ($("detailGifUploadStatus")) $("detailGifUploadStatus").textContent = "";
+    save();
+    await renderDetailMedia(ex);
+    previewActiveMedia(ex);
+    renderToday();
+    UI.toast("Media removed");
+  }
+
+
+  function renderCardioSummary(d) {
+    const el = $("cardioSummary");
+    if (!el) return;
+    const entries = d?.cardio || [];
+    if (!entries.length) {
+      el.textContent = "Not counted";
+      return;
+    }
+    const meaningful = entries.map(e => {
+      const parts = [];
+      if (e.type) parts.push(e.type);
+      if (e.duration) parts.push(`${e.duration}`);
+      if (e.calories) parts.push(`${e.calories} kcal`);
+      if (e.incline) parts.push(`incline ${e.incline}`);
+      if (e.speed) parts.push(`speed ${e.speed}`);
+      if (e.gear) parts.push(`gear ${e.gear}`);
+      return parts.join(" · ");
+    }).filter(Boolean);
+    el.textContent = meaningful.length ? meaningful.join(" | ") : "Not counted";
+  }
+
+  function cardioFields(entry) {
+    const type = (entry.type || "").toLowerCase();
+    const treadmill = type.includes("treadmill") || type.includes("walk") || type.includes("run");
+    const cycling = type.includes("cycle") || type.includes("bike");
+    return `
+      <div class="cardio-entry-head">
+        <input data-cardio="type" value="${esc(entry.type || "")}" placeholder="Treadmill / Cycling / Other">
+        <button class="table-action danger" data-cardio-remove>×</button>
+      </div>
+      <div class="cardio-entry-grid">
+        <label>Duration<input data-cardio="duration" value="${esc(entry.duration || "")}" placeholder="e.g. 20 min"></label>
+        <label>Calories burned<input data-cardio="calories" value="${esc(entry.calories || "")}" placeholder="e.g. 180 kcal"></label>
+        ${treadmill ? `<label>Incline<input data-cardio="incline" value="${esc(entry.incline || "")}" placeholder="e.g. 8%"></label>` : `<label>Incline<input data-cardio="incline" value="${esc(entry.incline || "")}" placeholder="optional"></label>`}
+        ${treadmill ? `<label>Speed<input data-cardio="speed" value="${esc(entry.speed || "")}" placeholder="e.g. 5.5 km/h"></label>` : `<label>Speed<input data-cardio="speed" value="${esc(entry.speed || "")}" placeholder="optional"></label>`}
+        ${cycling ? `<label>Gear<input data-cardio="gear" value="${esc(entry.gear || "")}" placeholder="e.g. 7"></label>` : `<label>Gear<input data-cardio="gear" value="${esc(entry.gear || "")}" placeholder="optional"></label>`}
+        <label class="span-2">Notes<input data-cardio="notes" value="${esc(entry.notes || "")}" placeholder="Optional notes"></label>
+      </div>`;
+  }
+
+  function openCardio() {
+    const d = day(); if (!d || d.type !== "workout") return;
+    cardioDraft = JSON.parse(JSON.stringify(d.cardio || []));
+    $("cardioDayTitle").textContent = `${d.name} · Cardio`;
+    renderCardioEntries();
+    UI.openModal("cardioModal");
+  }
+
+  function renderCardioEntries() {
+    const box = $("cardioEntries");
+    if (!cardioDraft.length) {
+      box.innerHTML = `<div class="empty-state">No cardio recorded. Add an entry if you performed conditioning.</div>`;
+      return;
+    }
+    box.innerHTML = cardioDraft.map((entry, i) => `<article class="cardio-entry" data-cardio-index="${i}">${cardioFields(entry)}</article>`).join("");
+    box.querySelectorAll(".cardio-entry").forEach(card => {
+      const i = +card.dataset.cardioIndex, entry = cardioDraft[i];
+      card.querySelectorAll("[data-cardio]").forEach(inp => {
+        inp.oninput = () => { entry[inp.dataset.cardio] = inp.value; };
+        inp.onchange = () => { entry.date ||= new Date().toISOString(); };
+      });
+      card.querySelector("[data-cardio-remove]").onclick = () => {
+        cardioDraft.splice(i, 1); renderCardioEntries();
+      };
+    });
+  }
+
+  function addCardioEntry() {
+    cardioDraft.push(Store.newCardioEntry({ date: new Date().toISOString() }));
+    renderCardioEntries();
+  }
+
+  function saveCardio() {
+    const d = day(); if (!d) return;
+    d.cardio = JSON.parse(JSON.stringify(cardioDraft)).map(e => ({ ...e, date: e.date || new Date().toISOString() }));
+    save();
+    renderCardioSummary(d);
+    UI.closeModal("cardioModal");
+    UI.toast("Cardio saved");
+  }
+
+
+  // ═══════════════ PRE / POST WORKOUT (WARMUP) ═══════════════
+  let activeWarmupPhase = "pre";
+
+  const WARMUP_SUGGESTIONS = {
+    pre: [
+      "Arm Circles", "Jumping Jacks", "Push-Ups", "Dead Hang",
+      "Dynamic Stretching", "Band Pull Apart", "Cat Cow Stretch",
+      "Shoulder Dislocate", "Hip Flexor Stretch", "World's Greatest Stretch",
+      "Jump Rope", "Foam Roll", "Mountain Climber"
+    ],
+    post: [
+      "Hamstring Stretch", "Quad Stretch", "Child's Pose", "Pigeon Stretch",
+      "Dead Hang", "Foam Roll", "90/90 Stretch", "Couch Stretch",
+      "Thoracic Rotation", "Cat Cow Stretch", "Shoulder Dislocate", "Arm Circles"
+    ]
+  };
+
+  function openWarmup(phase = "pre") {
+    const d = day();
+    if (!d) { UI.toast("Select a workout day first", "error"); return; }
+    if (d.type !== "workout") { UI.toast("This is a rest day — switch to Workout in Manage", "error"); return; }
+
+    activeWarmupPhase = phase;
+    const isPre = phase === "pre";
+    const titleEl = $("warmupPickerTitle");
+    const subEl = $("warmupPickerSubtitle");
+    if (titleEl) titleEl.textContent = isPre ? "🔥 Add Pre-Workout Exercise" : "🧊 Add Post-Workout Exercise";
+    if (subEl) subEl.textContent = isPre 
+      ? "Warmup, dynamic stretches & mobility before your workout" 
+      : "Cooldown, static stretches & recovery exercises";
+
+    const input = $("warmupPickerNameInput");
+    if (input) {
+      input.value = "";
+      input.placeholder = isPre ? "e.g. Arm Circles, Dead Hang, Dynamic Stretching..." : "e.g. Hamstring Stretch, Child's Pose, Foam Roll...";
+      if (window.ExerciseAutocomplete) {
+        ExerciseAutocomplete.attach(input, {
+          onSelect: item => {
+            if (item?.name) addWarmupExercise(item.name, activeWarmupPhase);
+          }
+        });
+      }
+    }
+
+    const chipsBox = $("warmupPickerChips");
+    if (chipsBox) {
+      const list = WARMUP_SUGGESTIONS[phase] || [];
+      chipsBox.innerHTML = list.map(name => 
+        `<span class="warmup-chip" data-warmup-pick="${esc(name)}">${esc(name)}</span>`
+      ).join("");
+    }
+
+    UI.openModal("warmupPickerModal");
+    setTimeout(() => $("warmupPickerNameInput")?.focus(), 100);
+  }
+
+  function addWarmupExercise(name, phase = "pre") {
+    const d = day();
+    if (!d || d.type !== "workout") return;
+
+    const trimmed = (name || "").trim() || (phase === "pre" ? "Warmup Exercise" : "Cooldown Exercise");
+    const ex = Store.newExercise({
+      name: trimmed,
+      phase,
+      sets: 2,
+      reps: "10-15"
+    });
+
+    if (phase === "pre") {
+      let lastPreIdx = -1;
+      for (let i = 0; i < d.exercises.length; i++) {
+        if (d.exercises[i].phase === "pre") lastPreIdx = i;
+      }
+      if (lastPreIdx >= 0) {
+        d.exercises.splice(lastPreIdx + 1, 0, ex);
+      } else {
+        d.exercises.unshift(ex);
+      }
+    } else {
+      d.exercises.push(ex);
+    }
+
+    save();
+    renderToday();
+    UI.closeModal("warmupPickerModal");
+    openDetails(ex.id);
+    UI.toast(`Added "${trimmed}" to ${phase === "pre" ? "Pre-Workout" : "Post-Workout"}`);
+  }
+
+  // Wire modal close and action buttons
+  document.addEventListener("click", ev => {
+    const chip = ev.target.closest("[data-warmup-pick]");
+    if (chip) {
+      addWarmupExercise(chip.dataset.warmupPick, activeWarmupPhase);
+      return;
+    }
+    if (ev.target.closest("[data-close-warmup-picker]")) {
+      UI.closeModal("warmupPickerModal");
+      return;
+    }
+    if (ev.target.closest("#warmupPickerAddBtn")) {
+      const input = $("warmupPickerNameInput");
+      const name = input ? input.value : "";
+      addWarmupExercise(name, activeWarmupPhase);
+    }
+  });
+
+  $("warmupPickerNameInput")?.addEventListener("keydown", ev => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      addWarmupExercise(ev.target.value, activeWarmupPhase);
+    }
+  });
+
+
+  // The Home export card scopes every pipeline download the same way the AI view
+  // does: one checkbox, honoured by all four buttons.
+  const exportOptions = () => ({ allProjects: $("homeExportAll")?.checked === true });
+
+  function renderArchivedCSVs() {
+    const box = $("archivedCsvList");
+    if (!box || !Store.allArchivedCSVs) return;
+
+    // Reads through Store instead of hard-coding the localStorage key, so the
+    // storage layer stays the only place that knows the key's name.
+    const all = Store.allArchivedCSVs();
+    const files = all
+      .filter(f => f.projectId === project().id)
+      .sort((a, b) => String(b.weekStart).localeCompare(String(a.weekStart)));
+
+    if (!files.length) {
+      box.innerHTML = `<div class="empty">-</div>`;
+      return;
+    }
+
+    box.innerHTML = files.map(f => `
+      <div class="archive-row">
+        <span><b>${esc(f.dayName)}</b><small>${esc(f.weekStart)}</small></span>
+        <button class="btn" data-archive-key="${esc(f.key)}">CSV</button>
+      </div>`).join("");
+
+    const byKey = Object.fromEntries(files.map(f => [f.key, f]));
+    box.querySelectorAll("[data-archive-key]").forEach(btn => {
+      btn.onclick = () => {
+        const obj = byKey[btn.dataset.archiveKey];
+        if (!obj) return;
+        const projectSlug = project().name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "project";
+        const daySlug = String(obj.dayName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "day";
+        UI.download(
+          `gymcoach-${projectSlug}-${daySlug}-${obj.weekStart}.csv`,
+          obj.csv,
+          "text/csv;charset=utf-8"
+        );
+      };
+    });
+  }
+
+  // timer
+
+  function timerCountdownValue() {
+    const n = Number($("timerCountdown")?.value);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : 30;
+  }
+  function timerBalanceValue() {
+    const n = Number($("timerBalance")?.value);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : 5;
+  }
+  function calculatedRecordedSeconds() {
+    // The recorded time is the FULL time on the clock (countdown phase +
+    // any extra time), plus the delay balance on top — e.g. a 30s countdown
+    // + 10s extra + a 5s balance must record 45s.
+    return Math.max(0, timerElapsedGross + timerBalanceSeconds);
+  }
+
+  function renderTimer() {
+    const display = $("timer"), phase = $("timerPhase"), preview = $("timerRecordedPreview");
+    if (!display) return;
+
+    display.classList.remove("timer-countdown-green", "timer-countdown-yellow", "timer-countdown-red", "timer-extra-white");
+    if (timerRunning && timerElapsedGross < timerTargetSeconds) {
+      timerMode = "countdown";
+      const remaining = timerTargetSeconds - timerElapsedGross;
+      if (display) display.textContent = formatTime(remaining);
+      if (phase) phase.textContent = "Countdown";
+      display.classList.add(
+        remaining <= 5 ? "timer-countdown-red" :
+          remaining <= 15 ? "timer-countdown-yellow" : "timer-countdown-green"
+      );
+    } else if (timerRunning) {
+      timerMode = "extra";
+      timerSeconds = Math.max(0, timerElapsedGross - timerTargetSeconds);
+      display.textContent = `+${formatTime(timerSeconds)}`;
+      if (phase) phase.textContent = "Extra time";
+      display.classList.add("timer-extra-white");
+    } else if (timerMode === "extra") {
+      display.textContent = `+${formatTime(timerSeconds)}`;
+      if (phase) phase.textContent = "Extra time";
+      display.classList.add("timer-extra-white");
+    } else if (timerMode === "countdown" && timerElapsedGross > 0) {
+      const remaining = Math.max(0, timerTargetSeconds - timerElapsedGross);
+      display.textContent = formatTime(remaining);
+      if (phase) phase.textContent = "Paused";
+      display.classList.add(
+        remaining <= 5 ? "timer-countdown-red" :
+          remaining <= 15 ? "timer-countdown-yellow" : "timer-countdown-green"
+      );
+    } else {
+      // Ready state shows the configured countdown so the user can see what will start.
+      timerTargetSeconds = timerCountdownValue();
+      timerBalanceSeconds = timerBalanceValue();
+      display.textContent = formatTime(timerTargetSeconds);
+      if (phase) phase.textContent = "Ready";
+      display.classList.add(
+        timerTargetSeconds <= 5 ? "timer-countdown-red" :
+          timerTargetSeconds <= 15 ? "timer-countdown-yellow" :
+            "timer-countdown-green"
+      );
+    }
+
+    if (preview) preview.textContent = formatTime(calculatedRecordedSeconds());
+    const button = $("timerButton");
+    if (button) button.textContent = timerRunning ? "Pause" : (timerElapsedGross > 0 ? "Resume" : "Start");
+
+    const ex = exercise(), rows = ex ? Store.currentSessionRows(ex) : [];
+    const row = timerSetId ? rows.find(r => r.id === timerSetId) : rows[timerSetIndex];
+    const label = $("timerRecordingSet");
+    if (row && label) {
+      const index = rows.findIndex(r => r.id === row.id);
+      label.textContent = `Set ${index + 1}`;
+    }
+  }
+
+  function tickSetTimer() {
+    if (!timerStartedAt || !timerRunning) return;
+    timerElapsedGross = Math.max(0, Math.floor((Date.now() - timerStartedAt) / 1000));
+    renderTimer();
+  }
+
+  function setTimerToNextIncomplete(ex) {
+    const next = nextRecordableRow(ex);
+    if (!next) {
+      timerSetId = null;
+      timerSetIndex = 0;
+      return false;
+    }
+    timerSetIndex = next.index;
+    timerSetId = next.row.id;
+    timerElapsedGross = 0;
+    timerSeconds = 0;
+    timerMode = "idle";
+    return true;
+  }
+
+  function toggleTimer() {
+    const ex = exercise();
+    if (!ex) return;
+    if (timerRunning) {
+      clearInterval(timerId);
+      timerRunning = false;
+      timerStartedAt = null;
+      renderTimer();
+      return;
+    }
+
+    // Never ask the user to choose a set. The timer always targets the next incomplete set.
+    const next = nextRecordableRow(ex);
+    if (!next) {
+      UI.toast("All sets are already completed.", "info");
+      return;
+    }
+    timerSetIndex = next.index;
+    timerSetId = next.row.id;
+    timerTargetSeconds = timerCountdownValue();
+    timerBalanceSeconds = timerBalanceValue();
+    timerStartedAt = Date.now() - timerElapsedGross * 1000;
+    timerRunning = true;
+    clearInterval(timerId);
+    timerId = setInterval(tickSetTimer, 200);
+    tickSetTimer();
+  }
+
+  // Writes the timer run into ex.restStats.
+  //   plannedSec  - the countdown the user configured for this run
+  //   extraSec    - time on the clock past the countdown
+  //   balanceSec  - the delay balance added on top
+  //   totalSec    - the sum actually recorded against the sets
+  function recordRestInterval(ex, { setId, plannedSec, grossSec, balanceSec, recordedSec, at }) {
+    ex.restStats ||= { plannedSec: 0, extraSec: 0, balanceSec: 0, defaultDelaySec: 0, totalSec: 0, intervals: [] };
+    const extra = Math.max(0, grossSec - plannedSec);
+    ex.restStats.plannedSec = (Number(ex.restStats.plannedSec) || 0) + plannedSec;
+    ex.restStats.extraSec = (Number(ex.restStats.extraSec) || 0) + extra;
+    ex.restStats.balanceSec = (Number(ex.restStats.balanceSec) || 0) + balanceSec;
+    ex.restStats.defaultDelaySec = balanceSec;
+    ex.restStats.totalSec = (Number(ex.restStats.totalSec) || 0) + recordedSec;
+    ex.restStats.intervals.push({ setId, plannedSec, grossSec, extraSec: extra, balanceSec, recordedSec, at });
+    if (ex.restStats.intervals.length > 200) ex.restStats.intervals = ex.restStats.intervals.slice(-200);
+  }
+
+  function stopTimer() {
+    const ex = exercise();
+    if (!ex || timerElapsedGross <= 0) return;
+    if (timerRunning) tickSetTimer();
+    clearInterval(timerId);
+    timerRunning = false;
+    timerStartedAt = null;
+    // Keep the exact countdown and balance values used for this run. Editing the
+    // inputs after starting must not change the calculation for the set being recorded.
+    const recordedSeconds = calculatedRecordedSeconds();
+    const recordedAt = new Date().toISOString();
+    const grossSeconds = timerElapsedGross;
+    const plannedSeconds = timerTargetSeconds;
+    const balanceSeconds = timerBalanceSeconds;
+    const recordedSetId = timerSetId;
+    updateSelectedSetTime(ex, recordedSeconds, recordedAt);
+
+    // Stop & record must mark the set as done, otherwise "next incomplete set"
+    // keeps finding this same set and the timer never advances.
+    const rowIndex = ex.logs.findIndex(x => x.id === recordedSetId);
+    if (rowIndex >= 0) {
+      ex.logs[rowIndex].completed = true;
+      ex.logs[rowIndex].date = recordedAt;
+      recordRestInterval(ex, {
+        setId: recordedSetId,
+        plannedSec: plannedSeconds,
+        grossSec: grossSeconds,
+        balanceSec: balanceSeconds,
+        recordedSec: recordedSeconds,
+        at: recordedAt
+      });
+      save({ silent: true });
+      renderSetTable();
+      renderToday();
+      renderIntensity(day());
+    }
+
+    // Recording a set advances directly to the next incomplete set.
+    const advanced = setTimerToNextIncomplete(ex);
+    timerMode = "idle";
+    timerSeconds = 0;
+    timerElapsedGross = 0;
+    timerTargetSeconds = timerCountdownValue();
+    timerBalanceSeconds = timerBalanceValue();
+    renderSetTimer(ex);
+    renderTimer();
+    if (!advanced) UI.toast("All sets recorded for this exercise.", "info");
+  }
+
+  function resetTimer() {
+    clearInterval(timerId);
+    timerRunning = false;
+    timerStartedAt = null;
+    timerElapsedGross = 0;
+    timerSeconds = 0;
+    timerMode = "idle";
+    const ex = exercise();
+    if (ex) setTimerToNextIncomplete(ex);
+    renderTimer();
+  }
+
+  // progress
+  // These ids live inside #homeView.
+
+  function renderProgress() {
+    const p = project();
+    const prog = Store.projectProgress(p);
+    if ($("weekPercent")) $("weekPercent").textContent = `${prog.pct}%`;
+    if ($("progressSub")) $("progressSub").textContent = `${prog.done} of ${prog.total} exercises completed`;
+
+    const bars = $("barChart");
+    if (bars) {
+      bars.innerHTML = "";
+      const workoutDays = p.days.filter(d => d.type === "workout");
+      if (!workoutDays.length) {
+        bars.innerHTML = `<div class="empty">No workout days in this project.</div>`;
+      } else {
+        workoutDays.forEach(d => {
+          const dp = Store.dayProgress(d);
+          const item = document.createElement("div");
+          item.className = "bar-day";
+          item.title = `${d.name}: ${dp.done}/${dp.total}`;
+          item.innerHTML = `<div class="bar ${dp.pct === 100 ? "complete" : ""}" style="height:${Math.max(4, Math.round(dp.pct * 0.9))}%"></div>
+            <div class="bar-label">${esc(d.name.slice(0, 3))}</div>`;
+          bars.appendChild(item);
+        });
+        bars.style.gridTemplateColumns = `repeat(${workoutDays.length}, 1fr)`;
+      }
+    }
+
+    const prof = Store.profile();
+    if ($("pWeight")) $("pWeight").value = prof.current.weight || "";
+    if ($("pWaist")) $("pWaist").value = prof.current.waist || "";
+    if ($("pChest")) $("pChest").value = prof.current.chest || "";
+    if ($("pArm")) $("pArm").value = prof.current.arm || "";
+    if ($("profileStamp")) $("profileStamp").textContent = prof.current.date ? `Last saved ${UI.fmtDate(prof.current.date, { month: "short", day: "numeric", year: "numeric" })}` : "Not recorded yet";
+
+    const previous = prof.history?.[1] || null;
+    if ($("previousProfileDate")) $("previousProfileDate").textContent = previous?.date ? UI.fmtDate(previous.date, { month: "short", day: "numeric", year: "numeric" }) : "- record";
+    if ($("previousProfileValues")) $("previousProfileValues").innerHTML = `
+      <label>Weight (kg)<input disabled value="${esc(previous?.weight || "")}" placeholder="—"></label>
+      <label>Waist (cm)<input disabled value="${esc(previous?.waist || "")}" placeholder="—"></label>
+      <label>Chest (cm)<input disabled value="${esc(previous?.chest || "")}" placeholder="—"></label>
+      <label>Arm (cm)<input disabled value="${esc(previous?.arm || "")}" placeholder="—"></label>
+    `;
+    if ($("projectIntensityProgress")) $("projectIntensityProgress").innerHTML = intensityMarkup(Store.projectIntensity(p), "Workout Intensity");
+
+    // Recent set-level history, newest first.
+    const rows = [];
+    p.days.forEach(d => d.exercises.forEach(ex => ex.logs.forEach((log, i) => {
+      const values = ex.setColumns
+        .map(c => (log.values[c.key] ?? "").toString().trim() ? `${c.label} ${log.values[c.key]}` : null)
+        .filter(Boolean).join(" · ");
+      if (!values && !log.completed) return;
+      rows.push({ day: d.name, ex: ex.name, set: i + 1, date: log.date, values, notes: log.notes, completed: log.completed, rir: log.rir });
+    })));
+    rows.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    if ($("historyList")) $("historyList").innerHTML = rows.length
+      ? rows.slice(0, 40).map(h => `<div class="history-row">
+            <span class="history-main">
+              <b>${esc(h.ex)}</b> <small>set ${h.set}</small>
+              <small class="history-meta">${esc(h.day)}${h.date ? ` · ${UI.fmtDate(h.date)}` : ""}</small>
+            </span>
+            <span class="history-values">${esc(h.values || "no values")}${h.rir !== "" && h.rir !== undefined && h.rir !== null ? ` · RIR ${esc(h.rir)}` : ""}${h.completed ? ' <span class="tick">✓</span>' : ""}</span>
+          </div>`).join("")
+      : `<div class="empty">No sets logged yet. Open an exercise and fill in the set table.</div>`;
+  }
+
+  async function saveProfile() {
+    const w = $("pWeight")?.value.trim() || "";
+    Store.saveProfile({
+      weight: w,
+      waist: $("pWaist")?.value.trim() || "",
+      chest: $("pChest")?.value.trim() || "",
+      arm: $("pArm")?.value.trim() || ""
+    });
+    renderProgress();
+    // The body-weight forecast and the "Body-weight trend" signal both read the
+    // profile, so Home has to repaint or it shows the pre-save numbers.
+    window.Home?.render?.();
+    window.StatsDashboard?.render?.();
+
+    // Auto-update weight in user profile & Supabase
+    const user = window.Auth?.getUser();
+    const numWeight = parseFloat(w);
+    if (user && !isNaN(numWeight) && window.supabaseClient) {
+      user.weight_kg = numWeight;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+      try {
+        await window.supabaseClient.from('profiles').update({ weight_kg: numWeight }).eq('id', user.id);
+      } catch (e) {
+        console.warn("Could not sync weight_kg to profile:", e);
+      }
+    }
+
+    UI.toast("Weekly check saved");
+  }
+
+  async function resetDay() {
+    const d = day();
+    if (!d || d.type !== "workout") return;
+    if (!await UI.confirm(`Clear all logged sets on ${d.name}?`, "Targets and columns stay; logged values and ticks are cleared.")) return;
+    Store.resetDayLogs(d);
+    save();
+    renderToday();
+    window.ReportCoach?.render();
+    UI.toast("Day cleared");
+  }
+
+  // wiring
+
+  function renderAll() {
+    renderProjectNav();
+    renderDayNav();
+    renderToday();
+    window.Manage?.render();
+    renderProgress();
+    window.Home?.render?.();
+    window.ReportCoach?.render();
+    renderArchivedCSVs();
+  }
+
+  const ACTIONS = {
+    "toggle-drawer": () => {
+      // On mobile (≤900px): toggle the slide-out drawer
+      // On desktop: toggle sidebar collapse/expand
+      if (window.innerWidth <= 900) {
+        UI.toggleDrawer();
+      } else {
+        UI.toggleSidebarCollapse();
+      }
+    },
+    // The brand icon+wordmark: when sidebar is collapsed, expand it.
+    // When sidebar is expanded, hard-reload to Home.
+    "go-home": () => {
+      const shell = document.querySelector(".app-shell");
+      if (shell && shell.classList.contains("side-collapsed")) {
+        UI.toggleSidebarCollapse(false);   // expand
+      } else {
+        location.hash = "home"; location.reload();
+      }
+    },
+    "home-tab": (btn) => {
+      if (!btn) return;
+      const targetId = btn.dataset.target;
+      
+      // Update buttons
+      document.querySelectorAll(".home-sub-tab").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      
+      // Update panels
+      document.querySelectorAll(".home-sub-panel").forEach(p => p.classList.remove("active"));
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) targetPanel.classList.add("active");
+    },
+    // The tabs and the sidebar entry switch views without throwing away state.
+    "show-home": showHome,
+    "toggle-sidebar-collapse": () => UI.toggleSidebarCollapse(),
+    "toggle-rail": () => UI.toggleRail(),
+    "show-today": showToday,
+    "manage-project": showManage,
+    "show-progress": showProgress,
+    "show-stats": showStats,
+    "show-ai": showAI,
+    "add-exercise": addExercise,
+    "create-day": createDay,
+    "reset-day": resetDay,
+    "add-set": addSetRow,
+    "add-set-column": addSetColumn,
+    "fill-down": fillDownSets,
+    "apply-columns-day": applyColumnsToDay,
+    "save-exercise-detail": saveDetails,
+    "delete-exercise": deleteCurrentExercise,
+    "close-exercise": closeDetails,
+    "remove-media": removeMedia,
+    "open-cardio": openCardio,
+    "add-cardio-entry": addCardioEntry,
+    "save-cardio": saveCardio,
+    "open-pre-workout": () => openWarmup("pre"),
+    "open-post-workout": () => openWarmup("post"),
+    "save-and-update": () => {
+      save();
+      window.ReportCoach?.render();
+      UI.toast("Saved and AI details updated");
+    },
+    "update-ai-details": () => {
+      save({ silent: true });
+      window.ReportCoach?.render();
+      UI.toast("AI coach details updated");
+    },
+    // download-ai-csv is handled in report.js, next to the other AI exports, so
+    // that it honours the All-projects checkbox on that view.
+
+    "open-support": openSupport,
+
+    // ---- data pipeline (Home). exportOptions() honours the All-projects box.
+    "export-zip-bundle": () => window.DataPipeline?.downloadBundle?.(exportOptions()),
+    "export-master-csv": () => window.DataPipeline?.downloadMaster?.(exportOptions()),
+    "export-long-csv": () => window.DataPipeline?.downloadLong?.(exportOptions()),
+    "save-csv-snapshot": () => window.DataPipeline?.saveSnapshot?.(exportOptions()),
+    "toggle-timer": toggleTimer,
+    "stop-timer": stopTimer,
+    "reset-timer": resetTimer,
+    "save-profile": saveProfile,
+    "open-user-profile": () => {
+       if (!window.Auth || !window.Auth.isLoggedIn()) return;
+       updateProfileIdDisplay();
+       UI.openModal("userProfileModal");
+       loadUserProfile();
+    },
+    "close-support": () => UI.closeModal("supportModal"),
+    "close-profile": () => UI.closeModal("userProfileModal"),
+    "open-credits": openCredits,
+    "close-credits": () => UI.closeModal("creditsModal"),
+    "close-profile-search": () => UI.closeModal("profileSearchModal"),
+    "close-other-profile": () => UI.closeModal("otherProfileModal"),
+    "close-shared-plan": () => UI.closeModal("sharedPlanModal")
+  };
+
+  // --- USER PROFILE LOGIC ---
+
+  function getOrGenerateProfileId(user) {
+    if (user?.profile_code) return user.profile_code;
+    if (user?.id) {
+      const hex = String(user.id).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase();
+      return 'GC-' + hex.padEnd(8, '0');
+    }
+    try {
+      const cached = JSON.parse(localStorage.getItem("gymcoach_session") || "{}");
+      if (cached?.profile_code) return cached.profile_code;
+      if (cached?.id) {
+        const hex = String(cached.id).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).toUpperCase();
+        return 'GC-' + hex.padEnd(8, '0');
+      }
+    } catch(e) {}
+
+    let local = localStorage.getItem("gymcoach_profile_code");
+    if (!local) {
+      local = 'GC-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      localStorage.setItem("gymcoach_profile_code", local);
+    }
+    return local;
+  }
+
+  function updateProfileIdDisplay() {
+    const user = window.Auth?.getUser();
+    const profileId = getOrGenerateProfileId(user);
+    if ($("profileDisplayId")) $("profileDisplayId").textContent = profileId;
+    if ($("btnCopyProfileId")) {
+      $("btnCopyProfileId").onclick = () => {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(profileId);
+          UI.toast("Profile ID copied: " + profileId, "ok");
+        } else {
+          prompt("Copy Profile ID:", profileId);
+        }
+      };
+    }
+    if (user && !user.profile_code) {
+      user.profile_code = profileId;
+      try {
+        const cached = JSON.parse(localStorage.getItem("gymcoach_session") || "{}");
+        cached.profile_code = profileId;
+        localStorage.setItem("gymcoach_session", JSON.stringify(cached));
+      } catch(e) {}
+    }
+    return profileId;
+  }
+
+  function cmToFtIn(cm) {
+    if (!cm || cm <= 0) return "";
+    const totalInches = cm / 2.54;
+    const ft = Math.floor(totalInches / 12);
+    const inches = Math.round(totalInches % 12);
+    return `(${ft}′${inches}″)`;
+  }
+
+  async function loadUserProfile() {
+    // Immediately display profile ID so it NEVER displays GC-LOADING
+    const profileId = updateProfileIdDisplay();
+
+    const user = window.Auth?.getUser();
+    if (!user) return;
+    user.profile_code = profileId;
+
+    $("profileUsername").value = user.username || "";
+    $("profileName").value = user.name || user.display_name || "";
+    $("profileEmail").value = user.email || "";
+    $("profileBio").value = user.bio || "";
+    if ($("profileUnsubscribe")) $("profileUnsubscribe").checked = user.unsubscribed === true;
+    
+    // Height
+    if ($("profileHeightInput")) {
+      const dbCm = user.height_cm;
+      $("profileHeightCm").value = dbCm || "";
+      if (dbCm) {
+        $("profileHeightInput").value = dbCm;
+        $("profileHeightUnit").value = "cm";
+        $("profileHeightUnit").dataset.prevUnit = "cm";
+        $("profileHeightInput").style.display = "block";
+        if ($("profileHeightFtInInputs")) $("profileHeightFtInInputs").style.display = "none";
+        
+        if ($("profileHeightFtIn")) {
+          $("profileHeightFtIn").textContent = cmToFtIn(dbCm);
+        }
+      } else {
+        $("profileHeightInput").value = "";
+      }
+    }
+
+    // Weight - auto-fill from current weight (Store or user.weight_kg)
+    if ($("profileWeightInput")) {
+      const currentWeight = user.weight_kg || parseFloat(Store.profile()?.current?.weight) || null;
+      if (currentWeight) {
+        $("profileWeightKg").value = currentWeight;
+        $("profileWeightInput").value = currentWeight;
+        $("profileWeightUnit").value = "kg";
+        $("profileWeightUnit").dataset.prevUnit = "kg";
+        if ($("profileWeightConverted")) {
+          $("profileWeightConverted").textContent = `(${(currentWeight * 2.20462).toFixed(1)} lb)`;
+        }
+      } else {
+        $("profileWeightInput").value = "";
+        $("profileWeightKg").value = "";
+        if ($("profileWeightConverted")) $("profileWeightConverted").textContent = "";
+      }
+    }
+
+    // Sharing settings & Project selector
+    const allUserProjects = window.Store?.all ? window.Store.all() : [];
+    const projectSelect = $("profileSharedProjectSelect");
+    if (projectSelect) {
+      if (allUserProjects.length === 0) {
+        projectSelect.innerHTML = `<option value="">No projects created yet</option>`;
+      } else {
+        projectSelect.innerHTML = `
+          <option value="">All Projects (Default Active)</option>
+          ${allUserProjects.map(pr => `
+            <option value="${esc(pr.id)}" ${user.shared_project_id === pr.id ? 'selected' : ''}>
+              ${esc(pr.name)} (${(pr.days || []).length} days)
+            </option>
+          `).join("")}
+        `;
+      }
+      projectSelect.onchange = updateUploadPlanSummary;
+    }
+
+    function updateUploadPlanSummary() {
+      const selectedId = $("profileSharedProjectSelect")?.value;
+      const allProjects = window.Store?.all ? window.Store.all() : [];
+      let targetProj = null;
+      if (selectedId) {
+        targetProj = allProjects.find(p => p.id === selectedId);
+      } else {
+        const activeId = window.Store?.activeId ? window.Store.activeId() : null;
+        targetProj = allProjects.find(p => p.id === activeId) || allProjects[0];
+      }
+      
+      const planNameEl = $("profileUploadWorkoutPlanName");
+      if (planNameEl) {
+        if (targetProj) {
+          const totalEx = (targetProj.days || []).reduce((sum, d) => sum + (d.exercises || []).length, 0);
+          planNameEl.textContent = `Plan: ${targetProj.name} (${(targetProj.days || []).length} days · ${totalEx} exercises)`;
+        } else {
+          planNameEl.textContent = `Plan: All Projects (${allProjects.length} Projects)`;
+        }
+      }
+    }
+    updateUploadPlanSummary();
+
+    if ($("profileSharePlan")) {
+      $("profileSharePlan").checked = user.share_plan === true;
+    }
+
+    if ($("profileSharePerformance")) $("profileSharePerformance").checked = user.share_performance === true;
+    
+    if (user.avatar_url) {
+      $("profileAvatarPreview").innerHTML = `<img src="${esc(user.avatar_url)}" alt="User avatar" style="width:100%; height:100%; object-fit:cover;">`;
+    } else {
+      $("profileAvatarPreview").innerHTML = `👤`;
+    }
+
+    const statusEl = $("profileUploadWorkoutStatus");
+    if (statusEl) {
+      if (user.share_plan) {
+        statusEl.innerHTML = `<span style="color:var(--accent, #00f2fe); font-weight:600;">✓ Shared on Cloud (Live)</span>`;
+      } else {
+        statusEl.textContent = "Upload your workout to the cloud so other members can find and use it.";
+      }
+    }
+  }
+
+  // Upload Shared Workout button
+  $("btnUploadSharedWorkout")?.addEventListener("click", async () => {
+    const user = window.Auth?.getUser();
+    if (!user || !window.Auth.isLoggedIn()) {
+      UI.toast("Please log in to upload and share your workout.", "error");
+      return;
+    }
+
+    const btn = $("btnUploadSharedWorkout");
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span>⏳ Uploading...</span>`;
+
+    try {
+      const allProjects = window.Store?.all ? window.Store.all() : [];
+      if (allProjects.length === 0) {
+        UI.toast("No workout projects found to upload.", "error");
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        return;
+      }
+
+      const selectedProjectId = $("profileSharedProjectSelect")?.value || null;
+
+      // 1. Sync gymcoach_projects_v4 to sync_data in Supabase
+      const { error: syncErr } = await window.supabaseClient
+        .from('sync_data')
+        .upsert({
+          user_id: user.id,
+          storage_key: 'gymcoach_projects_v4',
+          value: allProjects,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, storage_key' });
+
+      if (syncErr) throw syncErr;
+
+      // 2. Update profile with share_plan: true, shared_project_id
+      const { error: profileErr } = await window.supabaseClient
+        .from('profiles')
+        .update({
+          share_plan: true,
+          shared_project_id: selectedProjectId
+        })
+        .eq('id', user.id);
+
+      if (profileErr) throw profileErr;
+
+      // 3. Update local session cache
+      user.share_plan = true;
+      user.shared_project_id = selectedProjectId;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+
+      if ($("profileSharePlan")) $("profileSharePlan").checked = true;
+
+      const statusEl = $("profileUploadWorkoutStatus");
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:var(--accent, #00f2fe); font-weight:600;">✓ Uploaded & Shared (Live on Cloud)</span>`;
+      }
+
+      UI.toast("Workout uploaded and shared successfully! Others can now view it using your Profile ID.", "success");
+    } catch (err) {
+      console.error("Failed to upload shared workout:", err);
+      UI.toast("Upload failed: " + err.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<span>✓ Uploaded</span>`;
+      setTimeout(() => {
+        btn.innerHTML = origHtml;
+      }, 3000);
+    }
+  });
+
+  $("profileAvatarUpload")?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const user = window.Auth?.getUser();
+    if (!user) return;
+
+    // Security check: Validate MIME, magic bytes, and file size
+    if (window.Security?.validateUpload) {
+      const v = await window.Security.validateUpload(file, 'avatar');
+      if (!v.valid) {
+        UI.toast(v.error, "error");
+        e.target.value = '';
+        return;
+      }
+    }
+
+    try {
+      UI.toast("Uploading avatar...", "ok");
+      const fileExt = file.name.split('.').pop();
+      const fileName = `avatar-${user.id}-${Date.now()}.${fileExt}`;
+      const { error } = await window.supabaseClient.storage.from('avatars').upload(fileName, file);
+      if (error) throw error;
+      
+      const { data } = window.supabaseClient.storage.from('avatars').getPublicUrl(fileName);
+      const url = data.publicUrl;
+      
+      // Update profile
+      const { error: updateErr } = await window.supabaseClient.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+      if (updateErr) throw updateErr;
+      
+      // Update local session cache
+      user.avatar_url = url;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+      
+      loadUserProfile();
+      window.Auth.init(); // Re-render sidebar
+      UI.toast("Avatar updated!", "success");
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to upload avatar: " + err.message, "error");
+    }
+  });
+
+  // Live height conversion
+  const updateHeightPreview = () => {
+    const unit = $("profileHeightUnit")?.value || "cm";
+    let cm = NaN;
+    if (unit === "cm") {
+      cm = parseFloat($("profileHeightInput")?.value);
+    } else if (unit === "ftin") {
+      const ft = parseFloat($("profileHeightFt")?.value) || 0;
+      const inc = parseFloat($("profileHeightIn")?.value) || 0;
+      if (ft > 0 || inc > 0) {
+        cm = (ft * 12 + inc) * 2.54;
+      }
+    }
+    
+    if (isNaN(cm) || cm <= 0) {
+      if ($("profileHeightCm")) $("profileHeightCm").value = "";
+      if ($("profileHeightFtIn")) $("profileHeightFtIn").textContent = "";
+      return;
+    }
+    if ($("profileHeightCm")) $("profileHeightCm").value = cm;
+    if ($("profileHeightFtIn")) {
+      $("profileHeightFtIn").textContent = unit === "cm" ? cmToFtIn(cm) : `${cm.toFixed(1)} cm`;
+    }
+  };
+
+  $("profileHeightInput")?.addEventListener("input", updateHeightPreview);
+  $("profileHeightFt")?.addEventListener("input", updateHeightPreview);
+  $("profileHeightIn")?.addEventListener("input", updateHeightPreview);
+  
+  $("profileHeightUnit")?.addEventListener("change", (e) => {
+    const prevUnit = e.target.dataset.prevUnit || "cm";
+    const newUnit = e.target.value;
+    e.target.dataset.prevUnit = newUnit;
+    
+    let cm = parseFloat($("profileHeightCm").value);
+    
+    if (newUnit === "ftin") {
+      $("profileHeightInput").style.display = "none";
+      if ($("profileHeightFtInInputs")) $("profileHeightFtInInputs").style.display = "flex";
+      
+      if (!isNaN(cm) && cm > 0) {
+        const totalInches = cm / 2.54;
+        $("profileHeightFt").value = Math.floor(totalInches / 12);
+        $("profileHeightIn").value = (totalInches % 12).toFixed(1);
+      }
+    } else {
+      $("profileHeightInput").style.display = "block";
+      if ($("profileHeightFtInInputs")) $("profileHeightFtInInputs").style.display = "none";
+      
+      if (!isNaN(cm) && cm > 0) {
+        $("profileHeightInput").value = cm.toFixed(1);
+      }
+    }
+    
+    updateHeightPreview();
+  });
+
+  // Live weight conversion
+  const updateWeightPreview = () => {
+    const unit = $("profileWeightUnit")?.value || "kg";
+    const val = parseFloat($("profileWeightInput")?.value);
+    let kg = NaN;
+
+    if (!isNaN(val) && val > 0) {
+      kg = unit === "kg" ? val : (val / 2.20462);
+    }
+
+    if (isNaN(kg) || kg <= 0) {
+      if ($("profileWeightKg")) $("profileWeightKg").value = "";
+      if ($("profileWeightConverted")) $("profileWeightConverted").textContent = "";
+      return;
+    }
+
+    if ($("profileWeightKg")) $("profileWeightKg").value = kg.toFixed(1);
+    if ($("profileWeightConverted")) {
+      $("profileWeightConverted").textContent = unit === "kg" 
+        ? `(${(kg * 2.20462).toFixed(1)} lb)` 
+        : `(${kg.toFixed(1)} kg)`;
+    }
+  };
+
+  $("profileWeightInput")?.addEventListener("input", updateWeightPreview);
+  $("profileWeightUnit")?.addEventListener("change", (e) => {
+    const prevUnit = e.target.dataset.prevUnit || "kg";
+    const newUnit = e.target.value;
+    e.target.dataset.prevUnit = newUnit;
+
+    const kg = parseFloat($("profileWeightKg")?.value);
+    if (!isNaN(kg) && kg > 0) {
+      if (newUnit === "lb") {
+        $("profileWeightInput").value = (kg * 2.20462).toFixed(1);
+      } else {
+        $("profileWeightInput").value = kg.toFixed(1);
+      }
+    }
+    updateWeightPreview();
+  });
+
+  $("userProfileForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = window.Auth?.getUser();
+    if (!user) return;
+    const rawUsername = $("profileUsername").value.trim();
+    const rawName = $("profileName").value.trim();
+    const rawBio = $("profileBio").value.trim();
+
+    const username = window.Security?.sanitizeText ? window.Security.sanitizeText(rawUsername, 40) : rawUsername;
+    const name = window.Security?.sanitizeText ? window.Security.sanitizeText(rawName, 60) : rawName;
+    const bio = window.Security?.sanitizeText ? window.Security.sanitizeText(rawBio, 500) : rawBio;
+    const heightCm = parseFloat($("profileHeightCm")?.value) || null;
+    const weightKg = parseFloat($("profileWeightKg")?.value) || null;
+    const unsubscribed = $("profileUnsubscribe")?.checked || false;
+    const sharePlan = $("profileSharePlan")?.checked || false;
+    const sharePerformance = $("profileSharePerformance")?.checked || false;
+    const sharedProjectId = $("profileSharedProjectSelect")?.value || null;
+    const profileCode = user.profile_code || ('GC-' + (user.id ? user.id.replace(/-/g, '').slice(0, 8).toUpperCase() : '88888888'));
+
+    try {
+      const updateData = {
+        username, name, bio, display_name: name, height_cm: heightCm,
+        unsubscribed: unsubscribed,
+        weight_kg: weightKg,
+        share_plan: sharePlan,
+        share_performance: sharePerformance,
+        profile_code: profileCode,
+        shared_project_id: sharedProjectId
+      };
+
+      const { error } = await window.supabaseClient.from('profiles').update(updateData).eq('id', user.id);
+      if (error) throw error;
+
+      user.username = username;
+      user.name = name;
+      user.display_name = name;
+      user.bio = bio;
+      user.height_cm = heightCm;
+      user.weight_kg = weightKg;
+      user.unsubscribed = unsubscribed;
+      user.share_plan = sharePlan;
+      user.share_performance = sharePerformance;
+      user.profile_code = profileCode;
+      user.shared_project_id = sharedProjectId;
+      localStorage.setItem("gymcoach_session", JSON.stringify(user));
+
+      // Synchronize weight to Store.profile() and Home view
+      if (weightKg) {
+        Store.saveProfile({
+          weight: String(weightKg),
+          waist: $("pWaist")?.value?.trim() || Store.profile().current.waist || "",
+          chest: $("pChest")?.value?.trim() || Store.profile().current.chest || "",
+          arm: $("pArm")?.value?.trim() || Store.profile().current.arm || ""
+        });
+        if ($("pWeight")) $("pWeight").value = String(weightKg);
+        renderProgress();
+        window.Home?.render?.();
+        window.StatsDashboard?.render?.();
+      }
+
+      window.Auth.init(); // Re-render sidebar
+      UI.toast("Profile saved successfully!", "success");
+      UI.closeModal("userProfileModal");
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to update profile: " + err.message, "error");
+    }
+  });
+
+  $("btnChangePassword")?.addEventListener("click", async () => {
+    const newPass = prompt("Enter your new password (minimum 6 characters):");
+    if (!newPass || newPass.length < 6) {
+      if (newPass) alert("Password must be at least 6 characters.");
+      return;
+    }
+    
+    try {
+      const { error } = await window.supabaseClient.auth.updateUser({ password: newPass });
+      if (error) throw error;
+
+      // Security: Reset/revoke other active sessions upon password change
+      try {
+        await window.supabaseClient.auth.signOut({ scope: 'others' });
+      } catch (scopeErr) {
+        console.warn("Could not sign out other sessions:", scopeErr);
+      }
+
+      window.Security?.logEvent?.('PASSWORD_CHANGED', { user_id: window.Auth?.getUser()?.id });
+      UI.toast("Password updated successfully! Other sessions have been signed out.", "success");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update password: " + err.message);
+    }
+  });
+
+  $("btnResetDefaults")?.addEventListener("click", async () => {
+    if (!await UI.confirm("Erase all local logs and data?", "This clears your device's local data and resets to defaults. This cannot be undone.")) return;
+    if (!await UI.confirm("Are you absolutely sure?", "All projects, logs, and settings will be wiped.", { confirmLabel: "Erase it all" })) return;
+    
+    // Wipe cloud data if logged in
+    if (window.Auth && window.Auth.isLoggedIn() && window.supabaseClient) {
+      try {
+        const uid = window.Auth.user.id;
+        await window.supabaseClient.from('sync_data').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_projects').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_days').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_exercises').delete().eq('user_id', uid);
+        await window.supabaseClient.from('user_sets').delete().eq('user_id', uid);
+      } catch (err) {
+        console.error("Failed to clear cloud data", err);
+      }
+    }
+    
+    const keys = ["gymcoach_settings_v4", "gymcoach_projects_v4", "gymcoach_active_project_v4", "gymcoach_profile_v4", "gymcoach_csv_archives_v1", "gymcoach_layout_v4"];
+    keys.forEach(k => localStorage.removeItem(k));
+    location.reload();
+  });
+
+  $("btnDeleteAccount")?.addEventListener("click", async () => {
+    if (!await UI.confirm("Delete your account permanently?", "This will remove your account and all associated data. This action is irreversible.", { confirmLabel: "Delete Account" })) return;
+    
+    try {
+      UI.toast("Processing account deletion...", "ok");
+      // Call the secure RPC to delete the account
+      const { error } = await window.supabaseClient.rpc('delete_own_account');
+      if (error) throw error;
+      
+      // Cleanup local cache and log out
+      const keys = ["gymcoach_settings_v4", "gymcoach_projects_v4", "gymcoach_active_project_v4", "gymcoach_profile_v4", "gymcoach_csv_archives_v1", "gymcoach_layout_v4"];
+      keys.forEach(k => localStorage.removeItem(k));
+      localStorage.removeItem("gymcoach_session");
+      await window.supabaseClient.auth.signOut();
+      
+      alert("Your account and all associated data have been deleted. Thank you for using GymCoach.");
+      window.location.href = "login.html";
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to delete account: " + err.message, "error");
+    }
+  });
+
+  // --- CREDITS PANEL LOGIC ---
+  
+  // YouTube oEmbed channel name extraction (no API key needed)
+  const _ytChannelCache = {};
+  async function getYouTubeChannel(url) {
+    if (_ytChannelCache[url]) return _ytChannelCache[url];
+    try {
+      const resp = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if (!resp.ok) return 'YouTube';
+      const data = await resp.json();
+      const name = data.author_name || 'YouTube';
+      _ytChannelCache[url] = name;
+      return name;
+    } catch { return 'YouTube'; }
+  }
+
+  function isYouTubeUrl(url) {
+    return /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(url);
+  }
+
+  function getHostname(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Unknown'; }
+  }
+
+  async function openCredits() {
+    UI.openModal("creditsModal");
+    const videoList = $("creditsVideoList");
+    const imageList = $("creditsImageList");
+    videoList.innerHTML = '<p class="muted">Loading...</p>';
+    imageList.innerHTML = '<p class="muted">Loading...</p>';
+
+    const db = Array.isArray(window.EXERCISE_DB) ? window.EXERCISE_DB : [];
+
+    // Collect exercises with video URLs
+    const videoEntries = db.filter(ex => ex.video_url).map((ex, i) => ({ sn: i + 1, name: ex.name, url: ex.video_url }));
+    // Collect exercises with image URLs
+    const imageEntries = db.filter(ex => ex.image_url).map((ex, i) => ({ sn: i + 1, name: ex.name, url: ex.image_url }));
+
+    // Render video credits
+    if (videoEntries.length === 0) {
+      videoList.innerHTML = '<p class="muted" style="font-size:13px;">No video URLs provided by the administrator.</p>';
+    } else {
+      // Start rendering rows, resolve YouTube channels in parallel
+      const rows = await Promise.all(videoEntries.map(async (entry) => {
+        const channelName = isYouTubeUrl(entry.url) ? await getYouTubeChannel(entry.url) : getHostname(entry.url);
+        return `<tr>
+          <td style="text-align:center;">${entry.sn}</td>
+          <td>${esc(entry.name)}</td>
+          <td>${esc(channelName)}</td>
+          <td><a href="${esc(entry.url)}" target="_blank" rel="noopener" style="color:var(--accent); word-break:break-all;">${esc(entry.url.length > 50 ? entry.url.slice(0, 50) + '…' : entry.url)}</a></td>
+        </tr>`;
+      }));
+      videoList.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table class="set-table" style="width:100%; font-size:13px;">
+            <thead><tr><th>S.N.</th><th>Exercise</th><th>Channel / Source</th><th>URL</th></tr></thead>
+            <tbody>${rows.join('')}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // Render image credits
+    if (imageEntries.length === 0) {
+      imageList.innerHTML = '<p class="muted" style="font-size:13px;">No image URLs provided by the administrator.</p>';
+    } else {
+      const imgRows = imageEntries.map(entry => {
+        const source = getHostname(entry.url);
+        return `<tr>
+          <td style="text-align:center;">${entry.sn}</td>
+          <td>${esc(entry.name)}</td>
+          <td>${esc(source)}</td>
+          <td><a href="${esc(entry.url)}" target="_blank" rel="noopener" style="color:var(--accent); word-break:break-all;">${esc(entry.url.length > 50 ? entry.url.slice(0, 50) + '…' : entry.url)}</a></td>
+        </tr>`;
+      });
+      imageList.innerHTML = `
+        <div style="overflow-x:auto;">
+          <table class="set-table" style="width:100%; font-size:13px;">
+            <thead><tr><th>S.N.</th><th>Exercise</th><th>Source</th><th>URL</th></tr></thead>
+            <tbody>${imgRows.join('')}</tbody>
+          </table>
+        </div>`;
+    }
+  }
+
+  // --- SUPPORT TICKETS LOGIC ---
+  async function checkSupportBadge() {
+    if (!window.Auth || !window.Auth.isLoggedIn()) return;
+    try {
+      // Check if there are any tickets that are CLOSED (which means admin replied). 
+      // (A real "unread" system would need an 'is_read' flag, but for now we just show a dot if there are ANY closed tickets that the user might want to see).
+      // We will clear the badge when they open the support modal.
+      const { data, error } = await window.supabaseClient
+        .from('support_tickets')
+        .select('id')
+        .eq('status', 'CLOSED')
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        if ($("supportBadge")) $("supportBadge").style.display = "inline-block";
+      }
+    } catch (err) { }
+  }
+
+  function openSupport() {
+    if (!window.Auth || !window.Auth.isLoggedIn()) {
+      UI.toast("You must be logged in to access Support.", "error");
+      return;
+    }
+    UI.openModal("supportModal");
+    if ($("supportBadge")) $("supportBadge").style.display = "none";
+    loadMyTickets();
+  }
+
+  async function loadMyTickets() {
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('support_tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      const list = $("supportTicketsList");
+      if (data.length === 0) {
+        list.innerHTML = `<p class="empty-state">No tickets found.</p>`;
+      } else {
+        list.innerHTML = data.map(t => `
+          <div class="card" style="padding:10px; border-left: 4px solid ${t.status==='OPEN'?'var(--danger)':'var(--success)'};">
+            <h4 style="margin:0;">${esc(t.title)}</h4>
+            <small class="muted">${new Date(t.created_at).toLocaleString()}</small>
+            <p style="margin-top:5px; font-size:0.9rem;">${esc(t.body)}</p>
+            ${t.response ? `<div style="margin-top:10px; padding:10px; background:rgba(255,255,255,0.05); border-radius:4px;"><strong style="color:var(--primary);">Admin Reply:</strong><p style="margin:5px 0 0; font-size:0.9rem;">${esc(t.response)}</p></div>` : ''}
+          </div>
+        `).join('');
+      }
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to load tickets", "error");
+    }
+  }
+
+  $("btnTabInbox")?.addEventListener("click", () => {
+    $("supportInboxView").style.display = "block";
+    $("supportNewTicketView").style.display = "none";
+    $("btnTabInbox").classList.add("primary");
+    $("btnTabNewTicket").classList.remove("primary");
+    loadMyTickets();
+  });
+
+  $("btnTabNewTicket")?.addEventListener("click", () => {
+    $("supportInboxView").style.display = "none";
+    $("supportNewTicketView").style.display = "block";
+    $("btnTabNewTicket").classList.add("primary");
+    $("btnTabInbox").classList.remove("primary");
+  });
+
+  $("supportTicketForm")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const rawTitle = $("ticketTitle").value.trim();
+    const rawBody = $("ticketBody").value.trim();
+    if (!rawTitle || !rawBody) return;
+    
+    const title = window.Security?.sanitizeText ? window.Security.sanitizeText(rawTitle, 200) : rawTitle;
+    const body = window.Security?.sanitizeText ? window.Security.sanitizeText(rawBody, 2000) : rawBody;
+    
+    try {
+      const { error } = await window.supabaseClient.from('support_tickets').insert({ title, body });
+      if (error) throw error;
+      
+      UI.toast("Ticket submitted successfully!", "success");
+      $("supportTicketForm").reset();
+      $("btnTabInbox").click(); // switch back to inbox tab
+    } catch (err) {
+      console.error(err);
+      UI.toast("Failed to submit ticket: " + err.message, "error");
+    }
+  });
+
+  document.addEventListener("click", e => {
+    const completeBtn = e.target.closest("[data-complete]");
+    if (completeBtn) { toggleComplete(completeBtn.dataset.complete); return; }
+
+    const actionEl = e.target.closest("[data-action]");
+    if (actionEl && ACTIONS[actionEl.dataset.action]) {
+      ACTIONS[actionEl.dataset.action](actionEl, e);
+    }
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && $("exerciseModal").classList.contains("open")) closeDetails();
+  });
+
+  // Auto-select text as a whole on focus/click so typing immediately replaces old text
+  function autoSelectInput(el) {
+    if (!el || (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA")) return;
+    if (['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'image', 'color'].includes(el.type)) return;
+    if (el.readOnly || el.disabled) return;
+    try {
+      el.select();
+    } catch (_) {}
+  }
+
+  document.addEventListener("focusin", e => {
+    setTimeout(() => autoSelectInput(e.target), 0);
+  });
+
+  document.addEventListener("mouseup", e => {
+    const el = e.target;
+    if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) {
+      setTimeout(() => autoSelectInput(el), 10);
+    }
+  });
+
+  function init() {
+    document.querySelectorAll("[data-close-modal]").forEach(b => b.onclick = closeDetails);
+    document.querySelectorAll("[data-close-cardio]").forEach(b => b.onclick = () => UI.closeModal("cardioModal"));
+    document.querySelector(".drawer-scrim")?.addEventListener("click", () => UI.toggleDrawer(false));
+
+    // Live-update video/image path fields as the exercise name is typed
+    $("detailName")?.addEventListener("input", () => {
+      updatePathFieldsFromName($("detailName").value.trim());
+      // Also update the modal header title live
+      $("modalExerciseTitle").textContent = $("detailName").value.trim() || "Exercise";
+    });
+
+    // Attach exercise name autocomplete to the detail modal input
+    if (window.ExerciseAutocomplete && $("detailName")) {
+      ExerciseAutocomplete.attach($("detailName"), {
+        onSelect(name) {
+          updatePathFieldsFromName(name);
+          $("modalExerciseTitle").textContent = name || "Exercise";
+        }
+      });
+    }
+
+    $("detailWeightUnit")?.addEventListener("change", e => {
+      const ex = exercise(); if (!ex) return;
+      convertExerciseWeight(ex, e.target.value);
+      $("detailWeight").value = numericWeightText(ex.weight);
+      renderSetTable(); save({ silent: true }); renderToday();
+    });
+    $("detailPulleySystem")?.addEventListener("change", e => {
+      const ex = exercise(); if (!ex) return;
+      convertExercisePulley(ex, e.target.value);
+      $("detailWeight").value = numericWeightText(ex.weight);
+      renderSetTable(); save({ silent: true }); renderToday();
+    });
+
+    wireUpload("detailImageUpload", "image");
+    wireUpload("detailVideoUpload", "video");
+    wireUpload("detailGifUpload", "gif");
+
+    // Media Choice Selector Buttons (GitHub, YouTube, GIF)
+    $("btnMediaChoiceGithub")?.addEventListener("click", () => selectDetailMediaType("github", null, true));
+    $("btnMediaChoiceYoutube")?.addEventListener("click", () => selectDetailMediaType("youtube", null, true));
+    $("btnMediaChoiceGif")?.addEventListener("click", () => selectDetailMediaType("gif", null, true));
+
+    // Live URL inputs trigger live preview immediately
+    $("detailGithubUrl")?.addEventListener("input", () => {
+      if (detailActiveMediaType === "github") previewActiveMedia();
+    });
+    $("detailYoutubeUrl")?.addEventListener("input", () => {
+      if (detailActiveMediaType === "youtube") previewActiveMedia();
+    });
+    $("detailGifUrl")?.addEventListener("input", () => {
+      if (detailActiveMediaType === "gif") previewActiveMedia();
+    });
+
+    // Refresh live preview button
+    $("btnRefreshDetailPreview")?.addEventListener("click", () => {
+      previewActiveMedia();
+      UI.toast("Preview refreshed");
+    });
+
+    [$("timerCountdown"), $("timerBalance")].forEach(input => {
+      input?.addEventListener("input", () => {
+        if (!timerRunning && timerElapsedGross === 0) renderTimer();
+      });
+    });
+
+    // Actual workout clock time, kept per calendar date so history/CSV/AI
+    // export can be used to look for peak-performance-by-time-of-day.
+    $("workStartTime")?.addEventListener("change", e => saveWorkTime({ startTime: e.target.value.trim() }));
+    $("workStartAmPm")?.addEventListener("change", e => saveWorkTime({ startAmPm: e.target.value }));
+    $("workEndTime")?.addEventListener("change", e => saveWorkTime({ endTime: e.target.value.trim() }));
+    $("workEndAmPm")?.addEventListener("change", e => saveWorkTime({ endAmPm: e.target.value }));
+
+    const p = project();
+    const todayDay = p.days.find(d => Number.isInteger(d.weekday) && d.weekday === new Date().getDay());
+    currentDayId = todayDay?.id || p.days[0]?.id || null;
+
+    UI.applyLayout();
+    renderAll();
+    renderTimer();
+    window.WorkoutPlayer?.init?.();
+    window.StatsDashboard?.init?.();
+    MediaStore.applyLogo();
+    routeFromHash();
+    updateProfileIdDisplay();
+    
+    // Check for support notifications
+    checkSupportBadge();
+    
+    // Fetch system settings from cloud (non-blocking)
+    fetchSystemSettings();
+  }
+
+  async function fetchSystemSettings() {
+    if (!window.supabaseClient || !Auth.isLoggedIn()) return;
+    try {
+      const { data, error } = await window.supabaseClient.from('system_settings').select('*');
+      if (error) return;
+      
+      const settingsMap = {};
+      data.forEach(s => settingsMap[s.key] = s.value);
+      
+      // 1. Maintenance Mode
+      if (settingsMap['maintenance_mode'] === true || settingsMap['maintenance_mode'] === 'true') {
+        if (!Auth.isRole('SUPER_ADMIN')) {
+          const msg = settingsMap['maintenance_message'] || "We're performing scheduled maintenance. Check back soon!";
+          const overlay = document.getElementById('maintenanceOverlay');
+          if (overlay) {
+            document.getElementById('maintenanceMessageText').textContent = msg;
+            overlay.style.display = 'flex';
+          }
+        }
+      }
+      
+      // 2. App Branding (App Name, Logo, Welcome Message)
+      if (window.AppBranding) {
+        window.AppBranding.set({
+          name: settingsMap['app_name'],
+          logo: settingsMap['app_logo'],
+          welcome: settingsMap['welcome_message']
+        });
+      }
+      
+      // 3. Merge Default Exercises
+      const cloudExercises = settingsMap['default_exercises'];
+      if (cloudExercises && Array.isArray(cloudExercises) && cloudExercises.length > 0) {
+        // Merge with window.EXERCISE_DB, deduplicating by lowercased name
+        const existingNames = new Set((window.EXERCISE_DB || []).map(e => e.name.toLowerCase()));
+        cloudExercises.forEach(ce => {
+          if (ce && ce.name && !existingNames.has(ce.name.toLowerCase())) {
+            window.EXERCISE_DB.push(ce);
+            existingNames.add(ce.name.toLowerCase());
+          }
+        });
+        if (window.ExerciseAutocomplete && window.ExerciseAutocomplete.rebuildIndex) {
+          window.ExerciseAutocomplete.rebuildIndex();
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch system settings:", err);
+    }
+  }
+
+  // Hash routing. Home is the landing view, which is what makes the brand
+  // icon+wordmark a working "back to home" control on a plain reload. The other
+  // hashes exist so the manifest shortcuts can deep-link straight into a view.
+  function routeFromHash() {
+    switch ((location.hash || "").toLowerCase()) {
+      case "#today": showToday(); break;
+      case "#build":
+      case "#manage": showManage(); break;
+      case "#stats": showStats(); break;
+      case "#ai": showAI(); break;
+      case "#progress":                 // legacy link - Progress is part of Home now
+      case "#home":
+      default:
+        // renderAll() has already painted Home at this point, so only the view
+        // needs switching - re-rendering would refit every model for nothing.
+        history.replaceState(null, "", "#home");
+        showView("homeView");
+        break;
+    }
+  }
+
+  // Public surface used by manage.js and report.js.
+  window.GymCoach = {
+    project, day, exercise, save,
+    renderAll, renderToday, renderProgress, showHome, showToday, showManage, showProgress, showStats, showAI,
+    renderIntensity, renderArchivedCSVs,
+    openDetails, mediaSrc,
+    setCurrentDay: id => { currentDayId = id; },
+    get currentDayId() { return currentDayId; }
+  };
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();

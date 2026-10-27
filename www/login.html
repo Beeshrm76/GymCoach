@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1F2937">
+  <meta name="description" content="GymCoach — Sign in to your workout account or create a new one.">
+  <title>GymCoach — Login</title>
+
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="assets/login.css">
+  <script src="js/branding.js"></script>
+  <script src="js/security.js?v=18.23"></script>
+
+</head>
+<body>
+
+  <!-- Dynamic Global Background -->
+  <div class="login-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    
+    <!-- Floating muscular parts with screen blend mode -->
+    <img src="assets/bicep_render_blue.jpg" class="floating-body body-1" alt="Decorative bicep render">
+    <img src="assets/abs_render_blue.jpg" class="floating-body body-2" alt="Decorative abs render">
+    <img src="assets/back_render_blue.jpg" class="floating-body body-3" alt="Decorative back render">
+  </div>
+
+  <div class="login-layout">
+    <!-- Left Side: Bento Showcase -->
+    <div class="login-showcase">
+
+      <div class="showcase-content">
+        <div class="showcase-header">
+          <div class="login-logo">GC</div>
+          <h2>GymCoach</h2>
+        </div>
+        
+        <h1 class="showcase-title">Own Your <br>Progress.</h1>
+        <p class="showcase-subtitle">The most flexible workout tracker for data-driven athletes.</p>
+
+        <div class="bento-grid">
+          <div class="bento-item glass-panel span-2">
+            <h3>Custom Projects</h3>
+            <p>Build your own workout routines with custom columns for anything from RPE to rest times.</p>
+          </div>
+          <div class="bento-item glass-panel">
+            <h3>Offline First</h3>
+            <p>Your data stays on device. Syncs securely when online.</p>
+          </div>
+          <div class="bento-item glass-panel accent-panel">
+            <h3>AI Coach ✦</h3>
+            <p>Export your full history for intelligent ML insights.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Auth Panel -->
+    <div class="login-auth">
+      <div class="auth-container">
+        
+        <div class="auth-mobile-header">
+          <div class="login-logo">GC</div>
+          <h1>GymCoach</h1>
+        </div>
+
+        <!-- Tab Switcher -->
+        <div class="login-tabs">
+          <button class="login-tab active" data-tab="login" id="tabLogin">Sign In</button>
+          <button class="login-tab" data-tab="register" id="tabRegister">Create Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <form class="login-form active" id="loginForm" autocomplete="on">
+          <div class="form-group">
+            <label for="loginUsername">Username or Email</label>
+            <input class="form-input" type="text" id="loginUsername" name="username"
+              placeholder="Enter your username or email" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input class="form-input" type="password" id="loginPassword" name="password" placeholder="Enter your password"
+              required autocomplete="current-password">
+          </div>
+
+          <label class="login-checkbox">
+            <input type="checkbox" id="loginRememberMe" checked> Remember me
+          </label>
+
+          <button type="submit" class="login-btn" id="loginBtn">
+            <span class="spinner"></span>
+            <span class="btn-text">Sign In</span>
+          </button>
+
+          <div style="text-align: center;">
+            <a href="#" class="forgot-link" id="showForgotBtn">Forgot Password?</a>
+          </div>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form class="login-form forgot-form" id="forgotForm" autocomplete="off">
+          <p style="color:var(--text-secondary);font-size:14px;margin-bottom:1rem;text-align:center;">Enter your email to
+            receive a password reset link.</p>
+          <div class="form-group">
+            <label for="forgotEmail">Email</label>
+            <input class="form-input" type="email" id="forgotEmail" name="email" placeholder="you@example.com" required
+              autocomplete="email">
+          </div>
+          <button type="submit" class="login-btn" id="forgotBtn">
+            <span class="spinner"></span>
+            <span class="btn-text">Send Reset Link</span>
+          </button>
+          <div style="text-align: center;">
+            <a href="#" class="forgot-link" id="backToLoginBtn">Back to Login</a>
+          </div>
+        </form>
+
+        <!-- Register Form -->
+        <form class="login-form" id="registerForm" autocomplete="on">
+          <div class="form-group">
+            <label for="regUsername">Username</label>
+            <input class="form-input" type="text" id="regUsername" name="username"
+              placeholder="Choose a username (min 3 chars)" required minlength="3" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="regEmail">Email</label>
+            <input class="form-input" type="email" id="regEmail" name="email" placeholder="you@example.com" required
+              autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="regDisplayName">Display Name (optional)</label>
+            <input class="form-input" type="text" id="regDisplayName" name="displayName"
+              placeholder="How should we greet you?" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="regPassword">Password</label>
+            <input class="form-input" type="password" id="regPassword" name="password" placeholder="At least 6 characters"
+              required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="regConfirmPassword">Confirm Password</label>
+            <input class="form-input" type="password" id="regConfirmPassword" name="confirmPassword"
+              placeholder="Repeat password" required minlength="6" autocomplete="new-password">
+          </div>
+          
+          <label class="login-checkbox" style="margin-bottom: 1rem; align-items: flex-start; font-size: 13px;">
+            <input type="checkbox" id="regConsent" required style="margin-top: 4px;"> 
+            <span>I agree to the <a href="legal.html#terms" target="_blank" style="color: #F97316; text-decoration: underline;">Terms of Service</a> and <a href="legal.html#privacy" target="_blank" style="color: #F97316; text-decoration: underline;">Privacy Policy</a>, and I am over the age of 13.</span>
+          </label>
+          <button type="submit" class="login-btn" id="registerBtn">
+            <span class="spinner"></span>
+            <span class="btn-text">Create Account</span>
+          </button>
+        </form>
+
+        <!-- Logged In State (Hidden initially) -->
+        <div id="loggedInState" style="display: none; text-align: center; padding: 1rem 0;">
+          <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-weight: normal;" id="loggedInUserMsg">You are
+            already signed in.</h3>
+          <button class="login-btn" onclick="window.location.href='index.html'" style="margin-bottom: 1rem;">
+            <span class="btn-text">Continue to App</span>
+          </button>
+          <button class="login-skip" id="signOutBtn" style="color: var(--accent);">Sign Out</button>
+        </div>
+
+        <!-- Divider -->
+        <div class="login-divider">or</div>
+
+        <!-- Skip / Continue without account -->
+        <button class="login-skip" id="skipBtn">Continue without an account (Offline Mode)</button>
+
+        <p class="login-footer">
+          Your data stays on this device. An account lets admins manage defaults for you and syncs your data securely to
+          the cloud.
+        </p>
+        
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 12px; color: var(--text-secondary);">
+          <a href="legal.html#privacy" class="forgot-link" style="font-size: 12px; display: inline; margin: 0 5px;">Privacy Policy</a> &bull; 
+          <a href="legal.html#terms" class="forgot-link" style="font-size: 12px; display: inline; margin: 0 5px;">Terms of Service</a> &bull; 
+          <a href="legal.html#cookies" class="forgot-link" style="font-size: 12px; display: inline; margin: 0 5px;">Cookie Policy</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="js/vendor/supabase.js?v=18.28"></script>
+  <script src="js/supabaseClient.js?v=18.28"></script>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const supabase = window.supabaseClient;
+      if (window.AppBranding && supabase) window.AppBranding.syncFromCloud(supabase);
+
+      // ── Tab switching ───────────────────────────────────────
+      const tabs = document.querySelectorAll(".login-tab");
+      const loginForm = $("loginForm");
+      const registerForm = $("registerForm");
+      const forgotForm = $("forgotForm");
+
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          tabs.forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+          const isLogin = tab.dataset.tab === "login";
+          loginForm.classList.toggle("active", isLogin);
+          registerForm.classList.toggle("active", !isLogin);
+          forgotForm.classList.remove("active");
+        });
+      });
+
+      $("showForgotBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        loginForm.classList.remove("active");
+        forgotForm.classList.add("active");
+      });
+
+      $("backToLoginBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        forgotForm.classList.remove("active");
+        loginForm.classList.add("active");
+      });
+
+      // ── Toast helper ────────────────────────────────────────
+      function toast(msg, type = "error") {
+        document.querySelectorAll(".login-toast").forEach(t => t.remove());
+        const el = document.createElement("div");
+        el.className = `login-toast ${type}`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => {
+          el.classList.add("out");
+          setTimeout(() => el.remove(), 300);
+        }, 4000);
+      }
+
+      // Attach CSRF tokens to all forms
+      if (window.Security?.attachCSRF) {
+        Security.attachCSRF(loginForm);
+        Security.attachCSRF(registerForm);
+        Security.attachCSRF(forgotForm);
+      }
+
+      // Check URL for expired/active recovery link
+      (async () => {
+        if (window.location.hash.includes("type=recovery")) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const expiresAt = parseInt(hashParams.get("expires_at"), 10);
+          const now = Math.floor(Date.now() / 1000);
+          // If token expired or older than 15 minutes (900 seconds)
+          if (expiresAt && (expiresAt < now || (now - (expiresAt - 3600)) > 900)) {
+            toast("Password recovery link has expired (15-minute limit). Please request a new one.", "error");
+            history.replaceState(null, "", window.location.pathname);
+            return;
+          }
+
+          history.replaceState(null, "", window.location.pathname);
+          const newPass = prompt("Enter your new password (minimum 6 characters):");
+          if (newPass && newPass.length >= 6) {
+            try {
+              const { error } = await supabase.auth.updateUser({ password: newPass });
+              if (error) throw error;
+              toast("Password updated successfully! Sign in with your new password.", "success");
+              // Terminate all other active sessions
+              await supabase.auth.signOut({ scope: 'others' }).catch(() => {});
+              await Security.logEvent('PASSWORD_CHANGE', { method: 'recovery_link' });
+            } catch (err) {
+              toast("Failed to update password: " + err.message);
+            }
+          }
+        }
+      })();
+
+      // ── Login ───────────────────────────────────────────────
+      loginForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const btn = $("loginBtn");
+
+        const inputVal = $("loginUsername").value.trim();
+        const password = $("loginPassword").value;
+        const rememberMe = $("loginRememberMe").checked;
+
+        // Check account lockout (5 failed attempts -> 5 mins)
+        const lockout = window.Security?.getLockoutStatus(inputVal) || { locked: false };
+        if (lockout.locked) {
+          toast(`Account is locked for security. Please try again in ${lockout.remainingSeconds}s.`, "error");
+          return;
+        }
+
+        btn.classList.add("loading");
+        btn.disabled = true;
+
+        try {
+          let emailToUse = inputVal;
+
+          if (!inputVal.includes('@')) {
+            const { data: resolvedEmail } = await supabase.rpc('resolve_username_to_email', { p_username: inputVal });
+            // Prevent user enumeration: use resolved email or dummy if not found
+            emailToUse = resolvedEmail || (inputVal + "@invalid.gymcoach.internal");
+          }
+
+          if (!rememberMe) {
+            sessionStorage.setItem("gymcoach_no_remember", "true");
+          } else {
+            sessionStorage.removeItem("gymcoach_no_remember");
+          }
+
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: emailToUse,
+            password: password
+          });
+
+          if (error) {
+            // Record failed attempt
+            const res = await window.Security?.recordLoginAttempt(inputVal, false);
+            if (res?.locked) {
+              toast("Account locked for 5 minutes after 5 failed login attempts. Admins have been notified.", "error");
+            } else {
+              // Generic error to prevent user enumeration
+              toast("Invalid username/email or password.", "error");
+            }
+            return;
+          }
+
+          // Successful login: reset attempts
+          await window.Security?.recordLoginAttempt(inputVal, true);
+
+          if (data?.session?.user) {
+            const u = data.session.user;
+            const basicUser = {
+              id: u.id,
+              email: u.email,
+              username: u.user_metadata?.username || '',
+              display_name: u.user_metadata?.display_name || u.user_metadata?.username || u.email,
+              role: u.user_metadata?.role || 'USER',
+              status: 'ACTIVE'
+            };
+            try {
+              const { data: profile } = await supabase.from('profiles').select('*').eq('id', u.id).single();
+              if (profile) Object.assign(basicUser, profile);
+            } catch(_) {}
+            localStorage.setItem("gymcoach_session", JSON.stringify(basicUser));
+            localStorage.setItem("gymcoach_offline_opt_in", "true");
+            sessionStorage.setItem("gymcoach_offline_opt_in", "true");
+          }
+
+          toast("Signed in successfully!", "success");
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1000);
+        } catch (err) {
+          // Generic error message to prevent user enumeration
+          toast("Invalid username/email or password.");
+        } finally {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+        }
+      });
+
+      // ── Register ────────────────────────────────────────────
+      registerForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const btn = $("registerBtn");
+
+        const rawUsername = $("regUsername").value.trim();
+        const email = $("regEmail").value.trim();
+        const rawDisplayName = $("regDisplayName").value.trim();
+        const password = $("regPassword").value;
+        const confirmPassword = $("regConfirmPassword").value;
+
+        // Sanitize inputs before storage
+        const username = window.Security?.sanitize(rawUsername) || rawUsername;
+        const displayName = window.Security?.sanitize(rawDisplayName) || rawDisplayName;
+
+        if (!$("regConsent").checked) {
+          toast("You must agree to the Terms of Service and Privacy Policy.");
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          toast("Passwords do not match.");
+          return;
+        }
+
+        btn.classList.add("loading");
+        btn.disabled = true;
+
+        try {
+          const { data: isAvailable, error: rpcError } = await supabase.rpc('check_username_available', { p_username: username });
+
+          if (rpcError) {
+            console.error(rpcError);
+            throw new Error("Could not verify username availability.");
+          }
+          if (isAvailable === false) {
+            throw new Error("Username is not available. Please choose another.");
+          }
+
+          const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+              data: {
+                username: username,
+                display_name: displayName,
+                role: 'USER'
+              }
+            }
+          });
+
+          if (error) throw error;
+
+          if (data?.user && !data?.session) {
+            toast("Please check your email to verify your account before logging in.", "success");
+            setTimeout(() => {
+              registerForm.classList.remove("active");
+              loginForm.classList.add("active");
+              tabs.forEach(t => t.classList.remove("active"));
+              $("tabLogin").classList.add("active");
+            }, 3000);
+          } else {
+            toast("Account created! Redirecting…", "success");
+            setTimeout(() => { window.location.href = "index.html"; }, 800);
+          }
+        } catch (err) {
+          toast(err.message);
+        } finally {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+        }
+      });
+
+      // ── Forgot Password (Rate Limited & Enumeration-Safe) ───
+      forgotForm.addEventListener("submit", async e => {
+        e.preventDefault();
+        const btn = $("forgotBtn");
+
+        const now = Date.now();
+        const lastReset = parseInt(localStorage.getItem("gymcoach_last_reset_time") || "0", 10);
+        const resetCount = parseInt(localStorage.getItem("gymcoach_reset_count") || "0", 10);
+
+        // Rate limits: 60s cooldown, max 3 per 15 mins
+        if (now - lastReset < 60000) {
+          const waitSec = Math.ceil((60000 - (now - lastReset)) / 1000);
+          toast(`Please wait ${waitSec}s before requesting another reset link.`, "error");
+          return;
+        }
+
+        if (now - lastReset < 15 * 60 * 1000 && resetCount >= 3) {
+          toast("Password reset limit reached (max 3 per 15 mins). Please try again later.", "error");
+          return;
+        }
+
+        btn.classList.add("loading");
+        btn.disabled = true;
+
+        try {
+          const email = $("forgotEmail").value.trim();
+
+          localStorage.setItem("gymcoach_last_reset_time", now.toString());
+          localStorage.setItem("gymcoach_reset_count", (now - lastReset < 15 * 60 * 1000 ? resetCount + 1 : 1).toString());
+
+          await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + '/login.html'
+          });
+
+          // Always return generic success message (prevents user enumeration)
+          toast("If an account exists with this email, a password reset link has been sent.", "success");
+          $("forgotEmail").value = "";
+          setTimeout(() => {
+            forgotForm.classList.remove("active");
+            loginForm.classList.add("active");
+          }, 2000);
+        } catch (err) {
+          // Even on error, do not reveal if the email exists
+          toast("If an account exists with this email, a password reset link has been sent.", "success");
+        } finally {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+        }
+      });
+
+      // ── Skip ────────────────────────────────────────────────
+      $("skipBtn").addEventListener("click", () => {
+        sessionStorage.setItem("gymcoach_offline_opt_in", "true");
+        localStorage.setItem("gymcoach_offline_opt_in", "true");
+        window.location.href = "index.html";
+      });
+
+      // ── Auto-redirect if already logged in ──────────────────
+      (async () => {
+        try {
+          if (!supabase) return;
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session && session.user) {
+            document.querySelector('.login-tabs').style.display = 'none';
+            document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+            document.querySelector('.login-divider').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'none';
+
+            const name = session.user.user_metadata?.display_name || session.user.user_metadata?.username || session.user.email || 'User';
+            document.getElementById('loggedInUserMsg').textContent = `Signed in as ${name}`;
+            document.getElementById('loggedInState').style.display = 'block';
+
+            document.getElementById('signOutBtn').addEventListener('click', async () => {
+              const btn = document.getElementById('signOutBtn');
+              btn.textContent = "Signing out...";
+              await supabase.auth.signOut();
+              window.location.reload();
+            });
+          }
+        } catch (e) {
+          console.log("Auth check skipped:", e.message || e);
+        }
+      })();
+
+      // ── Auto-select text as a whole on focus/click so typing immediately replaces old text ──
+      function autoSelectText(el) {
+        if (!el || el.tagName !== "INPUT") return;
+        if (['checkbox', 'radio', 'button', 'submit', 'file'].includes(el.type)) return;
+        try { el.select(); } catch (_) {}
+      }
+
+      document.addEventListener("focusin", (e) => {
+        setTimeout(() => autoSelectText(e.target), 0);
+      });
+
+      document.addEventListener("mouseup", (e) => {
+        if (e.target && e.target.tagName === "INPUT") {
+          setTimeout(() => autoSelectText(e.target), 10);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

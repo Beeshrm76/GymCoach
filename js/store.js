@@ -329,11 +329,20 @@ window.Store = (() => {
           ? weekdayMap[day.name] : null;
       }
       day.type = day.type === "rest" ? "rest" : "workout";
-      day.title ||= day.type === "rest" ? "Rest Day" : "Workout";
+      if (day.type === "workout") {
+        if (day.category === "rest") day.category = "";
+        if (!day.title || /^rest(\b|\s|\/|&)/i.test(day.title.trim())) {
+          day.title = (day.category && day.category !== "other")
+            ? (day.category.charAt(0).toUpperCase() + day.category.slice(1))
+            : "Workout";
+        }
+      } else {
+        day.title ||= "Rest Day";
+      }
       if (day.name === "Saturday" && day.title === "Pull C") {
         day.title = "Pull B";
       }
-      if (!day.category) {
+      if (!day.category || (day.type === "workout" && day.category === "rest")) {
         const dName = (day.name || "").toLowerCase();
         const dTitle = (day.title || "").toLowerCase();
         if (day.type === "rest") {
@@ -601,6 +610,22 @@ window.Store = (() => {
     return active();
   }
 
+  function replaceAll(newProjects, newActiveId = null, { silent = false } = {}) {
+    if (!Array.isArray(newProjects) || !newProjects.length) return false;
+    hydrate();
+    projects = newProjects.map(normalize);
+    if (newActiveId && projects.some(p => p.id === newActiveId)) {
+      activeId = newActiveId;
+    } else if (!projects.some(p => p.id === activeId)) {
+      activeId = projects[0].id;
+    }
+    const rawSet = window._originalSetItem || localStorage.setItem;
+    rawSet.call(localStorage, KEY, JSON.stringify(projects));
+    rawSet.call(localStorage, ACTIVE_KEY, activeId);
+    if (!silent) emit();
+    return true;
+  }
+
   function findDay(dayId) { return active().days.find(d => d.id === dayId) || null; }
 
   function findExercise(dayId, exId) {
@@ -608,14 +633,15 @@ window.Store = (() => {
     return d ? d.exercises.find(e => e.id === exId) || null : null;
   }
 
-  function createProject({ name, goal = "", template = null } = {}) {
+  function createProject({ name, goal = "", intensityBand = "", description = "", notes = "", template = null } = {}) {
     hydrate();
     const p = normalize({
       id: uid("project"),
       name: name || "New Workout Project",
       goal,
-      description: "",
-      notes: "",
+      intensityBand,
+      description,
+      notes,
       days: []
     });
 

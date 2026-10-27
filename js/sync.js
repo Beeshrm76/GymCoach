@@ -1,14 +1,26 @@
-// js/sync.js — Background Cloud Synchronization Engine
-// Syncs local storage blobs to Supabase sync_data table based on Last Write Wins
+// js/sync.js — Bi-directional Cloud Synchronization Engine
+// Syncs workout and profile data between devices (e.g. PC and mobile) using Supabase sync_data.
 
 window.SyncEngine = (() => {
-  const SYNC_PREFIX = "gymcoach_";
+  const SYNC_KEYS = new Set([
+    "gymcoach_projects_v4",
+    "gymcoach_active_project_v4",
+    "gymcoach_profile_v4",
+    "gymcoach_settings_v4",
+    "gymcoach_settings",
+    "gymcoach_csv_archives_v1",
+    "gymcoach_wearable_v1",
+    "gymcoach_exercise_scoring_overrides_v1"
+  ]);
+
   const TIMESTAMPS_KEY = "gymcoach_sync_timestamps";
 
   let syncQueue = new Set();
   let syncTimer = null;
   let isSyncing = false;
   let supabase = null;
+  let realtimeChannel = null;
+  let pollInterval = null;
 
   function getLocalTimestamps() {
     try {
@@ -21,199 +33,377 @@ window.SyncEngine = (() => {
   function setLocalTimestamp(key, isoString) {
     const ts = getLocalTimestamps();
     ts[key] = isoString;
-    // use original so we don't infinitely loop
-    window._originalSetItem.call(localStorage, TIMESTAMPS_KEY, JSON.stringify(ts));
+    const rawSet = window._originalSetItem || localStorage.setItem;
+    rawSet.call(localStorage, TIMESTAMPS_KEY, JSON.stringify(ts));
   }
 
   // Intercept localStorage writes
   function interceptStorage() {
-    if (window._originalSetItem) return; // already intercepted
+    if (window._originalSetItem) return;
     window._originalSetItem = localStorage.setItem;
-    
+
     localStorage.setItem = function(key, value) {
       window._originalSetItem.apply(this, arguments);
-      
-      if (key.startsWith(SYNC_PREFIX) && key !== TIMESTAMPS_KEY) {
+
+      if (SYNC_KEYS.has(key)) {
         setLocalTimestamp(key, new Date().toISOString());
         queueSync(key);
       }
     };
   }
 
+  async function getValidUser() {
+    if (window.Auth && window.Auth.getUser && window.Auth.getUser()?.id) {
+      return window.Auth.getUser();
+    }
+    if (supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          return session.user;
+        }
+      } catch (e) {
+        console.warn("[SyncEngine] getSession error:", e);
+      }
+    }
+    return null;
+  }
+
+  function isDefaultSeed(projects) {
+    if (!Array.isArray(projects) || projects.length !== 1) return false;
+    const p = projects[0];
+    if (!p) return false;
+    if (p.id === "project-ppl6" || p.id === "project-seed" || p.name === "6-Day PPL x2" || p.name === "My Workout Project") {
+      const hasCompletedLogs = (p.days || []).some(d =>
+        (d.exercises || []).some(ex =>
+          (ex.logs || []).some(l => l.completed || (l.values && (l.values.weight || l.values.reps)))
+        )
+      );
+      return !hasCompletedLogs;
+    }
+    return false;
+  }
+
+  const NUMERIC_KEYS = new Set([
+    "bodyWeight", "bodyWaist", "bodyChest", "bodyArm", "completionPct", "workoutDurationMin",
+    "targetWeightKg", "targetEffectiveWeightKg", "targetRepsMin", "targetRepsMax", "targetRir",
+    "loggedSets", "recordedTotalSec", "pulleyRatio", "sets", "number", "weekday",
+    "weightRaw", "weightKg", "effectiveWeightKg", "volumeKg", "recordedSeconds",
+    "restPlannedSec", "restExtraSec", "restBalanceSec", "restDefaultDelaySec", "restTotalAfterBalancingSec"
+  ]);
+
+  function sanitizeForSync(key, val) {
+    if (key !== "gymcoach_projects_v4" || !Array.isArray(val)) return val;
+    return val.map(p => {
+      if (!p || typeof p !== "object") return p;
+      const copy = { ...p };
+      if (Array.isArray(copy.days)) {
+        copy.days = copy.days.map(d => {
+          if (!d || typeof d !== "object") return d;
+          const dayCopy = { ...d };
+          NUMERIC_KEYS.forEach(k => {
+            if (dayCopy[k] === "" || dayCopy[k] === undefined) dayCopy[k] = null;
+          });
+          if (Array.isArray(dayCopy.exercises)) {
+            dayCopy.exercises = dayCopy.exercises.map(ex => {
+              if (!ex || typeof ex !== "object") return ex;
+              const exCopy = { ...ex };
+              NUMERIC_KEYS.forEach(k => {
+                if (exCopy[k] === "" || exCopy[k] === undefined) exCopy[k] = null;
+              });
+              if (Array.isArray(exCopy.logs)) {
+                exCopy.logs = exCopy.logs.map(log => {
+                  if (!log || typeof log !== "object") return log;
+                  const logCopy = { ...log };
+                  NUMERIC_KEYS.forEach(k => {
+                    if (logCopy[k] === "" || logCopy[k] === undefined) logCopy[k] = null;
+                  });
+                  if (logCopy.values && typeof logCopy.values === "object") {
+                    const vals = { ...logCopy.values };
+                    NUMERIC_KEYS.forEach(k => {
+                      if (vals[k] === "" || vals[k] === undefined) vals[k] = null;
+                    });
+                    logCopy.values = vals;
+                  }
+                  return logCopy;
+                });
+              }
+              return exCopy;
+            });
+          }
+          return dayCopy;
+        });
+      }
+      return copy;
+    });
+  }
+
   function queueSync(key) {
-    if (!Auth || !Auth.isLoggedIn()) return;
+    if (!SYNC_KEYS.has(key)) return;
     syncQueue.add(key);
-    
+
     if (syncTimer) clearTimeout(syncTimer);
-    syncTimer = setTimeout(flushSync, 2000); // debounce 2s
+    syncTimer = setTimeout(flushSync, 1500); // Debounce 1.5s
   }
 
   async function flushSync() {
-    if (!Auth || !Auth.isLoggedIn() || !supabase) return;
+    const user = await getValidUser();
+    if (!user || !supabase) return;
     if (syncQueue.size === 0) return;
+
     if (isSyncing) {
-       syncTimer = setTimeout(flushSync, 2000);
-       return;
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(flushSync, 1500);
+      return;
     }
 
     isSyncing = true;
-    const user = Auth.getUser();
-    if (!user) { isSyncing = false; return; }
-
     const keysToSync = Array.from(syncQueue);
     syncQueue.clear();
 
-    for (let key of keysToSync) {
+    const rawSet = window._originalSetItem || localStorage.setItem;
+
+    for (const key of keysToSync) {
+      if (!SYNC_KEYS.has(key)) continue;
       const val = localStorage.getItem(key);
-      if (!val) continue;
+      if (val === null) continue;
 
       try {
         let jsonVal = null;
         try { jsonVal = JSON.parse(val); } catch { jsonVal = val; }
-        
-        // Ensure non-objects are wrapped properly if needed, though raw text is fine for most fields
-        if (key.includes("active") && typeof jsonVal !== 'object') {
-           jsonVal = { value: jsonVal };
+
+        if (key.includes("active") && typeof jsonVal !== "object") {
+          jsonVal = { value: jsonVal };
+        } else if (key === "gymcoach_projects_v4") {
+          jsonVal = sanitizeForSync(key, jsonVal);
         }
 
+        const nowIso = new Date().toISOString();
         const { error } = await supabase
-          .from('sync_data')
+          .from("sync_data")
           .upsert({
             user_id: user.id,
             storage_key: key,
             value: jsonVal,
-            updated_at: new Date().toISOString()
-          }, { onConflict: 'user_id, storage_key' });
+            updated_at: nowIso
+          }, { onConflict: "user_id, storage_key" });
 
         if (error) throw error;
-        console.log(`Synced ${key} to cloud.`);
+        setLocalTimestamp(key, nowIso);
+        console.log(`[SyncEngine] Synced ${key} to cloud.`);
       } catch (err) {
-        console.error(`Failed to sync ${key}:`, err);
-        // re-queue
+        console.error(`[SyncEngine] Failed to sync ${key}:`, err);
         syncQueue.add(key);
       }
     }
 
     isSyncing = false;
-    
     if (syncQueue.size > 0) {
-      syncTimer = setTimeout(flushSync, 2000);
+      syncTimer = setTimeout(flushSync, 3000);
     }
   }
 
-  // Initial Sync on load/login
-  async function performInitialSync() {
-    if (!Auth || !Auth.isLoggedIn() || !supabase) return;
-    const user = Auth.getUser();
-    if (!user) return;
+  // Initial and recurring sync
+  async function syncNow() {
+    if (isSyncing) return;
+    const user = await getValidUser();
+    if (!user || !supabase) return;
 
-    console.log("Starting initial sync...");
-    
+    isSyncing = true;
+    console.log("[SyncEngine] Checking remote sync...");
+
     try {
       const { data: cloudData, error } = await supabase
-        .from('sync_data')
-        .select('*')
-        .eq('user_id', user.id);
+        .from("sync_data")
+        .select("*")
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
       const localTimestamps = getLocalTimestamps();
-      let reloadedNeeded = false;
-
-      // Map cloud data
+      const rawSet = window._originalSetItem || localStorage.setItem;
       const cloudMap = {};
-      for (let row of cloudData) {
-         cloudMap[row.storage_key] = row;
+
+      for (const row of (cloudData || [])) {
+        if (SYNC_KEYS.has(row.storage_key)) {
+          cloudMap[row.storage_key] = row;
+        }
       }
 
-      // Collect all keys from both cloud and local that match the prefix
-      const allKeys = new Set(Object.keys(cloudMap).filter(k => k.startsWith(SYNC_PREFIX) && k !== TIMESTAMPS_KEY));
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith(SYNC_PREFIX) && k !== TIMESTAMPS_KEY) allKeys.add(k);
-      }
+      const allKeys = new Set([
+        ...Object.keys(cloudMap),
+        ...Array.from(SYNC_KEYS).filter(k => localStorage.getItem(k) !== null)
+      ]);
 
-      for (let key of allKeys) {
+      let updatedLocal = false;
+      let pulledProjects = null;
+      let pulledActiveId = null;
+
+      for (const key of allKeys) {
         const cRow = cloudMap[key];
         const localVal = localStorage.getItem(key);
         const localTs = localTimestamps[key];
 
-        if (!localVal && cRow) {
-          // Device has no data for this key, use Cloud
-          console.log(`Pulling ${key} from cloud (empty local)...`);
+        let parsedLocal = null;
+        if (localVal) {
+          try { parsedLocal = JSON.parse(localVal); } catch { parsedLocal = localVal; }
+        }
+
+        // Case A: Cloud has data and (local is missing OR local is just the default seed project)
+        if (cRow && (!localVal || (key === "gymcoach_projects_v4" && isDefaultSeed(parsedLocal)))) {
+          console.log(`[SyncEngine] Pulling ${key} from cloud (local was empty or default seed)...`);
           let valToStore = cRow.value;
           if (key.includes("active") && valToStore && valToStore.value !== undefined) {
-             valToStore = valToStore.value;
-             window._originalSetItem.call(localStorage, key, valToStore);
+            valToStore = valToStore.value;
+            rawSet.call(localStorage, key, valToStore);
+            pulledActiveId = valToStore;
           } else {
-             window._originalSetItem.call(localStorage, key, typeof valToStore === 'string' ? valToStore : JSON.stringify(valToStore));
+            rawSet.call(localStorage, key, typeof valToStore === "string" ? valToStore : JSON.stringify(valToStore));
+            if (key === "gymcoach_projects_v4") pulledProjects = valToStore;
           }
           setLocalTimestamp(key, cRow.updated_at);
-          reloadedNeeded = true;
-        } 
+          updatedLocal = true;
+        }
+        // Case B: Both have data -> Last Write Wins
         else if (localVal && cRow) {
-          // Both have data. Last Write Wins.
           const cTime = new Date(cRow.updated_at).getTime();
-          const lTime = localTs ? new Date(localTs).getTime() : 0; // If no local ts, cloud wins
+          const lTime = localTs ? new Date(localTs).getTime() : 0;
 
           if (cTime > lTime) {
-            console.log(`Cloud data newer for ${key}, pulling...`);
+            console.log(`[SyncEngine] Cloud data newer for ${key}, pulling...`);
             let valToStore = cRow.value;
             if (key.includes("active") && valToStore && valToStore.value !== undefined) {
-               valToStore = valToStore.value;
-               window._originalSetItem.call(localStorage, key, valToStore);
+              valToStore = valToStore.value;
+              rawSet.call(localStorage, key, valToStore);
+              pulledActiveId = valToStore;
             } else {
-               window._originalSetItem.call(localStorage, key, JSON.stringify(valToStore));
+              rawSet.call(localStorage, key, typeof valToStore === "string" ? valToStore : JSON.stringify(valToStore));
+              if (key === "gymcoach_projects_v4") pulledProjects = valToStore;
             }
             setLocalTimestamp(key, cRow.updated_at);
-            reloadedNeeded = true;
+            updatedLocal = true;
           } else if (lTime > cTime) {
-            // Local is newer, push to cloud
-            console.log(`Local data newer for ${key}, queuing sync...`);
+            console.log(`[SyncEngine] Local data newer for ${key}, queuing push...`);
             queueSync(key);
           }
         }
+        // Case C: Local has data, cloud missing -> push
         else if (localVal && !cRow) {
-          // Local has data, cloud doesn't. Push.
-          console.log(`Cloud missing ${key}, queuing sync...`);
+          console.log(`[SyncEngine] Cloud missing ${key}, queuing push...`);
           queueSync(key);
         }
       }
 
-      if (reloadedNeeded) {
-        // If we pulled new projects or profile, a reload is safest to reset the Store state.
-        // Wait 500ms to allow logs to flush
-        setTimeout(() => location.reload(), 500);
+      if (updatedLocal) {
+        if (pulledProjects && window.Store?.replaceAll) {
+          window.Store.replaceAll(pulledProjects, pulledActiveId);
+        }
+        if (window.GymCoach?.renderAll) {
+          window.GymCoach.renderAll();
+        }
+        window.dispatchEvent(new CustomEvent("gymcoach:remotesync"));
       }
 
     } catch (err) {
-      console.error("Initial sync failed:", err);
+      console.error("[SyncEngine] Sync failed:", err);
+    } finally {
+      isSyncing = false;
+    }
+
+    if (syncQueue.size > 0) {
+      flushSync();
+    }
+  }
+
+  function setupRealtime(userId) {
+    if (!supabase || realtimeChannel) return;
+    try {
+      realtimeChannel = supabase
+        .channel(`sync_data_realtime_${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "sync_data", filter: `user_id=eq.${userId}` },
+          (payload) => {
+            const row = payload.new;
+            if (!row || !SYNC_KEYS.has(row.storage_key)) return;
+            const localTs = getLocalTimestamps()[row.storage_key];
+            const cTime = new Date(row.updated_at).getTime();
+            const lTime = localTs ? new Date(localTs).getTime() : 0;
+            if (cTime > lTime) {
+              console.log(`[SyncEngine] Realtime update for ${row.storage_key}, applying...`);
+              let valToStore = row.value;
+              let pulledActive = null;
+              if (row.storage_key.includes("active") && valToStore && valToStore.value !== undefined) {
+                valToStore = valToStore.value;
+                pulledActive = valToStore;
+              }
+              const strVal = typeof valToStore === "string" ? valToStore : JSON.stringify(valToStore);
+              const rawSet = window._originalSetItem || localStorage.setItem;
+              rawSet.call(localStorage, row.storage_key, strVal);
+              setLocalTimestamp(row.storage_key, row.updated_at);
+
+              if (row.storage_key === "gymcoach_projects_v4" && window.Store?.replaceAll) {
+                window.Store.replaceAll(row.value, pulledActive);
+              }
+              if (window.GymCoach?.renderAll) {
+                window.GymCoach.renderAll();
+              }
+              window.dispatchEvent(new CustomEvent("gymcoach:remotesync"));
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            console.log("[SyncEngine] Realtime channel connected for instant cross-device sync.");
+          }
+        });
+    } catch (e) {
+      console.warn("[SyncEngine] Realtime setup error:", e);
     }
   }
 
   function init() {
     supabase = window.supabaseClient;
     interceptStorage();
-    
-    // Listen for auth events to trigger initial sync
-    if (window.supabaseClient) {
-       window.supabaseClient.auth.onAuthStateChange((event, session) => {
-         if (event === 'SIGNED_IN') {
-           setTimeout(performInitialSync, 1000);
-         }
-       });
+
+    // Listen to Supabase auth events
+    if (supabase) {
+      supabase.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
+          if (session?.user) {
+            setupRealtime(session.user.id);
+          }
+          setTimeout(syncNow, 500);
+        }
+      });
     }
 
-    // Run initial sync if already logged in on load
-    if (Auth && Auth.isLoggedIn()) {
-      setTimeout(performInitialSync, 1000);
+    // Trigger sync when page becomes visible or focused (e.g. phone screen unlocked or switched tab)
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        syncNow();
+      }
+    });
+
+    window.addEventListener("focus", () => syncNow());
+    window.addEventListener("online", () => syncNow());
+
+    // Recurring background sync every 30s while page is visible
+    if (!pollInterval) {
+      pollInterval = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          syncNow();
+        }
+      }, 30000);
     }
+
+    // Immediate check
+    setTimeout(syncNow, 600);
   }
 
-  return { init, flushSync };
+  return { init, syncNow, flushSync, queueSync };
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Wait a tick to ensure Auth has initialized
-  setTimeout(() => SyncEngine.init(), 100);
+  SyncEngine.init();
 });

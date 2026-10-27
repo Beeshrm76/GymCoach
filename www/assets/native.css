@@ -1,0 +1,157 @@
+/* ============================================================================
+   native.css — Capacitor / native app adjustments
+   
+   These styles apply ONLY when running inside the Capacitor native shell.
+   The .capacitor-native class is added by js/native-bridge.js.
+   In a regular browser, none of these rules activate.
+   ========================================================================== */
+
+/* ── Safe Area Insets ──────────────────────────────────────────────────────
+   Handles iPhone notch, Dynamic Island, Android navigation bar, etc.
+   env(safe-area-inset-*) is provided by the native WebView automatically. */
+
+.capacitor-native {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --keyboard-height: 0px;
+}
+
+/* Top bar pushed below the notch / status bar */
+.capacitor-native .topbar {
+  padding-top: var(--safe-top);
+  min-height: calc(var(--topbar-h) + var(--safe-top));
+}
+
+/* Sidebar pushed below the notch */
+.capacitor-native .sidebar {
+  padding-top: var(--safe-top);
+}
+
+.capacitor-native .sidebar-head {
+  padding-top: calc(var(--safe-top) + 8px);
+}
+
+/* Bottom safe area for iPhone home indicator */
+.capacitor-native .views {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* Session rail bottom padding */
+.capacitor-native .session-rail,
+.capacitor-native .details-panel {
+  padding-bottom: calc(var(--safe-bottom) + 12px);
+}
+
+/* ── Keyboard Open Adjustments ────────────────────────────────────────── */
+.capacitor-native.keyboard-open .views {
+  padding-bottom: 0;
+}
+
+/* When keyboard is open, ensure the focused input is visible */
+.capacitor-native.keyboard-open .set-table input:focus,
+.capacitor-native.keyboard-open .form-input:focus,
+.capacitor-native.keyboard-open textarea:focus {
+  scroll-margin-bottom: calc(var(--keyboard-height) + 20px);
+}
+
+/* ── iOS Specific ──────────────────────────────────────────────────────── */
+.capacitor-ios {
+  /* Disable iOS rubber-band overscroll on the body */
+  overscroll-behavior: none;
+}
+
+.capacitor-ios .sidebar-scroll,
+.capacitor-ios .views,
+.capacitor-ios .session-rail-scroll {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS navigation bar area */
+.capacitor-ios .app-shell {
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+/* ── Android Specific ──────────────────────────────────────────────────── */
+.capacitor-android .topbar {
+  /* Android status bar is handled by the StatusBar plugin */
+  padding-top: 0;
+}
+
+/* Android edge-to-edge mode might need this */
+.capacitor-android .views {
+  padding-bottom: max(var(--safe-bottom), 16px);
+}
+
+/* ── Touch Optimizations for Native ───────────────────────────────────── */
+
+/* Slightly larger touch targets in native */
+.capacitor-native .nav-btn {
+  min-height: 48px;
+}
+
+.capacitor-native .tab {
+  min-height: 44px;
+}
+
+.capacitor-native .set-table input {
+  min-height: 40px;
+  font-size: 15px; /* Prevents iOS zoom on focus */
+}
+
+.capacitor-native .form-input,
+.capacitor-native textarea {
+  font-size: 16px; /* Prevents iOS auto-zoom */
+}
+
+/* ── Disable Web-Specific UI in Native ────────────────────────────────── */
+
+/* Hide the PWA install button inside the native app */
+.capacitor-native #installButton {
+  display: none !important;
+}
+
+/* Hide any "open in browser" or web-specific links */
+.capacitor-native .web-only {
+  display: none !important;
+}
+
+/* ── Splash / Loading State ───────────────────────────────────────────── */
+
+/* Smooth fade-in after splash screen hides */
+.capacitor-native body {
+  animation: nativeFadeIn 0.3s ease-out;
+}
+
+@keyframes nativeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Pull-to-Refresh Prevention ───────────────────────────────────────── */
+.capacitor-native {
+  overscroll-behavior-y: contain;
+}
+
+/* ── Selection and Context Menu ───────────────────────────────────────── */
+.capacitor-native .topbar,
+.capacitor-native .sidebar,
+.capacitor-native .nav-btn,
+.capacitor-native .tab,
+.capacitor-native .btn {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* But allow text selection in content areas */
+.capacitor-native .set-table input,
+.capacitor-native .form-input,
+.capacitor-native textarea,
+.capacitor-native .panel p,
+.capacitor-native .ai-output {
+  -webkit-user-select: text;
+  user-select: text;
+}

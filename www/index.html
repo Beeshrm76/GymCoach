@@ -1,0 +1,1953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="description"
+    content="GymCoach — build your own workout projects, log every set with custom columns, and export the whole record to an AI coach.">
+  <title>GymCoach — Workout Projects</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icons/icon-192.png">
+
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GymCoach">
+  <meta name="application-name" content="GymCoach">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/icon-512.png">
+  <link rel="apple-touch-startup-image" href="assets/icons/icon-512.png">
+
+  <link rel="stylesheet" href="assets/app.css?v=18.19">
+  <link rel="stylesheet" href="assets/custom.css?v=18.19">
+  <link rel="stylesheet" href="assets/native.css?v=1.0">
+  <script src="js/native-bridge.js"></script>
+  <script src="js/branding.js"></script>
+  <script src="js/security.js?v=18.23"></script>
+</head>
+
+<body>
+
+  <div class="drawer-scrim" aria-hidden="true"></div>
+
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar" aria-label="Projects and days">
+      <div class="sidebar-head">
+        <button class="brand brand-home-button" data-action="go-home" title="GymCoach · Home"
+          aria-label="GymCoach · Home">
+          <span class="brand-mark">
+            <img class="brand-logo-img" alt="" hidden>
+            <span class="brand-dot">GC</span>
+          </span>
+          <span class="brand-text">
+            <b>GymCoach</b>
+            <small id="sidebarUserLabel">Home</small>
+          </span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <div class="nav-section">
+          <div class="nav-label">
+            <span>Workouts</span>
+            <button class="small-btn" data-action="open-projects"
+              title="Switch, create, copy or delete a project">Manage</button>
+          </div>
+          <div id="projectNav" class="nav-list"></div>
+          <button class="nav-add" data-action="open-projects" style="margin-top:10px;">+ New workout</button>
+
+          <div class="nav-label" style="margin-top:1.5rem;">
+            <span>Support</span>
+          </div>
+          <div class="nav-list">
+            <button class="nav-btn" data-action="open-support" title="Inbox & Support Tickets">
+              <span class="nav-icon">📬</span>
+              <span class="nav-text">
+                <b>Inbox / Support</b><small>Messages & Feedback</small>
+              </span>
+              <span class="badge" id="supportBadge" style="display:none; background:var(--danger); margin-left:auto; width:8px; height:8px; border-radius:50%;"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label">
+            <span>Days</span>
+            <button class="small-btn" data-view-btn="manageView" data-action="manage-project"
+              title="Build days and exercises">Build</button>
+          </div>
+          <div id="dayNav" class="nav-list"></div>
+          <button class="nav-add" data-action="create-day">+ Add a day</button>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label"><span>App</span></div>
+          <div class="sidebar-search-box" style="padding: 0 10px 8px;">
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="search" id="sidebarProfileSearch" placeholder="Search profiles..." 
+                style="width: 100%; padding: 7px 10px 7px 28px; font-size: 12px; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text-primary); outline: none;"
+                aria-label="Search profiles by name or ID">
+              <span style="position: absolute; left: 8px; font-size: 12px; pointer-events: none; opacity: 0.6;">🔍</span>
+            </div>
+          </div>
+          <div class="nav-list">
+            <button class="nav-btn" data-view-btn="homeView" data-action="show-home">
+              <span class="nav-icon">◔</span><span class="nav-text"><b>Home</b><small>Charts, forecast &amp;
+                  measurements</small></span>
+            </button>
+            <button class="nav-btn" data-view-btn="manageView" data-action="manage-project">
+              <span class="nav-icon">🛠</span><span class="nav-text"><b>Build</b><small>Edit days, exercises &amp;
+                  split</small></span>
+            </button>
+            <button class="nav-btn" data-view-btn="statsView" data-action="show-stats">
+              <span class="nav-icon">📈</span><span class="nav-text"><b>Statistics</b><small>DTS &amp; exercise trends</small></span>
+            </button>
+            <button class="nav-btn" data-view-btn="aiView" data-action="show-ai">
+              <span class="nav-icon">✦</span><span class="nav-text"><b>AI Coach</b><small>Export the full
+                  record</small></span>
+            </button>
+            <button class="nav-btn" data-action="open-settings">
+              <span class="nav-icon">⚙</span><span class="nav-text"><b>Settings</b><small>Logo, API key,
+                  storage</small></span>
+            </button>
+            <button class="nav-btn" data-action="open-credits">
+              <span class="nav-icon">©</span><span class="nav-text"><b>Credits</b><small>Content sources &amp;
+                  attributions</small></span>
+            </button>
+            <button class="nav-btn" id="installButton" hidden>
+              <span class="nav-icon">↓</span><span class="nav-text"><b>Install app</b><small>Use it
+                  offline</small></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-label"><span>Account</span></div>
+          <div id="authUserNav" class="nav-list">
+            <!-- Populated by js/auth.js -->
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="app-content">
+
+      <header class="topbar">
+        <button class="icon-btn drawer-btn" data-action="toggle-drawer" title="Open menu"
+          aria-label="Open sidebar menu">☰</button>
+        <div class="topbar-title">
+          <b id="sessionProject">GymCoach</b>
+          <small><span id="sessionDay">—</span> · <span id="dateLabel"></span> · <span
+              id="currentDateTime"></span></small>
+        </div>
+        <div class="top-intensity" id="topIntensity" aria-label="Overall workout intensity">
+          <span class="top-intensity-label">Overall intensity</span>
+          <div class="top-intensity-scale">
+            <div class="top-intensity-bar" aria-hidden="true"><span class="top-intensity-indicator"></span></div>
+          </div>
+        </div>
+        <nav class="view-tabs" aria-label="Views">
+          <button class="tab" data-view-btn="homeView" data-action="show-home">Home</button>
+          <button class="tab" data-view-btn="todayView" data-action="show-today">Today</button>
+          <button class="tab" data-view-btn="manageView" data-action="manage-project">Build</button>
+          <button class="tab" data-view-btn="statsView" data-action="show-stats">Statistics</button>
+          <button class="tab" data-view-btn="aiView" data-action="show-ai">AI Coach</button>
+        </nav>
+      </header>
+
+      <main class="views">
+
+        <!-- HOME
+             The landing view. It owns everything the old Progress view showed
+             (completion, project intensity, weekly check, recent sets) plus the
+             ML performance chart, coach signals, records, the CSV/ZIP pipeline
+             and install help.
+
+             It deliberately does NOT repeat Today, Build or AI Coach content -
+             no exercise list, no set tables, no prompt preview. The links below
+             navigate to those views instead of mirroring them. -->
+        <section id="homeView" class="view home-view" hidden aria-label="Home">
+
+          <!-- ---------------------------------------------------- hero -->
+          <div class="panel home-hero">
+            <div class="home-hero-head">
+              <div>
+                <p class="home-greeting" id="homeGreeting">Welcome</p>
+                <h1 id="homeHeadline">GymCoach</h1>
+                <p class="muted" id="homeSub">—</p>
+              </div>
+              <div class="home-hero-actions">
+                <button class="btn primary" data-action="show-today">Open today's workout</button>
+                <button class="btn" data-action="manage-project">Build the plan</button>
+                <button class="btn" data-action="show-ai">AI coach</button>
+              </div>
+            </div>
+            <div class="hero-stats" id="homeHeroStats"></div>
+          </div>
+
+          <!-- ML performance -->
+          <div class="panel home-chart-card">
+            <div class="panel-head">
+              <div>
+                <h2>Performance forecast</h2>
+                <p class="muted small">Fitted on this device from your own logged sets — ridge regression on
+                  autoregressive features blended with a Holt linear-trend smoother. No data leaves the phone.</p>
+              </div>
+              <div class="panel-head-actions home-chart-controls">
+                <span class="home-model-badge" id="homeModelBadge">—</span>
+                <label class="inline-select">Metric
+                  <select id="homeMetric" aria-label="Chart metric"></select>
+                </label>
+                <label class="inline-select">Forecast
+                  <select id="homeHorizon" aria-label="Forecast horizon">
+                    <option value="1">1 session</option>
+                    <option value="2">2 sessions</option>
+                    <option value="3">3 sessions</option>
+                    <option value="5">5 sessions</option>
+                    <option value="8">8 sessions</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="home-chart" id="homeChart"></div>
+            <div class="home-chart-legend" id="homeChartLegend"></div>
+            <div class="model-stats" id="homeModelStats"></div>
+            <p class="muted small model-note" id="homeChartNote">—</p>
+          </div>
+
+          <div class="progress-grid">
+            <div class="panel">
+              <h2>Completion</h2>
+              <div class="big-number" id="weekPercent">0%</div>
+              <p class="muted" id="progressSub">—</p>
+              <div class="bar-chart" id="barChart"></div>
+            </div>
+
+            <div class="panel">
+              <h2>Weekly check</h2>
+              <div class="previous-current-grid">
+                <section class="previous-current-card previous">
+                  <div class="pc-head"><b>Previous</b><small id="previousProfileDate">-</small></div>
+                  <div class="form-grid compact" id="previousProfileValues">
+                    <label>Weight (kg)<input disabled placeholder="—"></label>
+                    <label>Body Fat (%)<input disabled placeholder="—"></label>
+                    <label>Waist (cm)<input disabled placeholder="—"></label>
+                    <label>Chest (cm)<input disabled placeholder="—"></label>
+                    <label>Biceps (cm)<input disabled placeholder="—"></label>
+                    <label>Forearm (cm)<input disabled placeholder="—"></label>
+                  </div>
+                  <button class="btn full" style="visibility: hidden; pointer-events: none;">Placeholder</button>
+                </section>
+                <section class="previous-current-card current">
+                  <div class="pc-head"><b>Current</b><small id="profileStamp">Not recorded yet</small></div>
+                  <div class="form-grid compact">
+                    <label>Weight (kg)<input id="pWeight" inputmode="decimal" placeholder="—"></label>
+                    <label>Body Fat (%)<input id="pBodyFat" inputmode="decimal" placeholder="—"></label>
+                    <label>Waist (cm)<input id="pWaist" inputmode="decimal" placeholder="—"></label>
+                    <label>Chest (cm)<input id="pChest" inputmode="decimal" placeholder="—"></label>
+                    <label>Biceps (cm)<input id="pBiceps" inputmode="decimal" placeholder="—"></label>
+                    <label>Forearm (cm)<input id="pForearm" inputmode="decimal" placeholder="—"></label>
+                    <input type="hidden" id="pArm">
+                  </div>
+                  <button class="btn primary full" data-action="save-profile">Save current</button>
+                </section>
+              </div>
+              <div id="homePredictionQuickCard" class="home-prediction-quick-card" style="margin-top:12px;"></div>
+              <div class="panel">
+                <h2>Workout Intensity</h2>
+                <div id="projectIntensityProgress"></div>
+              </div>
+
+            </div>
+          </div>
+
+
+          <div class="home-sub-nav">
+            <div class="home-sub-tabs">
+              <button class="home-sub-tab active" data-action="home-tab" data-target="tab-recovery">Recovery</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-signals">Signals</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-consistency">Consistency</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-trends">Trends</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-records">Records</button>
+              <button class="home-sub-tab" data-action="home-tab" data-target="tab-history">History</button>
+            </div>
+          </div>
+          <div class="home-sub-content">
+            <div id="tab-recovery" class="home-sub-panel active">
+              <div class="panel home-recovery-card" id="homeRecoveryCard" style="margin-bottom: 16px;">
+                <div class="panel-head">
+                  <div>
+                    <h2>Wearable Recovery</h2>
+                    <p class="muted small">Smartwatch &amp; wearable data — last night's sleep, activity and today's
+                      readiness.</p>
+                  </div>
+                </div>
+                <div class="home-recovery-body" id="homeRecoveryBody"></div>
+              </div>
+            </div>
+            <div id="tab-signals" class="panel home-sub-panel">
+              <h2>Coach signals</h2>
+              <p class="muted small">Written from the fitted models, not from templates.</p>
+              <div class="signal-list" id="homeInsights"></div>
+            </div>
+            <div id="tab-consistency" class="panel home-sub-panel">
+              <h2>Consistency</h2>
+              <p class="muted small">Streaks count a single rest day between sessions as unbroken.</p>
+              <div class="kv-list" id="homeConsistency"></div>
+            </div>
+            <div id="tab-trends" class="panel home-sub-panel">
+              <h2>Exercise trends</h2>
+              <p class="muted small">Slope of your top standardised set per session, per exercise.</p>
+              <div class="trend-list" id="homeTrends"></div>
+            </div>
+            <div id="tab-records" class="panel home-sub-panel">
+              <h2>Best standardised loads</h2>
+              <p class="muted small">Effective kg after unit conversion and pulley division.</p>
+              <div class="record-list" id="homeRecords"></div>
+            </div>
+            <div id="tab-history" class="panel home-sub-panel">
+              <h2>Recent sets</h2>
+              <div id="historyList" class="history-list"></div>
+            </div>
+          </div>
+
+          <!-- desired body pictures -->
+          <div class="panel" id="desiredBodyPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Desired body</h2>
+                <p class="muted small">Target physique inspiration. Upload reference photos for each section to
+                  visualize your goals.</p>
+              </div>
+              <div class="panel-head-actions desired-head-actions">
+                <div class="desired-dropdown-wrap" id="desiredDropdownWrap">
+                  <button class="btn primary small-btn desired-add-btn" id="desiredAddBtn" type="button"
+                    aria-expanded="false" aria-haspopup="true" title="Add picture to desired body section">
+                    + Add picture ▾
+                  </button>
+                  <div class="desired-dropdown-menu" id="desiredDropdownMenu" hidden>
+                    <div class="desired-menu-header">Select section to add picture:</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <input type="file" id="desiredFileInput" accept="image/*" hidden>
+            <div class="body-shots" id="homeBodyShots">
+              <figure class="body-slot" data-body-slot="whole">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Whole body<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="chest">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Chest<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="arms">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Arms<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="abs">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Abs<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="back">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Back<small>Reserved</small></figcaption>
+              </figure>
+              <figure class="body-slot" data-body-slot="legs">
+                <div class="body-slot-frame"><span class="body-slot-icon">◍</span></div>
+                <figcaption>Legs<small>Reserved</small></figcaption>
+              </figure>
+            </div>
+          </div>
+
+          <!-- install card -->
+          <div class="panel home-install">
+            <div class="panel-head">
+              <div>
+                <h2>Install on your phone</h2>
+                <p class="muted small" id="homeInstallState">—</p>
+              </div>
+              <div class="panel-head-actions">
+                <a href="downloads/GymCoach.apk" download="GymCoach.apk" class="btn" id="homeDownloadApkBtn" title="Download Android APK directly">📥 Download APK</a>
+                <button class="btn primary" data-action="install-app">Install App</button>
+                <button class="btn" data-action="show-install-help">How to install</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TODAY -->
+        <section id="todayView" class="view">
+          <div class="workout-layout">
+
+            <div class="workout-main">
+              <div class="panel session-hero">
+                <div class="hero-head">
+                  <div>
+                    <h1 id="pageTitle">Workout</h1>
+                    <p id="pageSubtitle"></p>
+                  </div>
+                  <div class="hero-actions" id="heroActions">
+                    <button class="btn" data-action="add-exercise">+ Exercise</button>
+                    <button class="btn" data-action="open-cardio">+ Cardio</button>
+                    <button class="btn" data-action="reset-day" title="Clear this day's logged sets">Clear log</button>
+                  </div>
+                </div>
+
+                <div class="hero-stats">
+                  <div class="stat"><b id="exerciseCount">0</b><small>Exercises</small></div>
+                  <div class="stat"><b id="completion">0%</b><small>Complete</small></div>
+                  <div class="stat wide"><b id="focus">—</b><small>Focus</small></div>
+                  <div class="stat wide"><b id="muscles">—</b><small>Muscles</small></div>
+                </div>
+
+                <div class="progress-track" role="progressbar" aria-label="Day completion">
+                  <div class="progress-fill" id="progressBar" style="width:0%"></div>
+                </div>
+                <div class="progress-caption"><span id="dayProgressLabel">—</span></div>
+
+                <div class="work-time-row" id="workTimeRow">
+                  <div class="work-time-group">
+                    <small class="wt-label">Workout start</small>
+                    <div class="wt-inputs">
+                      <input id="workStartTime" type="text" inputmode="numeric" placeholder="e.g. 6:30"
+                        aria-label="Workout start time">
+                      <select id="workStartAmPm" aria-label="Workout start AM or PM">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="work-time-group">
+                    <small class="wt-label">Workout end</small>
+                    <div class="wt-inputs">
+                      <input id="workEndTime" type="text" inputmode="numeric" placeholder="e.g. 7:15"
+                        aria-label="Workout end time">
+                      <select id="workEndAmPm" aria-label="Workout end AM or PM">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PRE-WORKOUT -->
+              <div class="warmup-strip panel pre-workout-strip" id="preWorkoutStrip">
+                <div class="warmup-strip-head">
+                  <div class="warmup-strip-info">
+                    <span class="warmup-strip-icon">🔥</span>
+                    <div>
+                      <h3>Pre-Workout</h3>
+                      <p class="muted small">Warmup, stretching, mobility — prepare your body</p>
+                    </div>
+                  </div>
+                  <button class="btn primary" data-action="open-pre-workout">+ Add Pre-Workout</button>
+                </div>
+              </div>
+
+              <div id="exerciseList" class="exercise-list"></div>
+
+              <!-- POST-WORKOUT -->
+              <div class="warmup-strip panel post-workout-strip" id="postWorkoutStrip">
+                <div class="warmup-strip-head">
+                  <div class="warmup-strip-info">
+                    <span class="warmup-strip-icon">🧊</span>
+                    <div>
+                      <h3>Post-Workout</h3>
+                      <p class="muted small">Cooldown, stretching, recovery exercises</p>
+                    </div>
+                  </div>
+                  <button class="btn primary" data-action="open-post-workout">+ Add Post-Workout</button>
+                </div>
+              </div>
+
+              <div class="cardio-strip panel">
+                <div class="cardio-strip-head">
+                  <div>
+                    <h3>Cardio</h3>
+                    <p class="muted small">Optional conditioning records. Nothing here is required.</p>
+                  </div>
+                  <button class="btn" data-action="open-cardio">Open cardio</button>
+                </div>
+                <div id="cardioSummary" class="cardio-summary">Not counted</div>
+              </div>
+            </div>
+
+            <!-- Right rail: collapsible and independently scrollable -->
+            <aside class="workout-side-panel" aria-label="Session tools">
+              <div class="rail-head">
+                <span id="dayFocusShort" class="rail-title">Music</span>
+                <div class="rail-head-actions" style="display: flex; gap: 4px; align-items: center;">
+                  <button class="icon-btn wpb-settings-link" id="wpbSettingsBtn" type="button" title="Manage Playlist">⚙️</button>
+                  <button class="icon-btn panel-toggle" data-action="toggle-rail" title="Minimize this panel" aria-label="Minimize or expand the session panel">
+                    <span class="panel-toggle-expanded" aria-hidden="true">›</span>
+                    <span class="panel-toggle-collapsed" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                      </svg>
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="rail-scroll">
+                <!-- Workout Music Player Card -->
+                <div class="panel rail-card playlist-card" id="workoutPlaylistCard">
+
+                  <!-- Embedded In-Page Music Player Block -->
+                  <div class="workout-player-bar spotify-widget in-page-player" id="workoutPlayerBar">
+                    <div class="spotify-widget-inner">
+                      <div class="sp-top-row">
+                        <div class="wpb-disc" id="wpbDisc">
+                          <span class="wpb-disc-hole"></span>
+                        </div>
+                        <div class="wpb-text-wrap">
+                          <b class="wpb-song-title" id="wpbSongTitle">No track selected</b>
+                          <small class="wpb-song-meta" id="wpbSongMeta">Workout Audio</small>
+                        </div>
+                        <div class="wpb-buttons">
+                          <button class="icon-btn wpb-ctrl-btn" id="wpbPrevBtn" type="button"
+                            title="Previous track">⏮</button>
+                          <button class="icon-btn wpb-play-btn" id="wpbPlayBtn" type="button" title="Play">▶</button>
+                          <button class="icon-btn wpb-ctrl-btn" id="wpbNextBtn" type="button"
+                            title="Next track">⏭</button>
+                        </div>
+                      </div>
+                      <div class="sp-bottom-row">
+                        <span class="wpb-time" id="wpbCurrentTime">0:00</span>
+                        <input class="wpb-seek-slider" id="wpbSeekSlider" type="range" min="0" max="100" value="0"
+                          step="0.1" aria-label="Seek track">
+                        <span class="wpb-time" id="wpbDuration">0:00</span>
+                        <div class="sp-mini-actions">
+                          <button class="icon-btn wpb-loop-btn active-accent" id="wpbLoopBtn" type="button"
+                            title="Repeat mode">🔁</button>
+                          <button class="icon-btn wpb-mute-btn" id="wpbMuteBtn" type="button"
+                            title="Mute / Unmute">🔊</button>
+                          <input class="wpb-vol-slider" id="wpbVolumeSlider" type="range" min="0" max="1" value="0.9"
+                            step="0.05" aria-label="Volume">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="panel rail-card">
+                  <h3>This project</h3>
+                  <p class="rail-note">Days, exercises, set columns and rest days are all yours to define — nothing is
+                    fixed.</p>
+                  <button class="btn full primary" data-action="save-and-update">Save &amp; update details</button>
+                  <button class="btn full" data-action="show-ai">Export to AI coach</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- BUILD -->
+        <section id="manageView" class="view" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Project</h2>
+                <p class="muted" id="projectSummary">—</p>
+              </div>
+              <div class="panel-head-actions">
+                <button class="btn" data-action="open-projects">Projects…</button>
+                <button class="btn primary" data-action="save-project">Save project</button>
+              </div>
+            </div>
+            <div class="form-grid">
+              <label>Project name<input id="projectName" placeholder="e.g. 6-Day PPL x2"></label>
+              <label>Goal<input id="projectGoal" placeholder="e.g. Hypertrophy, lean bulk"></label>
+              <label>Intensity Band
+                <select id="projectIntensityBand">
+                  <option value="">None</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </label>
+              <label class="span-2">Description<input id="projectDescription"
+                  placeholder="What this block is for"></label>
+              <label class="span-2">Notes for your coach<textarea id="projectNotes" rows="3"
+                  placeholder="Injuries, equipment limits, schedule constraints…"></textarea></label>
+            </div>
+          </div>
+
+          <div class="panel-head standalone">
+            <div>
+              <h2>Days</h2>
+              <p class="muted">Add as many days as you like and flip any of them between Workout and Rest.</p>
+            </div>
+            <div class="panel-head-actions">
+              <button class="btn primary" data-action="create-day">+ Add day</button>
+              <button class="btn" data-action="export-backup">Export backup</button>
+              <label class="btn file-btn">Import backup<input id="importBackupInput" type="file"
+                  accept="application/json,.json" hidden></label>
+            </div>
+          </div>
+
+          <div id="manageDays" class="manage-days"></div>
+        </section>
+
+        <!-- User Profile Modal -->
+  <div class="modal" id="userProfileModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-profile"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 520px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 20px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">👤</span>
+          <b style="font-size:16px; letter-spacing:0.2px;">User Profile</b>
+        </div>
+        <button class="icon-btn" data-action="close-profile" aria-label="Close" style="cursor:pointer;">✕</button>
+      </div>
+      <div class="modal-body single" style="padding: 20px; max-height: 80vh; overflow-y: auto;">
+        <form id="userProfileForm" class="settings-form">
+          <!-- Avatar & Picture Change -->
+          <div style="text-align: center; margin-bottom: 12px;">
+            <div id="profileAvatarPreview" style="width: 86px; height: 86px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2.2rem; border: 2px solid rgba(255,255,255,0.12); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+              👤
+            </div>
+            <label class="btn small-btn primary" style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; text-transform:none; font-weight:600;">
+              <span>Change Picture</span>
+              <input type="file" id="profileAvatarUpload" accept="image/*" hidden>
+            </label>
+          </div>
+
+          <!-- Profile ID Pill (Prominently Visible) -->
+          <div style="display:flex; justify-content:center; align-items:center; margin-bottom:18px;">
+            <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(0, 242, 254, 0.08); border:1px solid rgba(0, 242, 254, 0.3); padding:6px 14px; border-radius:24px;">
+              <span style="font-size:11px; font-weight:700; color:var(--accent, #00f2fe); letter-spacing:0.8px;">PROFILE ID:</span>
+              <span id="profileDisplayId" style="font-family:var(--mono, monospace); font-weight:700; font-size:13px; color:#ffffff; letter-spacing:1px;">GC-········</span>
+              <button type="button" class="small-btn" id="btnCopyProfileId" style="padding:3px 8px; font-size:11px; margin-left:4px; border-radius:6px; cursor:pointer; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15);" title="Copy Profile ID">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+
+          <!-- Username & Full Name -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+              <span>Username <small class="muted" style="font-weight:normal; text-transform:none;">(Private for login only)</small></span>
+              <input type="text" id="profileUsername" class="input-text" required>
+            </label>
+          </div>
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+              <span>Display / Full Name <small class="muted" style="font-weight:normal; text-transform:none;">(Visible to other members)</small></span>
+              <input type="text" id="profileName" class="input-text" placeholder="e.g. Alex Rivera">
+            </label>
+          </div>
+          
+          <!-- Email Address & Side Unsubscribe Checkbox -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <div style="display:flex !important; justify-content:space-between !important; align-items:center !important; margin-bottom:6px !important;">
+              <span style="font-weight:500; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#ececec;">Email Address</span>
+              <label class="check-inline" style="margin:0 !important; cursor:pointer !important; font-size:12px !important; text-transform:none !important; letter-spacing:normal !important; color:var(--text-secondary) !important; display:inline-flex !important; align-items:center !important; gap:6px !important;">
+                <input type="checkbox" id="profileUnsubscribe" style="width:16px !important; height:16px !important; min-width:16px !important; margin:0 !important; cursor:pointer !important; accent-color:var(--accent);">
+                <span style="text-transform:none !important; letter-spacing:normal !important;">Unsubscribe from emails</span>
+              </label>
+            </div>
+            <input type="email" id="profileEmail" class="input-text" disabled title="Contact support to change email">
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+              <span>Bio</span>
+              <textarea id="profileBio" class="input-text" rows="2" placeholder="Share your fitness goals, training split, or background..."></textarea>
+            </label>
+          </div>
+
+          <!-- Physical Measurements: Height & Weight in 2 columns -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:16px;">
+            <!-- Height -->
+            <div>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+                <span>Height</span>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="profileHeightInput" class="input-text" min="0" step="0.1" placeholder="175" style="flex:1;">
+                  <div id="profileHeightFtInInputs" style="display: none; gap: 4px; align-items: center; flex: 1;">
+                    <input type="number" id="profileHeightFt" class="input-text" min="0" step="1" placeholder="5" style="width: 48px; padding:8px 4px; text-align:center;">
+                    <span class="muted" style="font-size:12px;">ft</span>
+                    <input type="number" id="profileHeightIn" class="input-text" min="0" max="11.9" step="0.1" placeholder="9" style="width: 48px; padding:8px 4px; text-align:center;">
+                    <span class="muted" style="font-size:12px;">in</span>
+                  </div>
+                  <select id="profileHeightUnit" class="input-text" style="width: auto; padding: 0 8px;">
+                    <option value="cm">cm</option>
+                    <option value="ftin">ft/in</option>
+                  </select>
+                  <input type="hidden" id="profileHeightCm">
+                </div>
+                <span class="muted" id="profileHeightFtIn" style="white-space:nowrap; font-size:11px; margin-top:2px;"></span>
+              </label>
+            </div>
+
+            <!-- Weight -->
+            <div>
+              <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 500;">
+                <span>Weight</span>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  <input type="number" id="profileWeightInput" class="input-text" min="0" step="0.1" placeholder="75" style="flex:1;">
+                  <select id="profileWeightUnit" class="input-text" style="width: auto; padding: 0 8px;">
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                  </select>
+                  <input type="hidden" id="profileWeightKg">
+                </div>
+                <span class="muted" id="profileWeightConverted" style="white-space:nowrap; font-size:11px; margin-top:2px;"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Workout Plan Sharing & Privacy Controls (Modern UI) -->
+          <div class="card" style="margin: 18px 0; padding: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 16px rgba(0,0,0,0.2);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+              <span style="font-size: 16px; color: var(--accent, #00f2fe);">🔗</span>
+              <span style="font-weight: 700; font-size: 14px; color: #ffffff; letter-spacing: 0.2px;">Workout Plan Sharing &amp; Privacy</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Toggle 1: Share Workout Plan -->
+              <div class="share-toggle-card" style="display:flex !important; flex-direction:row !important; align-items:flex-start !important; gap:12px !important; padding:12px 14px !important; background:rgba(0,0,0,0.25) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:10px !important; cursor:pointer !important; transition:all 0.2s ease !important;">
+                <input type="checkbox" id="profileSharePlan" style="width:18px !important; height:18px !important; min-width:18px !important; max-width:18px !important; margin:2px 0 0 0 !important; cursor:pointer !important; accent-color:var(--accent, #00f2fe) !important;">
+                <div style="flex:1 !important; text-transform:none !important; letter-spacing:normal !important;">
+                  <div style="font-weight:600 !important; font-size:13px !important; color:#ffffff !important; text-transform:none !important; letter-spacing:normal !important;">Share My Workout Plan</div>
+                  <div style="font-weight:normal !important; font-size:12px !important; color:var(--text-secondary, #94a3b8) !important; margin-top:2px !important; line-height:1.4 !important; text-transform:none !important; letter-spacing:normal !important;">
+                    Allows other users to find your profile, view your workout split, and use your plan.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Toggle 2: Make Performance Visible -->
+              <div class="share-toggle-card" style="display:flex !important; flex-direction:row !important; align-items:flex-start !important; gap:12px !important; padding:12px 14px !important; background:rgba(0,0,0,0.25) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:10px !important; cursor:pointer !important; transition:all 0.2s ease !important;">
+                <input type="checkbox" id="profileSharePerformance" style="width:18px !important; height:18px !important; min-width:18px !important; max-width:18px !important; margin:2px 0 0 0 !important; cursor:pointer !important; accent-color:var(--accent, #00f2fe) !important;">
+                <div style="flex:1 !important; text-transform:none !important; letter-spacing:normal !important;">
+                  <div style="font-weight:600 !important; font-size:13px !important; color:#ffffff !important; text-transform:none !important; letter-spacing:normal !important;">Make Performance Visible (DTS, Weights, Sets &amp; Reps)</div>
+                  <div style="font-weight:normal !important; font-size:12px !important; color:var(--text-secondary, #94a3b8) !important; margin-top:2px !important; line-height:1.4 !important; text-transform:none !important; letter-spacing:normal !important;">
+                    Allows other users to see your Daily Training Score (DTS) and logged exercise weights, sets, and reps in the Performance panel.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Workout (Shared Workout) -->
+          <div class="card" style="margin-top: 14px; padding: 16px; background: linear-gradient(135deg, rgba(0, 242, 254, 0.08) 0%, rgba(13, 17, 23, 0.8) 100%); border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.25);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">☁️</span>
+                <b style="font-size: 13.5px; color: #ffffff; letter-spacing: 0.2px;">Upload Workout (Shared Workout)</b>
+              </div>
+              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; background: rgba(0, 242, 254, 0.15); color: var(--accent, #00f2fe); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(0, 242, 254, 0.3);">Cloud Share</span>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <label style="display:flex !important; flex-direction:column !important; gap:5px !important; font-size:12px !important; font-weight:600 !important; text-transform:none !important; letter-spacing:normal !important; color:var(--text-secondary, #94a3b8) !important;">
+                <span>Choose Workout Project to Upload &amp; Share:</span>
+                <select id="profileSharedProjectSelect" class="input-text" style="width:100% !important; padding:8px 10px !important; font-size:13px !important; background:rgba(0,0,0,0.5) !important;">
+                  <!-- Dynamically populated with user's projects -->
+                </select>
+              </label>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06);">
+              <div style="flex: 1; min-width: 180px;">
+                <div id="profileUploadWorkoutPlanName" style="font-size: 12.5px; color: var(--accent, #00f2fe); font-weight: 600;">
+                  Plan: Ready to upload
+                </div>
+                <small id="profileUploadWorkoutStatus" class="muted" style="display: block; font-size: 11px; margin-top: 2px;">
+                  Upload your workout to the cloud so other members can find and use it.
+                </small>
+              </div>
+              <button type="button" class="btn primary" id="btnUploadSharedWorkout" style="padding: 8px 14px; font-size: 12px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0, 242, 254, 0.25);">
+                <span>📤 Upload Workout</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn primary" style="width:100%; margin-top:1.25rem; padding:12px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer;">Save Profile Changes</button>
+        </form>
+
+        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border);">
+        <h3 style="margin-bottom: 1rem;">Account Management</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" id="btnChangePassword">Change Password</button>
+          <button class="btn" id="btnResetDefaults" style="color: var(--warning);">Restore to Defaults (Clear Data)</button>
+          <button class="btn" id="btnDeleteAccount" style="color: var(--danger); border-color: var(--danger);">Delete Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+        <!-- AI COACH -->
+        <section id="aiView" class="view" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Feed everything to your AI coach</h2>
+                <p class="muted">Every day, exercise, custom column, set row, note, timestamp and measurement — captured
+                  in one payload.</p>
+              </div>
+              <div class="panel-head-actions">
+                <label class="check-inline"><input type="checkbox" id="aiAllProjects"> All projects</label>
+                <button class="btn" data-action="open-settings">Settings</button>
+              </div>
+            </div>
+
+            <p class="muted" id="aiStats">—</p>
+
+            <div class="ai-buttons">
+              <button class="btn primary" data-action="update-ai-details">Update details</button>
+              <button class="btn" data-action="copy-ai-prompt">Copy prompt</button>
+              <button class="btn" data-action="download-ai-txt">Text</button>
+              <button class="btn" data-action="download-ai-md">Markdown</button>
+              <button class="btn" data-action="download-ai-json">JSON</button>
+              <button class="btn" data-action="download-ai-csv">CSV</button>
+              <button class="btn" data-action="download-ai-pdf">PDF</button>
+              <button class="btn" data-action="download-ai-doc">Word</button>
+              <button class="btn accent" id="sendAiButton" data-action="send-ai">Send to AI now</button>
+            </div>
+
+            <div class="ai-result" id="aiResult" hidden>
+              <h3>Coach reply</h3>
+              <div class="ai-result-body" id="aiResultBody"></div>
+            </div>
+
+            <section class="archive-block">
+              <div class="archive-head">
+                <div>
+                  <h3>Saved CSV history</h3>
+                  <p class="muted small">Older weeks are kept as separate day files.</p>
+                </div>
+              </div>
+              <div id="archivedCsvList" class="archive-list">-</div>
+            </section>
+
+            <label class="ai-prompt-label">Prompt preview (editable — copying always uses the live data)
+              <textarea id="aiPrompt" rows="18" spellcheck="false"></textarea>
+            </label>
+          </div>
+          <!-- data pipeline -->
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Data pipeline</h2>
+                <p class="muted small">Every recorded field — weight, unit, pulley system, effective kg, sets, reps,
+                  RIR, set completion, total rest after balancing, workout clock time, body weight and every note —
+                  written to CSV. Blank means never recorded, so numeric columns stay numeric.</p>
+              </div>
+              <div class="panel-head-actions">
+                <label class="check-inline"><input type="checkbox" id="homeExportAll"> All projects</label>
+              </div>
+            </div>
+
+            <div class="kv-list" id="homePipelineStats"></div>
+
+            <div class="pipeline-actions">
+              <button class="btn primary" data-action="export-zip-bundle">Download ZIP bundle</button>
+              <button class="btn" data-action="export-master-csv">Master sets CSV</button>
+              <button class="btn" data-action="export-long-csv">Tidy long CSV</button>
+              <button class="btn" data-action="save-csv-snapshot">Save snapshot on device</button>
+            </div>
+            <p class="muted small">The ZIP holds one CSV per table plus a README describing every column. The tidy file
+              is one row per recorded value, so custom set columns survive intact.</p>
+          </div>
+
+
+        </section>
+
+        <!-- STATISTICS DASHBOARD -->
+        <section id="statsView" class="view stats-view" hidden aria-label="Statistics Dashboard">
+          
+          <!-- Top KPI Summary Cards -->
+          <div class="stats-kpi-grid">
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">📈</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Average DTS</span>
+                <b class="kpi-val" id="kpiAvgDts">—</b>
+                <small class="muted">Training load magnitude</small>
+              </div>
+            </div>
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">⚡</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Highest DTS</span>
+                <b class="kpi-val" id="kpiMaxDts">—</b>
+                <small class="muted">Peak session recorded</small>
+              </div>
+            </div>
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">🏋️</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Active Workouts</span>
+                <b class="kpi-val" id="kpiWorkoutsCount">0</b>
+                <small class="muted">Sessions in range</small>
+              </div>
+            </div>
+            <div class="panel stats-kpi-card">
+              <div class="kpi-icon">⚖️</div>
+              <div class="kpi-content">
+                <span class="kpi-label">Workload Split</span>
+                <b class="kpi-val" id="kpiStrengthCardioRatio">—</b>
+                <small class="muted">Strength vs Cardio</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Training Score (DTS) Trend Card -->
+          <div class="panel stats-chart-card">
+            <div class="panel-head stats-chart-head">
+              <div>
+                <h2>Daily Training Score (DTS) Trend</h2>
+                <p class="muted">0–100 training workload combining strength, bodyweight, and cardio. Click any point to view explainable breakdown.</p>
+              </div>
+              <div class="stats-range-controls">
+                <button class="range-btn" data-stats-range="7d">7 Days</button>
+                <button class="range-btn active" data-stats-range="30d">30 Days</button>
+                <button class="range-btn" data-stats-range="90d">90 Days</button>
+                <button class="range-btn" data-stats-range="all">All</button>
+              </div>
+            </div>
+
+            <div class="stats-dts-chart-wrap" id="dtsChartContainer">
+              <!-- Rendered by js/stats.js -->
+            </div>
+
+            <div class="dts-scale-legend">
+              <span class="legend-pill" style="border-left:3px solid #64748b;">0: No Training</span>
+              <span class="legend-pill" style="border-left:3px solid #00f2fe;">1–39: Low</span>
+              <span class="legend-pill" style="border-left:3px solid #38ef7d;">40–59: Reference / Moderate</span>
+              <span class="legend-pill" style="border-left:3px solid #f5af19;">60–79: High</span>
+              <span class="legend-pill" style="border-left:3px solid #ff416c;">80–100: Very High</span>
+            </div>
+          </div>
+
+          <!-- Body Weight Change Trend Card -->
+          <div class="panel stats-chart-card">
+            <div class="panel-head stats-chart-head">
+              <div>
+                <h2>Body Weight Trend</h2>
+                <p class="muted">Body weight changes tracked over time from your weekly check-ins and profile entries.</p>
+              </div>
+              <div class="weight-kpis-wrap" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <span class="legend-pill" id="weightKpiCurrent" style="border-left: 3px solid #00f2fe;">Current: <b>—</b></span>
+                <span class="legend-pill" id="weightKpiChange" style="border-left: 3px solid #38ef7d;">Change: <b>—</b></span>
+                <span class="legend-pill" id="weightKpiMinMax" style="border-left: 3px solid #f5af19;">Range: <b>—</b></span>
+              </div>
+            </div>
+
+            <div class="stats-dts-chart-wrap" id="weightTrendChartContainer" style="min-height: 200px;">
+              <!-- Rendered by js/stats.js -->
+            </div>
+          </div>
+
+          <!-- 7-Date Body Composition & Metric Predictor Panel -->
+          <div class="panel stats-chart-card" id="bodyPredictionPanel">
+            <div class="panel-head stats-chart-head">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <h2>7-Date Body Metric Predictor</h2>
+                  <span class="prediction-eval-badge" id="predictionEvalBadge">Evaluating 7 Logged Dates</span>
+                </div>
+                <p class="muted">Forecasts body weight, body fat %, chest, waist, biceps, and forearm size evaluated across 7 logged dates results.</p>
+              </div>
+              <div class="stats-prediction-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button class="btn small-btn" id="btnPredictionDemoData" title="Load sample 7-date progression to preview AI evaluation">Load 7-Date Sample</button>
+                <div class="prediction-metric-tabs" id="predictionMetricTabs">
+                  <button class="range-btn active" data-pred-metric="all">Overview</button>
+                  <button class="range-btn" data-pred-metric="weight">Weight</button>
+                  <button class="range-btn" data-pred-metric="bodyFat">Body Fat</button>
+                  <button class="range-btn" data-pred-metric="waist">Waist</button>
+                  <button class="range-btn" data-pred-metric="chest">Chest</button>
+                  <button class="range-btn" data-pred-metric="biceps">Biceps</button>
+                  <button class="range-btn" data-pred-metric="forearm">Forearm</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Evaluated Dates Timeline Strip -->
+            <div id="predictionTimelineStrip" class="prediction-timeline-strip">
+              <!-- Rendered by js/stats.js: Pills showing the evaluated dates -->
+            </div>
+
+            <!-- 5 Metric Cards Grid -->
+            <div id="predictionCardsGrid" class="prediction-cards-grid">
+              <!-- Rendered by js/stats.js -->
+            </div>
+
+            <!-- Predictive Trajectory Chart -->
+            <div class="stats-dts-chart-wrap" id="predictionChartContainer" style="min-height: 220px; margin-top: 16px;">
+              <!-- Rendered by js/stats.js -->
+            </div>
+
+            <!-- AI Composition Trajectory Insight -->
+            <div id="predictionInsightBox" class="prediction-insight-box">
+              <!-- Rendered by js/stats.js -->
+            </div>
+          </div>
+
+          <!-- Exercise-Specific Trend Section -->
+          <div class="panel stats-exercise-section">
+            <div class="panel-head stats-exercise-head">
+              <div>
+                <h2>Exercise Performance Trends</h2>
+                <p class="muted">Analytical progression charts for individual movements.</p>
+              </div>
+              <div class="stats-exercise-picker-wrap">
+                <label for="statsExercisePicker" class="muted small">Select Exercise:</label>
+                <select id="statsExercisePicker" class="stats-select" aria-label="Select Exercise to view trends">
+                  <!-- Populated by js/stats.js -->
+                </select>
+              </div>
+            </div>
+
+            <div id="exerciseTrendsContainer">
+              <!-- Rendered by js/stats.js (4 trend charts) -->
+            </div>
+          </div>
+
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- EXERCISE DETAILS
+     demo video, RIR, rest, tempo, equipment, cues — plus the fully custom set table. -->
+  <div class="modal" id="exerciseModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="modalExerciseTitle">
+      <div class="modal-header">
+        <div>
+          <b id="modalExerciseTitle">Exercise</b>
+        </div>
+        <button class="icon-btn" data-close-modal aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-media">
+          <!-- ── Live Preview Section ── -->
+          <div class="detail-preview-header">
+            <div class="detail-preview-badge-row">
+              <span class="preview-title-text">🎬 Demo Preview</span>
+              <span class="preview-badge" id="detailPreviewBadge">GitHub Video</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button type="button" class="btn small-btn" id="btnToggleDetailAutoplay" title="Toggle Video Autoplay" style="padding:2px 8px; font-size:11px;">▶️ Autoplay: ON</button>
+              <button type="button" class="btn small-btn" id="btnRefreshDetailPreview" title="Refresh Live Preview" style="padding:2px 8px; font-size:11px;">👁️ Refresh</button>
+            </div>
+          </div>
+
+          <div class="media-frame" id="detailMediaFrame">
+            <iframe id="detailVideoFrame" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen hidden></iframe>
+            <video id="detailVideo" controls autoplay loop muted playsinline preload="metadata" hidden></video>
+            <img id="detailImage" alt="Exercise Demo Preview" hidden>
+            <div class="media-fallback" id="detailMediaFallback">
+              <span style="font-size:32px; opacity:0.6;">🎬</span>
+              <small id="detailFallbackText">No media chosen yet</small>
+            </div>
+          </div>
+
+          <div id="detailIntensity"></div>
+
+          <!-- ── Media Type Selector List ── -->
+          <div class="media-picker-card">
+            <div class="media-picker-label">
+              <span style="font-size:12px; font-weight:700; color:#fff;">Choose Demo Media Source:</span>
+              <span class="muted small" style="font-size:10px;">Select &amp; save to apply</span>
+            </div>
+
+            <!-- List Selector for GIF, YouTube, GitHub -->
+            <div class="media-type-list" role="tablist">
+              <button type="button" class="media-type-btn active" id="btnMediaChoiceGithub" data-media-type="github">
+                <span class="type-icon">🐙</span>
+                <span class="type-name">GitHub</span>
+              </button>
+              <button type="button" class="media-type-btn" id="btnMediaChoiceYoutube" data-media-type="youtube">
+                <span class="type-icon">🎬</span>
+                <span class="type-name">YouTube</span>
+              </button>
+              <button type="button" class="media-type-btn" id="btnMediaChoiceGif" data-media-type="gif">
+                <span class="type-icon">🎞️</span>
+                <span class="type-name">GIF</span>
+              </button>
+            </div>
+
+            <!-- Panel: GitHub Video -->
+            <div class="media-type-panel" id="panelMediaGithub">
+              <label for="detailGithubUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">GitHub Video URL (raw streaming):</label>
+              <input type="url" id="detailGithubUrl" class="setting-input compact" placeholder="https://raw.githubusercontent.com/.../videos/exercise.mp4">
+            </div>
+
+            <!-- Panel: YouTube Video -->
+            <div class="media-type-panel" id="panelMediaYoutube" style="display:none;">
+              <label for="detailYoutubeUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">YouTube Video / Shorts Link:</label>
+              <input type="url" id="detailYoutubeUrl" class="setting-input compact" placeholder="https://www.youtube.com/watch?v=... or youtu.be/...">
+            </div>
+
+            <!-- Panel: Looping Demo GIF -->
+            <div class="media-type-panel" id="panelMediaGif" style="display:none;">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">Looping Demo GIF (upload or URL):</label>
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px;">
+                <label class="btn small-btn file-btn" style="margin:0; font-size:11px; padding:4px 10px; cursor:pointer;">
+                  Upload .gif file<input id="detailGifUpload" type="file" accept="image/gif" hidden>
+                </label>
+                <span id="detailGifUploadStatus" class="muted small" style="font-size:10px;"></span>
+              </div>
+              <input type="url" id="detailGifUrl" class="setting-input compact" placeholder="https://.../demo.gif or GitHub GIF URL">
+            </div>
+
+            <!-- Clear Media Action -->
+            <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+              <button type="button" class="btn small-btn btn-danger-subtle" id="btnRemoveDetailMedia" data-action="remove-media">✕ Clear media</button>
+            </div>
+          </div>
+
+          <!-- Hidden legacy upload inputs to preserve any external file handlers -->
+          <input id="detailImageUpload" type="file" accept="image/*" hidden>
+          <input id="detailVideoUpload" type="file" accept="video/*" hidden>
+
+          <div class="timer-options">
+            <label>Countdown (sec)<input id="timerCountdown" type="number" min="0" step="1" value="30"></label>
+            <label>Delay balance (sec)<input id="timerBalance" type="number" min="0" step="1" value="5"></label>
+          </div>
+        </div>
+
+        <div class="detail-main">
+          <div class="exercise-name-editor">
+            <label>Exercise name<input id="detailName" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></label>
+          </div>
+
+          <section class="set-timer-card" aria-label="Set timer">
+            <div class="set-timer-head">
+              <div>
+                <h3>Set timer</h3>
+                <p class="muted small">Countdown first, then extra time counts up. Stop &amp; record applies the
+                  calculated time to this set.</p>
+              </div>
+              <div class="timer-recording-set">Recording set <b id="timerRecordingSet">Set 1</b></div>
+            </div>
+            <div class="set-timer-main">
+              <div class="timer-readout">
+                <span class="timer-phase" id="timerPhase">Ready</span>
+                <div class="timer-display" id="timer">00:00</div>
+                <div class="timer-recorded-preview">
+                  Will record <b id="timerRecordedPreview">00:00</b> after balancing
+                </div>
+              </div>
+              <div class="set-timer-actions">
+                <button class="btn primary" id="timerButton" data-action="toggle-timer">Start</button>
+                <button class="btn" data-action="stop-timer">Stop &amp; record</button>
+                <button class="btn" data-action="reset-timer">Reset</button>
+              </div>
+            </div>
+          </section>
+
+          <div class="detail-sets">
+            <div class="sets-head">
+              <div>
+                <h3>Set log</h3>
+                <p class="muted small" id="setCountLabel">—</p>
+              </div>
+              <div class="sets-actions">
+                <button class="btn" data-action="add-set">+ Add set</button>
+                <button class="btn" data-action="fill-down" title="Copy set 1 into every current row">Fill down</button>
+                <button class="btn" data-action="apply-columns-day"
+                  title="Give every exercise on this day the same columns">Apply columns to day</button>
+              </div>
+            </div>
+            <div class="set-table-wrap" id="detailSetTable"></div>
+          </div>
+
+          <details class="detail-more" open>
+            <summary>Plan details</summary>
+            <div class="form-grid">
+              <label>Workout Phase
+                <select id="detailPhase">
+                  <option value="main">Main Workout</option>
+                  <option value="pre">🔥 Pre-Workout</option>
+                  <option value="post">🧊 Post-Workout</option>
+                </select>
+              </label>
+              <label>Target weight
+                <div class="input-with-select"><input id="detailWeight" type="number" step="0.01"
+                    placeholder="e.g. 60" autocomplete="off"><select id="detailWeightUnit">
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                  </select></div>
+              </label>
+              <label>Intensity Band
+                <select id="detailIntensityBand">
+                  <option value="">None</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </label>
+              <label>Target reps
+                <div class="input-with-select reps-range">
+                  <input id="detailRepsMin" type="number" min="0" step="1" placeholder="8" aria-label="Reps range low" autocomplete="off">
+                  <span class="reps-range-sep">–</span>
+                  <input id="detailRepsMax" type="number" min="0" step="1" placeholder="12"
+                    aria-label="Reps range high" autocomplete="off">
+                </div>
+              </label>
+              <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1" autocomplete="off"></label>
+              <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells" autocomplete="off"></label>
+              <!-- Synced background inputs to preserve backward compatibility & tests -->
+              <input type="hidden" id="detailImagePath">
+              <input type="hidden" id="detailVideoPath">
+              <input type="hidden" id="detailGifPath">
+              <label>Pulley system
+                <select id="detailPulleySystem">
+                  <option value="single">Single pulley</option>
+                  <option value="double">Double pulley</option>
+                  <option value="four">Four pulley</option>
+                </select>
+              </label>
+              <label class="span-2">Notes<textarea id="detailNotes" rows="2"
+                  placeholder="Setup, machine number, pin height…"></textarea></label>
+              <label class="span-2">Form cues<textarea id="detailCues" rows="3"
+                  placeholder="One cue per line"></textarea></label>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn danger" data-action="delete-exercise">Delete exercise</button>
+        <div class="spacer"></div>
+        <button class="btn" data-action="close-exercise">Close</button>
+        <button class="btn primary" data-action="save-exercise-detail">Save details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Support / Inbox Modal -->
+  <div class="modal" id="supportModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-support"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 600px;">
+      <div class="modal-header">
+        <div><b>📬 Support Inbox</b></div>
+        <button class="icon-btn" data-action="close-support" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single">
+        <div style="display:flex; gap:10px; margin-bottom: 1rem;">
+          <button class="btn primary" id="btnTabInbox" style="flex:1;">My Inbox</button>
+          <button class="btn" id="btnTabNewTicket" style="flex:1;">New Ticket</button>
+        </div>
+        
+        <div id="supportInboxView">
+          <div id="supportTicketsList" style="display:flex; flex-direction:column; gap:10px;">
+             <!-- Tickets will render here -->
+          </div>
+        </div>
+        
+        <div id="supportNewTicketView" style="display:none;">
+          <form id="supportTicketForm" class="settings-form">
+            <div class="form-group">
+              <label>Title / Subject<input type="text" id="ticketTitle" class="input-text" required placeholder="E.g. Found a bug, or Feature Request"></label>
+            </div>
+            <div class="form-group">
+              <label>Description<textarea id="ticketBody" class="input-text" rows="5" required placeholder="Explain your issue or suggestion here..."></textarea></label>
+            </div>
+            <button type="submit" class="btn primary" style="width:100%; margin-top:1rem;">Submit Ticket</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits Modal -->
+  <div class="modal" id="creditsModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-credits"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 700px;">
+      <div class="modal-header">
+        <div><b>© Content Credits</b></div>
+        <button class="icon-btn" data-action="close-credits" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single" style="max-height: 70vh; overflow-y: auto;">
+        <p class="muted" style="margin-bottom: 1rem; font-size: 13px;">
+          Credits for exercise media provided by the administrator. YouTube channel names are auto-detected from video URLs.
+        </p>
+        
+        <h3 style="margin-bottom: 0.5rem;">🎬 Video Credits</h3>
+        <div id="creditsVideoList" style="margin-bottom: 1.5rem;">
+          <p class="muted">Loading...</p>
+        </div>
+
+        <h3 style="margin-bottom: 0.5rem;">🖼 Image Credits</h3>
+        <div id="creditsImageList">
+          <p class="muted">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Search Results Modal -->
+  <div class="modal" id="profileSearchModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-profile-search"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 550px;">
+      <div class="modal-header">
+        <div><b>🔍 Search Profiles</b><span id="profileSearchResultsCount" style="display:block; font-size:12px; color:var(--text-secondary); margin-top:2px;">Type to find other fitness profiles</span></div>
+        <button class="icon-btn" data-action="close-profile-search" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single" style="max-height: 70vh; overflow-y: auto;">
+        <div style="margin-bottom: 12px;">
+          <input type="search" id="profileSearchModalInput" class="input-text" placeholder="Search by name or Profile ID (GC-XXXXXX)..." style="width: 100%;">
+        </div>
+        <div id="profileSearchResultsList" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Results injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Other User Profile Modal -->
+  <div class="modal" id="otherProfileModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-other-profile"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" style="max-width: 480px;">
+      <div class="modal-header">
+        <div><b>👤 Member Profile</b></div>
+        <button class="icon-btn" data-action="close-other-profile" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body single">
+        <div style="text-align: center; margin-bottom: 1rem;">
+          <div id="otherProfileAvatar" style="width: 80px; height: 80px; border-radius: 50%; background: var(--bg-tertiary); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; font-size: 2.2rem;">
+            👤
+          </div>
+          <h2 id="otherProfileDisplayName" style="margin: 0; font-size: 1.3rem;">Display Name</h2>
+          <div style="margin-top: 4px;">
+            <span id="otherProfileCode" style="font-family: monospace; font-size: 12px; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-secondary);">GC-········</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 12px; margin-bottom: 14px; background: rgba(0,0,0,0.2);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+            <div>
+              <small class="muted" style="font-size: 11px; text-transform: uppercase;">Height</small>
+              <div id="otherProfileHeight" style="font-weight: 600; font-size: 15px; margin-top: 2px;">—</div>
+            </div>
+            <div>
+              <small class="muted" style="font-size: 11px; text-transform: uppercase;">Weight</small>
+              <div id="otherProfileWeight" style="font-weight: 600; font-size: 15px; margin-top: 2px;">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <small class="muted" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Bio</small>
+          <p id="otherProfileBio" style="margin-top: 4px; font-size: 14px; line-height: 1.4; color: var(--text-primary); white-space: pre-wrap;">No bio provided.</p>
+        </div>
+
+        <div id="otherProfilePlanSection">
+          <button class="btn primary full" id="btnOpenSharedPlan" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>📋 View Shared Workout Plan &amp; Dashboard</span> ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Plan Dashboard Modal -->
+  <div class="modal" id="sharedPlanModal" aria-hidden="true">
+    <div class="modal-backdrop" data-action="close-shared-plan"></div>
+    <div class="modal-card wide" role="dialog" aria-modal="true" style="max-width: 850px; max-height: 88vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div>
+          <b id="sharedPlanHeaderTitle">Shared Plan Dashboard</b>
+          <span id="sharedPlanHeaderAuthor" style="display:block; font-size:12px; color:var(--text-secondary); margin-top:2px;">by User</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn primary" id="btnUseSharedPlan" style="font-weight: 600;">⚡ Use this plan</button>
+          <button class="icon-btn" data-action="close-shared-plan" aria-label="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- Dashboard Panel Switcher -->
+      <div style="padding: 10px 16px 0; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; gap: 8px;">
+        <button class="tab active" id="tabSharedWorkout" type="button" style="padding: 8px 16px;">🏋️ Workout Plan</button>
+        <button class="tab" id="tabSharedPerformance" type="button" style="padding: 8px 16px;">⚡ Performance</button>
+      </div>
+
+      <!-- Project Switcher (When user has multiple projects) -->
+      <div id="sharedPlanProjectSwitcher" style="display:none; padding: 10px 16px; background: rgba(0, 242, 254, 0.04); border-bottom: 1px solid var(--border); align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Workout Project:</span>
+          <select id="sharedPlanProjectSelect" class="input-text" style="width: auto; min-width: 220px; padding: 6px 10px; font-size: 13px; font-weight: 600;">
+            <!-- Options populated dynamically -->
+          </select>
+        </div>
+        <span id="sharedPlanProjectsCountBadge" class="role-badge" style="font-size:11px;">1 Project</span>
+      </div>
+
+      <div class="modal-body single" style="overflow-y: auto; flex: 1; padding: 16px;">
+        <!-- PANEL 1: WORKOUT -->
+        <div id="sharedWorkoutPanel">
+          <div class="card" style="padding: 14px; margin-bottom: 14px; background: rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 id="sharedPlanProjectName" style="margin: 0; font-size: 1.2rem;">Workout Project</h3>
+                <p id="sharedPlanProjectGoal" class="muted small" style="margin: 4px 0 0;">Goal: —</p>
+              </div>
+              <span id="sharedPlanIntensityBand" class="role-badge" style="font-size: 12px;">Moderate</span>
+            </div>
+          </div>
+
+          <div id="sharedWorkoutDaysList" style="display: flex; flex-direction: column; gap: 14px;">
+            <!-- Days and exercises rendered here -->
+          </div>
+        </div>
+
+        <!-- PANEL 2: PERFORMANCE -->
+        <div id="sharedPerformancePanel" style="display: none;">
+          <!-- Injected dynamically: either performance stats or private notice -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn primary" id="btnUseSharedPlanFooter">⚡ Use this plan</button>
+        <div class="spacer"></div>
+        <button class="btn" data-action="close-shared-plan">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="modal" id="projectModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-project-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><b>Workout projects</b><span>Each project has its own days, exercises and logs.</span></div>
+        <button class="icon-btn" data-close-project-modal aria-label="Close">×</button>
+      </div>
+      <div class="modal-body single">
+        <div id="projectModalList" class="project-list"></div>
+
+        <div class="new-project">
+          <h3>Create a new workout plan</h3>
+          <div class="form-grid">
+            <label>Name<input id="newProjectName" placeholder="e.g. 5-Day PPL + Upper"></label>
+            <label>Goal<input id="newProjectGoal" placeholder="Goal"></label>
+            <label>Intensity Band
+              <select id="newProjectIntensityBand">
+                <option value="">None</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </label>
+            <label class="span-2">Start from<select id="newProjectTemplate"></select></label>
+          </div>
+          <p class="muted small" id="templateHint"></p>
+          <button class="btn primary full" data-action="create-project-from-modal">Create workout plan</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-project-modal></button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- CARDIO -->
+  <div class="modal" id="cardioModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-cardio></div>
+    <div class="modal-card cardio-modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><b>Cardio</b><span>Optional activity details for the current day</span></div>
+        <button class="icon-btn" data-close-cardio aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single">
+        <div class="cardio-toolbar">
+          <div>
+            <h3 id="cardioDayTitle">Today</h3>
+            <p class="muted small">Leave any field blank when you did not count it. Export will show <b>not counted</b>.
+            </p>
+          </div>
+          <button class="btn primary" data-action="add-cardio-entry">+ Cardio entry</button>
+        </div>
+        <div id="cardioEntries" class="cardio-entries"></div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-cardio>Close</button>
+        <button class="btn primary" data-action="save-cardio">Save cardio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <!-- WARMUP / COOLDOWN PICKER MODAL -->
+  <div class="modal" id="warmupPickerModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-warmup-picker></div>
+    <div class="modal-card warmup-modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <div><b id="warmupPickerTitle">🔥 Add Pre-Workout Exercise</b><span id="warmupPickerSubtitle">Warmup &amp; mobility exercises before your workout</span></div>
+        <button class="icon-btn" data-close-warmup-picker aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single">
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Exercise Name</label>
+          <div style="display: flex; gap: 8px;">
+            <input id="warmupPickerNameInput" placeholder="e.g. Arm Circles, Dead Hang, Dynamic Stretching..." autocomplete="off" style="flex: 1;">
+            <button class="btn primary" id="warmupPickerAddBtn" type="button">+ Add</button>
+          </div>
+        </div>
+
+        <label style="font-size: 11px; font-weight: 600; color: var(--text-dim); display: block; margin-bottom: 8px;">
+          ⚡ Quick Suggestions (tap to add instantly):
+        </label>
+        <div class="warmup-suggestions" id="warmupPickerChips"></div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-warmup-picker>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="modal" id="settingsModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-settings></div>
+    <div class="modal-card settings-modal-card" role="dialog" aria-modal="true">
+      <div class="modal-header settings-modal-header">
+        <div class="settings-header-titles">
+          <b>⚙️ Settings &amp; Preferences</b>
+          <span>Branding, AI model connection and weekday workout playlists</span>
+        </div>
+        <button class="icon-btn" data-close-settings aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single settings-modal-body">
+        <!-- Segmented Tab Navigation -->
+        <div class="settings-nav-tabs">
+          <button class="settings-tab-btn active" id="settingsTabBtnGeneral" data-settings-tab="general" type="button">
+            <span class="tab-icon">⚡</span> General &amp; AI
+          </button>
+          <button class="settings-tab-btn" id="settingsTabBtnMusic" data-settings-tab="music" type="button">
+            <span class="tab-icon">🎵</span> Workout Music &amp; Playlists
+          </button>
+        </div>
+
+        <!-- TAB 1: GENERAL & AI -->
+        <div id="settingsGeneralTab" class="settings-tab-pane">
+
+          <!-- AI Connection Card -->
+          <section class="settings-block settings-card">
+            <div class="card-head-row">
+              <h3>🤖 AI Coach Connection</h3>
+              <span class="tag accent">Optional</span>
+            </div>
+            <p class="muted small">Connect your preferred AI provider to generate tailored coaching, critique workout
+              volume, and optimize hypertrophy based on your logs.</p>
+
+            <div class="form-grid settings-form-grid">
+              <label class="span-2">Provider
+                <select id="settingsProvider" class="custom-select">
+                  <option value="anthropic">Anthropic (Claude)</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="groq">Groq (Ultra-Fast)</option>
+                  <option value="deepseek">DeepSeek (V3 / R1)</option>
+                  <option value="xai">xAI (Grok)</option>
+                  <option value="openrouter">OpenRouter (Unified)</option>
+                  <option value="mistral">Mistral AI</option>
+                  <option value="perplexity">Perplexity</option>
+                  <option value="together">Together AI</option>
+                  <option value="cohere">Cohere</option>
+                  <option value="custom">My own proxy / Worker</option>
+                  <option value="others">Others (OpenAI-compatible)</option>
+                  <option value="manual">Manually configure</option>
+                </select>
+              </label>
+
+              <div class="span-2 provider-hint-card" id="settingsProviderHintWrap">
+                <span class="hint-icon">💡</span>
+                <p class="muted small" id="settingsProviderHint"></p>
+              </div>
+
+              <label class="span-2" id="settingsKeyRow">API key
+                <div class="input-with-toggle">
+                  <input id="settingsApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…">
+                  <button type="button" class="btn-toggle-eye" id="toggleApiKeyEye" title="Show/hide key">👁️</button>
+                </div>
+              </label>
+
+              <label class="span-2">Model
+                <input id="settingsModel" spellcheck="false" placeholder="Enter model ID">
+                <div class="model-chips-container" id="settingsModelChips" hidden></div>
+              </label>
+
+              <label class="span-2" id="settingsEndpointRow" hidden>Endpoint / base URL
+                <input id="settingsEndpoint" spellcheck="false" placeholder="https://api.openai.com/v1">
+              </label>
+
+              <label class="span-2">System instruction
+                <textarea id="settingsSystem" rows="3"
+                  placeholder="You are an experienced strength and hypertrophy coach..."></textarea>
+              </label>
+            </div>
+
+            <div class="settings-actions">
+              <button class="btn" id="testConnectionButton" data-action="test-connection">⚡ Test connection</button>
+              <button class="btn primary" data-action="save-settings">💾 Save settings</button>
+            </div>
+          </section>
+
+          <!-- Device Storage Card -->
+          <section class="settings-block settings-card">
+            <div class="card-head-row">
+              <h3>💾 Device Storage &amp; Backup</h3>
+              <span class="tag">Offline first</span>
+            </div>
+            <p class="muted small" id="settingsStorage">—</p>
+            <div class="settings-actions">
+              <button class="btn" data-action="export-backup">📥 Export backup (JSON)</button>
+              <button class="btn danger" data-action="clear-all-data">⚠️ Erase everything</button>
+            </div>
+            <p class="muted small hint-foot">A backup holds your projects, plans, logs, and workout notes. Media can be
+              included separately when needed.</p>
+          </section>
+        </div>
+
+        <!-- TAB 2: WORKOUT MUSIC & WEEKDAY PLAYLISTS -->
+        <div id="settingsMusicTab" class="settings-tab-pane" hidden>
+          <div class="music-settings-intro settings-card">
+            <div class="music-intro-left">
+              <div class="music-intro-icon">🎧</div>
+              <div>
+                <h4>Daily Workout Music &amp; Playlists</h4>
+                <p class="muted small">Customize playlists according to weekday by uploading local audio files.
+                </p>
+              </div>
+            </div>
+            <div class="music-active-day-chip" id="musicActiveDayChip">
+              <span class="day-chip-dot"></span>
+              <span id="musicActiveDayText">Editing Monday</span>
+            </div>
+          </div>
+
+          <!-- Weekday Pills -->
+          <div class="music-weekday-nav">
+            <span class="music-nav-label">Select Day:</span>
+            <div class="music-weekday-pills" id="musicWeekdayPills">
+              <button type="button" class="weekday-pill-btn active" data-music-weekday="monday">
+                <span class="pill-day">Mon</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="tuesday">
+                <span class="pill-day">Tue</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="wednesday">
+                <span class="pill-day">Wed</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="thursday">
+                <span class="pill-day">Thu</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="friday">
+                <span class="pill-day">Fri</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="saturday">
+                <span class="pill-day">Sat</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="sunday">
+                <span class="pill-day">Sun</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+              <button type="button" class="weekday-pill-btn" data-music-weekday="general">
+                <span class="pill-day">All</span>
+                <span class="pill-count" hidden>0</span>
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Upload Local Music Files -->
+          <section class="settings-block music-upload-card settings-card">
+            <div class="block-title-row">
+              <h3>📁 Upload Audio Files</h3>
+              <span class="muted small tag-subtle" id="uploadSelectedDayLabel">to Monday</span>
+            </div>
+            <div class="audio-drop-zone" id="audioDropZone">
+              <div class="drop-icon-wrap">🎵</div>
+              <p class="drop-title">Drag &amp; drop audio tracks here, or <label class="file-browse-btn">browse
+                  files<input type="file" id="settingsAudioUploadInput" accept="audio/*" multiple hidden></label></p>
+              <span class="drop-hint">Supports MP3, WAV, M4A, AAC, OGG, FLAC · Multiple files allowed</span>
+            </div>
+          </section>
+
+          <!-- Weekday Playlist Manager -->
+          <section class="settings-block music-tracks-block settings-card">
+            <div class="settings-playlist-head">
+              <div>
+                <h3 id="settingsPlaylistTitle">Monday Playlist</h3>
+                <p class="muted small" id="settingsPlaylistStats">0 tracks · 0:00 total</p>
+              </div>
+              <div class="settings-playlist-actions">
+                <button class="small-btn download-day-btn" id="settingsDownloadAllBtn" type="button"
+                  title="Download all tracks for this day to your computer">📥 Download Day MP3s</button>
+                <button class="small-btn danger clear-day-btn" id="settingsClearDayBtn" type="button"
+                  title="Clear this weekday's playlist">🗑️ Clear Day</button>
+              </div>
+            </div>
+
+            <div class="settings-tracks-list" id="settingsPlaylistTracks"></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" data-close-settings>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================== DESIRED BODY VIEWER
+       Lightbox / photo viewer for inspecting and managing desired body images -->
+  <div class="modal" id="desiredViewerModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-desired-viewer></div>
+    <div class="modal-card desired-viewer-card" role="dialog" aria-modal="true" aria-labelledby="desiredViewerTitle">
+      <div class="modal-header">
+        <div><b id="desiredViewerTitle">Desired physique photo</b><span>Target physique reference</span></div>
+        <button class="icon-btn" id="desiredViewerClose" data-close-desired-viewer aria-label="Close">×</button>
+      </div>
+      <div class="modal-body single desired-viewer-body">
+        <div class="desired-viewer-frame">
+          <img id="desiredViewerImg" alt="Desired body target">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn danger" id="desiredViewerDelete">Remove photo</button>
+        <div class="spacer"></div>
+        <button class="btn" data-close-desired-viewer>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================== INSTALL
+       Android/Chromium can install straight from beforeinstallprompt, so this
+       modal is a fallback there. On iOS Safari it is the ONLY route: that
+       browser never fires beforeinstallprompt, so the manual Share -> Add to
+       Home Screen steps have to be spelled out. settings.js shows whichever
+       block matches the device. -->
+  <div class="modal" id="installModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-install></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="installModalTitle">
+      <div class="modal-header">
+        <div><b id="installModalTitle">Install GymCoach Mobile</b><span>Standalone APK &amp; Home Screen App for Android &amp; iOS</span>
+        </div>
+        <button class="icon-btn" data-close-install aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single">
+        <p class="muted small" id="installModalState">—</p>
+
+        <!-- Direct APK Download -->
+        <section class="install-steps">
+          <div style="background:var(--surface-subtle, rgba(255,255,255,0.04));border:1px solid var(--line, rgba(255,255,255,0.08));border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+              <b style="font-size:14px;display:block;margin-bottom:2px;">🤖 Android Native App (.APK)</b>
+              <span class="muted small">Direct standalone APK install. Works completely offline without Google Play Store.</span>
+            </div>
+            <a href="downloads/GymCoach.apk" download="GymCoach.apk" class="btn primary" id="modalDownloadApk" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
+              <span>📥</span> Download .APK
+            </a>
+          </div>
+        </section>
+
+        <!-- PWA / Web App Section -->
+        <section class="install-steps">
+          <h3>📱 Web App (No file download needed)</h3>
+          <p class="muted small">Add directly to your home screen from your browser. Fullscreen, offline cache, 100% of features.</p>
+        </section>
+
+        <section class="install-steps" id="installStepsIos" hidden>
+          <h3>iPhone &amp; iPad (Safari)</h3>
+          <ol class="install-list">
+            <li>Open this page in <b>Safari</b> (Chrome on iOS cannot add to the Home Screen).</li>
+            <li>Tap the <b>Share</b> button — the square with the arrow pointing up.</li>
+            <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+            <li>Tap <b>Add</b>. GymCoach appears as its own app icon and opens without Safari's toolbars.</li>
+          </ol>
+          <p class="muted small">Your projects, logs and images stay on the device. Deleting the icon deletes the stored
+            data, so export a backup or the ZIP bundle first.</p>
+        </section>
+
+        <section class="install-steps" id="installStepsOther" hidden>
+          <h3>Android &amp; Desktop (Chrome, Edge)</h3>
+          <ol class="install-list">
+            <li>Tap <b>Add to Home Screen</b> below if offered — that is the one-step route.</li>
+            <li>Otherwise open the browser menu (<b>⋮</b> in Chrome, <b>…</b> in Edge).</li>
+            <li>Choose <b>Install app</b>, <b>Add to Home screen</b> or <b>Apps → Install this site as an app</b>.</li>
+            <li>Confirm. It then launches from your home screen or Start menu like any other app.</li>
+          </ol>
+          <p class="muted small">Installing needs the page served over https:// or from localhost.</p>
+        </section>
+
+        <section class="install-steps">
+          <h3>All features identical</h3>
+          <p class="muted small">Installed as an APK or added to your Home Screen, every single feature runs locally: timers, custom tracking columns, AI workouts, ML forecast, and export tools.</p>
+        </section>
+      </div>
+
+      <div class="modal-footer">
+        <a href="downloads/GymCoach.apk" download="GymCoach.apk" class="btn" style="text-decoration:none;">📥 Download APK</a>
+        <div class="spacer"></div>
+        <button class="btn" data-close-install>Close</button>
+        <button class="btn primary" data-action="install-app">Add to Home Screen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DTS SCORE BREAKDOWN MODAL -->
+  <div class="modal" id="dtsBreakdownModal" aria-hidden="true" style="display:none;">
+    <div class="modal-backdrop" data-close-dts-modal></div>
+    <div class="modal-card wide dts-modal-card" role="dialog" aria-modal="true" aria-labelledby="dtsModalTitle">
+      <div class="modal-header">
+        <div>
+          <b id="dtsModalTitle">Daily Training Score Breakdown</b>
+          <span id="modalDtsDate">—</span>
+        </div>
+        <button class="icon-btn" id="btnCloseDtsModal" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body single dts-breakdown-body">
+        <!-- Big Score Display -->
+        <div class="dts-score-hero">
+          <div class="dts-score-circle">
+            <span class="score-number" id="modalDtsScore">0</span>
+            <span class="score-max">/ 100</span>
+          </div>
+          <div class="dts-score-meta">
+            <div class="dts-band-badge"><span id="modalDtsBand" class="role-badge">Moderate</span></div>
+            <div class="dts-components-row">
+              <div class="comp-item">
+                <span class="comp-label">Strength Component</span>
+                <b class="comp-val" id="modalStrengthScore">0</b>
+              </div>
+              <div class="comp-plus">+</div>
+              <div class="comp-item">
+                <span class="comp-label">Cardio Contribution</span>
+                <b class="comp-val" id="modalCardioScore">+0</b>
+              </div>
+            </div>
+            <p class="muted small" style="margin-top:6px;">DTS is a relative training-load score combining weighted volume, bodyweight, and duration-based cardio.</p>
+          </div>
+        </div>
+
+        <!-- Two Columns: Resistance vs Cardio -->
+        <div class="dts-details-grid">
+          <!-- Strength Column -->
+          <div class="dts-detail-box">
+            <h4>🏋️ Resistance Training Details</h4>
+            <div class="dts-kv-list">
+              <div class="dts-kv"><span>Today's Strength Workload</span><b id="modalStrengthWorkload">0 kg</b></div>
+              <div class="dts-kv"><span>Active Strength Reference</span><b id="modalStrengthRef">10,000 kg</b></div>
+              <div class="dts-kv"><span>Strength Normalized</span><b id="modalStrengthNorm">0.0x</b></div>
+              <div class="dts-kv"><span>Total Sets / Reps</span><span><b id="modalStrengthSets">0</b> sets · <b id="modalStrengthReps">0</b> reps</span></div>
+            </div>
+            <h5 style="margin:12px 0 6px; font-size:12px; color:var(--text-secondary);">Exercises in this session:</h5>
+            <div class="table-wrap mini-table-wrap">
+              <table class="data-table mini-table">
+                <thead>
+                  <tr><th>Exercise</th><th>Type</th><th>Sets × Reps</th><th>Weighted Volume</th><th>Est. 1RM</th></tr>
+                </thead>
+                <tbody id="modalExercisesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Cardio Column -->
+          <div class="dts-detail-box">
+            <h4>🏃 Cardio &amp; Conditioning Details</h4>
+            <div class="dts-kv-list">
+              <div class="dts-kv"><span>Today's Cardio Workload</span><b id="modalCardioWorkload">0 units</b></div>
+              <div class="dts-kv"><span>Breakdown (units)</span><span>Treadmill: <b id="modalCardioTreadmill">0</b> · Cycling: <b id="modalCardioCycling">0</b> · Other: <b id="modalCardioOther">0</b></span></div>
+              <div class="dts-kv"><span>Active Cardio Reference</span><b id="modalCardioRef">150 units</b></div>
+              <div class="dts-kv"><span>Cardio Normalized</span><b id="modalCardioNorm">0.0x</b></div>
+              <div class="dts-kv"><span>Total Duration</span><b id="modalCardioDuration">0 min</b></div>
+              <div class="dts-kv"><span>Average Speed / Incline</span><span><b id="modalCardioSpeed">—</b> · <b id="modalCardioIncline">0%</b></span></div>
+            </div>
+            <div style="margin-top:16px; padding:10px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--glass-border);">
+              <small class="muted" style="display:block; line-height:1.4;">
+                <b>Model &amp; Calibration Reference:</b><br>
+                Scoring Engine: <span id="modalScoringVersion">v1.0</span> · Baseline: <span id="modalRefVersion">Ref v1</span><br>
+                Cardio is bounded at max +25 contribution to keep resistance dominant.
+              </small>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn" onclick="StatsDashboard.closeBreakdownModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Maintenance Overlay -->
+  <div id="maintenanceOverlay" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10, 14, 23, 0.95); backdrop-filter:blur(10px); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+    <div style="font-size:48px; margin-bottom:16px;">🛠️</div>
+    <h2 style="color:var(--text-primary); margin-bottom:12px;">System Maintenance</h2>
+    <p id="maintenanceMessageText" style="color:var(--text-secondary); max-width:400px; line-height:1.5;">We're performing scheduled maintenance. Check back soon!</p>
+  </div>
+
+  <!-- PDF export is optional: report.js checks for the library and falls back to
+     Markdown/JSON if the CDN is unreachable (e.g. offline). -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <script src="js/vendor/supabase.js?v=18.28"></script>
+
+  <script src="data/templates.js?v=18.16"></script>
+  <script src="data/seed-project.js?v=18.16"></script>
+  <script src="data/exercises.js?v=18.16"></script>
+  <script src="js/ui.js?v=18.25"></script>
+  <script src="js/supabaseClient.js?v=18.28"></script>
+  <script src="js/auth.js?v=18.28"></script>
+  <script src="js/sync.js?v=18.16"></script>
+  <script src="js/mediaStore.js?v=18.16"></script>
+  <script src="js/store.js?v=18.16"></script>
+  <script src="js/exerciseMetadata.js?v=18.20"></script>
+  <script src="js/dts.js?v=18.20"></script>
+  <script src="js/stats.js?v=18.22"></script>
+  <script src="js/profileShare.js?v=18.22"></script>
+  <script src="js/ml.js?v=18.22"></script>
+  <script src="js/pipeline.js?v=18.22"></script>
+
+  <script src="js/settings.js?v=18.22"></script>
+  <script src="js/player.js?v=18.22"></script>
+  <script src="js/autocomplete.js?v=18.22"></script>
+  <script src="js/app.js?v=18.22"></script>
+  <script src="js/manage.js?v=18.22"></script>
+  <script src="js/report.js?v=18.22"></script>
+  <script src="js/home.js?v=18.22"></script>
+
+</body>
+
+</html>
