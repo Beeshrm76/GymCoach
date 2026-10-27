@@ -863,10 +863,29 @@ document.addEventListener("DOMContentLoaded", async () => {
           vid.onerror = async () => {
             const isGitHub = info.url.includes('raw.githubusercontent.com') || info.url.includes('github.com');
             const fn = info.url.split('/').pop() || 'video.mp4';
+
+            // Stage 1: Try local/web server video file first
+            try {
+              const localUrl = `videos/${fn}`;
+              const check = await fetch(localUrl, { method: 'HEAD' });
+              if (check.ok) {
+                vid.onerror = null;
+                vid.src = localUrl;
+                vid.style.display = 'block';
+                if (emptyBox) emptyBox.style.display = 'none';
+                if (status) {
+                  status.innerHTML = `<span style="color:#10b981;">✓ Playing video from server: <code>${esc(fn)}</code></span>`;
+                }
+                vid.play().catch(() => {});
+                return;
+              }
+            } catch (_) {}
+
+            // Stage 2: If on GitHub, fetch and stream via video/mp4 Blob
             if (isGitHub && !vid._attemptedBlob) {
               vid._attemptedBlob = true;
               if (status) {
-                status.innerHTML = `<span style="color:var(--accent, #00f2fe);">⏳ Downloading <code>${esc(fn)}</code> from GitHub for playback...</span>`;
+                status.innerHTML = `<span style="color:var(--accent, #00f2fe);">⏳ Buffering <code>${esc(fn)}</code> from GitHub...</span>`;
               }
               try {
                 const res = await fetch(info.url);
@@ -880,6 +899,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   try { URL.revokeObjectURL(vid._blobUrl); } catch (_) {}
                 }
                 vid._blobUrl = URL.createObjectURL(mp4Blob);
+                vid.onerror = null; // Prevent source-change abort from triggering error
                 vid.src = vid._blobUrl;
                 vid.style.display = 'block';
                 if (emptyBox) emptyBox.style.display = 'none';

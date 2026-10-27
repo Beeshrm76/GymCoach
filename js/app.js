@@ -780,6 +780,22 @@
       vid.hidden = false;
       vid.onerror = async () => {
         const fn = ghUrl.split('/').pop() || 'video.mp4';
+
+        // Stage 1: Try local/web server path first
+        try {
+          const localUrl = `videos/${fn}`;
+          const check = await fetch(localUrl, { method: 'HEAD' });
+          if (check.ok) {
+            vid.onerror = null;
+            vid.src = localUrl;
+            vid.hidden = false;
+            if (fall) fall.hidden = true;
+            vid.play().catch(() => {});
+            return;
+          }
+        } catch (_) {}
+
+        // Stage 2: Fetch GitHub video as Blob
         if (!vid._blobAttempted) {
           vid._blobAttempted = true;
           try {
@@ -787,6 +803,7 @@
             if (res.ok) {
               const b = await res.blob();
               const mp4 = new Blob([b], { type: 'video/mp4' });
+              vid.onerror = null;
               vid.src = URL.createObjectURL(mp4);
               vid.hidden = false;
               if (fall) fall.hidden = true;
@@ -1203,6 +1220,22 @@
           vid.hidden = false;
           vid.onerror = async () => {
             const fn = vSrc.split('/').pop() || 'video.mp4';
+
+            // Stage 1: Try local/web server path first
+            try {
+              const localUrl = `videos/${fn}`;
+              const check = await fetch(localUrl, { method: 'HEAD' });
+              if (check.ok) {
+                vid.onerror = null;
+                vid.src = localUrl;
+                vid.hidden = false;
+                if (fall) fall.hidden = true;
+                vid.play().catch(() => {});
+                return;
+              }
+            } catch (_) {}
+
+            // Stage 2: Fetch via Blob
             if (!vid._blobAttempted) {
               vid._blobAttempted = true;
               try {
@@ -1210,6 +1243,7 @@
                 if (res.ok) {
                   const b = await res.blob();
                   const mp4 = new Blob([b], { type: 'video/mp4' });
+                  vid.onerror = null;
                   vid.src = URL.createObjectURL(mp4);
                   vid.hidden = false;
                   if (fall) fall.hidden = true;
