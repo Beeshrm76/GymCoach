@@ -8,3 +8,7 @@ music/
 node_modules/
 server/data/
 server/sessions/
+
+# Large binaries (exceeds GitHub 100MB limit)
+downloads/
+*.apk
