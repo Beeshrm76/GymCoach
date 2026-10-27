@@ -298,6 +298,28 @@ window.Store = (() => {
     return Object.entries(archives).map(([key, value]) => ({ key, ...value }));
   }
 
+  const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+  function getWeekdayKey(input) {
+    if (!input) {
+      const idx = new Date().getDay();
+      return idx === 0 ? "sunday" : WEEKDAY_KEYS[idx - 1] || "monday";
+    }
+    if (typeof input === "number") {
+      return input === 0 ? "sunday" : (WEEKDAY_KEYS[input - 1] || "monday");
+    }
+    const s = String(input).trim().toLowerCase();
+    for (const w of WEEKDAY_KEYS) {
+      if (s.includes(w)) return w;
+    }
+    if (s.includes("sun")) return "sunday";
+    const abbrevs = { mon: "monday", tue: "tuesday", wed: "wednesday", thu: "thursday", fri: "friday", sat: "saturday", sun: "sunday" };
+    for (const [abbr, full] of Object.entries(abbrevs)) {
+      if (s.includes(abbr)) return full;
+    }
+    return "general";
+  }
+
   function normalize(p) {
     p.id ||= uid("project");
     p.name ||= "Workout Project";
@@ -323,10 +345,19 @@ window.Store = (() => {
     p.days.forEach(day => {
       day.id ||= uid("day");
       day.name ||= "Day";
-      if (day.weekday === undefined) {
-        const weekdayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
-        day.weekday = Object.prototype.hasOwnProperty.call(weekdayMap, day.name)
-          ? weekdayMap[day.name] : null;
+      if (!Number.isInteger(day.weekday)) {
+        const weekdayMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+        const k = getWeekdayKey(day.name);
+        if (Object.prototype.hasOwnProperty.call(weekdayMap, k)) {
+          day.weekday = weekdayMap[k];
+        } else {
+          const kTitle = getWeekdayKey(day.title);
+          if (Object.prototype.hasOwnProperty.call(weekdayMap, kTitle)) {
+            day.weekday = weekdayMap[kTitle];
+          } else {
+            day.weekday = null;
+          }
+        }
       }
       day.type = day.type === "rest" ? "rest" : "workout";
       if (day.type === "workout") {
@@ -1008,7 +1039,22 @@ window.Store = (() => {
   }
 
   function dayForWeekday(p = active(), weekday = new Date().getDay()) {
-    return p.days.find(d => Number.isInteger(d.weekday) && d.weekday === weekday) || null;
+    if (!p || !Array.isArray(p.days) || !p.days.length) return null;
+    const exact = p.days.find(d => Number.isInteger(d.weekday) && d.weekday === weekday);
+    if (exact) return exact;
+
+    const weekdayMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+    const byName = p.days.find(d => {
+      const k1 = getWeekdayKey(d.name);
+      if (weekdayMap[k1] === weekday) return true;
+      const k2 = getWeekdayKey(d.title);
+      return weekdayMap[k2] === weekday;
+    });
+    if (byName) {
+      if (!Number.isInteger(byName.weekday)) byName.weekday = weekday;
+      return byName;
+    }
+    return null;
   }
 
   // ---- body profile ------------------------------------------------------
@@ -1031,28 +1077,6 @@ window.Store = (() => {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
     emit();
     return p;
-  }
-
-  const WEEKDAY_KEYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-
-  function getWeekdayKey(input) {
-    if (!input) {
-      const idx = new Date().getDay();
-      return idx === 0 ? "sunday" : WEEKDAY_KEYS[idx - 1] || "monday";
-    }
-    if (typeof input === "number") {
-      return input === 0 ? "sunday" : (WEEKDAY_KEYS[input - 1] || "monday");
-    }
-    const s = String(input).trim().toLowerCase();
-    for (const w of WEEKDAY_KEYS) {
-      if (s.includes(w)) return w;
-    }
-    if (s.includes("sun")) return "sunday";
-    const abbrevs = { mon: "monday", tue: "tuesday", wed: "wednesday", thu: "thursday", fri: "friday", sat: "saturday", sun: "sunday" };
-    for (const [abbr, full] of Object.entries(abbrevs)) {
-      if (s.includes(abbr)) return full;
-    }
-    return "general";
   }
 
   function getDayPlaylist(project, dayKeyOrName) {

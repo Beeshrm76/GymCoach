@@ -6,6 +6,8 @@
   const esc = v => UI.esc(v);
 
   let currentDayId = null;
+  let selectedDayId = null;
+  let currentDayMode = "today"; // "today" or "selected"
   let currentExerciseId = null;
   let cardioDraft = [];
   let preWorkoutDraft = [];
@@ -167,12 +169,58 @@
     };
   }
 
+  function getDayWeekdayName(d) {
+    if (!d) return "Build";
+    if (d.name && window.Store?.WEEKDAY_KEYS) {
+      const k = window.Store.getWeekdayKey(d.name);
+      if (k && k !== "general") return k.charAt(0).toUpperCase() + k.slice(1);
+    }
+    if (Number.isInteger(d.weekday)) {
+      const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      if (names[d.weekday]) return names[d.weekday];
+    }
+    return d.name || "Workout";
+  }
+
+  function updateSelectedDayTab() {
+    const tab = $("selectedDayTab");
+    if (!tab) return;
+    const p = project();
+    if (!p || !p.days.length) {
+      tab.textContent = "Build";
+      tab.title = "Build days and exercises";
+      return;
+    }
+    const d = p.days.find(x => x.id === selectedDayId)
+      || (currentDayMode === "selected" ? p.days.find(x => x.id === currentDayId) : null)
+      || p.days[0];
+    const name = getDayWeekdayName(d);
+    tab.textContent = name;
+    tab.title = `View ${d.name || name} workout`;
+  }
+
   function day() {
     const p = project();
-    if (!p.days.length) return null;
-    return p.days.find(d => d.id === currentDayId)
-      || p.days.find(d => d.type === "workout")
-      || p.days[0];
+    if (!p || !p.days.length) return null;
+    if (currentDayMode === "today") {
+      const todayDay = Store.dayForWeekday(p, new Date().getDay());
+      if (todayDay) return todayDay;
+      if (currentDayId) {
+        const found = p.days.find(d => d.id === currentDayId);
+        if (found) return found;
+      }
+      return p.days.find(d => d.type === "workout") || p.days[0];
+    } else {
+      if (selectedDayId) {
+        const found = p.days.find(d => d.id === selectedDayId);
+        if (found) return found;
+      }
+      if (currentDayId) {
+        const found = p.days.find(d => d.id === currentDayId);
+        if (found) return found;
+      }
+      return p.days.find(d => d.type === "workout") || p.days[0];
+    }
   }
 
   const exercise = () => day()?.exercises.find(e => e.id === currentExerciseId) || null;
@@ -183,8 +231,15 @@
   const VIEWS = ["homeView", "todayView", "manageView", "statsView", "aiView"];
   function showView(id) {
     VIEWS.forEach(v => { const el = $(v); if (el) el.hidden = v !== id; });
-    document.querySelectorAll("[data-view-btn]").forEach(b =>
-      b.classList.toggle("active", b.dataset.viewBtn === id));
+    document.querySelectorAll("[data-view-btn]").forEach(b => {
+      if (b.id === "todayTab") {
+        b.classList.toggle("active", id === "todayView" && currentDayMode === "today");
+      } else if (b.id === "selectedDayTab") {
+        b.classList.toggle("active", id === "todayView" && currentDayMode === "selected");
+      } else {
+        b.classList.toggle("active", b.dataset.viewBtn === id);
+      }
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
     UI.toggleDrawer(false);
   }
@@ -198,10 +253,32 @@
   };
   const showToday = () => {
     history.replaceState(null, "", "#today");
+    currentDayMode = "today";
     const scheduled = Store.dayForWeekday
       ? Store.dayForWeekday(Store.active(), new Date().getDay())
       : Store.active().days.find(d => Number.isInteger(d.weekday) && d.weekday === new Date().getDay());
     if (scheduled) currentDayId = scheduled.id;
+    updateSelectedDayTab();
+    showView("todayView");
+    renderToday();
+    UI.toggleDrawer(false);
+  };
+  const showSelectedDay = (dayId) => {
+    currentDayMode = "selected";
+    const p = project();
+    if (dayId) {
+      selectedDayId = dayId;
+      currentDayId = dayId;
+    } else if (!selectedDayId || !p.days.some(d => d.id === selectedDayId)) {
+      selectedDayId = currentDayId || (p.days[0]?.id || null);
+      if (selectedDayId) currentDayId = selectedDayId;
+    } else {
+      currentDayId = selectedDayId;
+    }
+    const cur = p.days.find(d => d.id === currentDayId) || p.days[0];
+    const name = cur ? getDayWeekdayName(cur) : "day";
+    history.replaceState(null, "", "#" + name.toLowerCase());
+    updateSelectedDayTab();
     showView("todayView");
     renderToday();
     UI.toggleDrawer(false);
@@ -394,6 +471,7 @@
 
     if (!p.days.length) {
       box.innerHTML = `<div class="nav-empty">No days yet.<br>Open Manage to add one.</div>`;
+      updateSelectedDayTab();
       return;
     }
 
@@ -405,13 +483,16 @@
       b.innerHTML = `<span class="nav-icon has-picture">${getDayPicture(d)}</span>
         <span class="nav-text"><b>${esc(d.name)}</b><small>${d.type === "rest" ? "Rest" : `${esc(d.title || "Workout")} · ${prog.done}/${prog.total}`}</small></span>`;
       b.onclick = () => {
+        selectedDayId = d.id;
         currentDayId = d.id;
-        showView("todayView");
-        renderToday();
+        currentDayMode = "selected";
+        updateSelectedDayTab();
+        showSelectedDay(d.id);
         UI.toggleDrawer(false);
       };
       box.appendChild(b);
     });
+    updateSelectedDayTab();
   }
 
   // --------------------------------------------------------------- today
@@ -443,10 +524,14 @@
           <button class="btn primary" data-action="create-day">+ Add a day</button>
         </div>`;
       renderProjectNav(); renderDayNav();
+      updateSelectedDayTab();
       return;
     }
 
     currentDayId = d.id;
+    if (currentDayMode === "selected") {
+      selectedDayId = d.id;
+    }
     const isRest = d.type === "rest";
     const prog = Store.dayProgress(d);
 
@@ -2390,6 +2475,7 @@
     "toggle-sidebar-collapse": () => UI.toggleSidebarCollapse(),
     "toggle-rail": () => UI.toggleRail(),
     "show-today": showToday,
+    "show-selected-day": () => showSelectedDay(),
     "manage-project": showManage,
     "show-progress": showProgress,
     "show-stats": showStats,
@@ -3338,7 +3424,13 @@
   // icon+wordmark a working "back to home" control on a plain reload. The other
   // hashes exist so the manifest shortcuts can deep-link straight into a view.
   function routeFromHash() {
-    switch ((location.hash || "").toLowerCase()) {
+    const hash = (location.hash || "").toLowerCase();
+    const weekdayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    if (hash === "#day" || weekdayNames.some(w => hash === "#" + w)) {
+      showSelectedDay();
+      return;
+    }
+    switch (hash) {
       case "#today": showToday(); break;
       case "#build":
       case "#manage": showManage(); break;
@@ -3358,11 +3450,13 @@
   // Public surface used by manage.js and report.js.
   window.GymCoach = {
     project, day, exercise, save,
-    renderAll, renderToday, renderProgress, showHome, showToday, showManage, showProgress, showStats, showAI,
+    renderAll, renderToday, renderProgress, showHome, showToday, showSelectedDay, showManage, showProgress, showStats, showAI,
     renderIntensity, renderArchivedCSVs,
     openDetails, mediaSrc,
-    setCurrentDay: id => { currentDayId = id; },
-    get currentDayId() { return currentDayId; }
+    setCurrentDay: id => { currentDayId = id; selectedDayId = id; },
+    get currentDayId() { return currentDayId; },
+    get selectedDayId() { return selectedDayId; },
+    get currentDayMode() { return currentDayMode; }
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

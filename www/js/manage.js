@@ -181,7 +181,8 @@ window.Manage = (() => {
       };
       footer.querySelector("[data-open-day]").onclick = () => {
         window.GymCoach.setCurrentDay(d.id);
-        window.GymCoach.showToday();
+        if (window.GymCoach?.showSelectedDay) window.GymCoach.showSelectedDay(d.id);
+        else window.GymCoach?.showToday();
       };
       footer.querySelector("[data-clear-day]").onclick = async () => {
         if (!await UI.confirm(`Clear logged sets on ${d.name}?`, "Targets and columns are kept.")) return;
