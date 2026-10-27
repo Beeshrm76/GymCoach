@@ -778,8 +778,23 @@
       vid.src = ghUrl;
       vid.muted = true;
       vid.hidden = false;
-      vid.onerror = () => {
+      vid.onerror = async () => {
         const fn = ghUrl.split('/').pop() || 'video.mp4';
+        if (!vid._blobAttempted) {
+          vid._blobAttempted = true;
+          try {
+            const res = await fetch(ghUrl);
+            if (res.ok) {
+              const b = await res.blob();
+              const mp4 = new Blob([b], { type: 'video/mp4' });
+              vid.src = URL.createObjectURL(mp4);
+              vid.hidden = false;
+              if (fall) fall.hidden = true;
+              vid.play().catch(() => {});
+              return;
+            }
+          } catch (_) {}
+        }
         vid.hidden = true;
         if (fall) {
           fall.hidden = false;
@@ -1186,11 +1201,26 @@
           vid.src = vSrc;
           vid.muted = true;
           vid.hidden = false;
-          vid.onerror = () => {
+          vid.onerror = async () => {
+            const fn = vSrc.split('/').pop() || 'video.mp4';
+            if (!vid._blobAttempted) {
+              vid._blobAttempted = true;
+              try {
+                const res = await fetch(vSrc);
+                if (res.ok) {
+                  const b = await res.blob();
+                  const mp4 = new Blob([b], { type: 'video/mp4' });
+                  vid.src = URL.createObjectURL(mp4);
+                  vid.hidden = false;
+                  if (fall) fall.hidden = true;
+                  vid.play().catch(() => {});
+                  return;
+                }
+              } catch (_) {}
+            }
             vid.hidden = true;
             if (fall) {
               fall.hidden = false;
-              const fn = vSrc.split('/').pop() || 'video.mp4';
               const t = $("detailFallbackText");
               if (t) t.textContent = `"${fn}" not found on GitHub (404).`;
             }

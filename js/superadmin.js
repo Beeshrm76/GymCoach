@@ -859,20 +859,52 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (vid) {
           vid.src = info.url;
           vid.style.display = 'block';
-          vid.onerror = () => {
+          vid._attemptedBlob = false;
+          vid.onerror = async () => {
             const isGitHub = info.url.includes('raw.githubusercontent.com') || info.url.includes('github.com');
             const fn = info.url.split('/').pop() || 'video.mp4';
-            if (isGitHub) {
+            if (isGitHub && !vid._attemptedBlob) {
+              vid._attemptedBlob = true;
               if (status) {
-                status.innerHTML = `<span style="color:#ef4444;">⚠️ <code>${esc(fn)}</code> not found on GitHub (404). Upload it directly above or push it to your GitHub <code>videos/</code> folder.</span>`;
+                status.innerHTML = `<span style="color:var(--accent, #00f2fe);">⏳ Downloading <code>${esc(fn)}</code> from GitHub for playback...</span>`;
               }
-              if (emptyBox) {
-                emptyBox.innerHTML = `⚠️ <b>${esc(fn)} not found on GitHub (404)</b><br><span style="font-size:11px; color:#94a3b8; display:block; margin-top:4px;">Upload this video directly using the Video File section above, or commit it to your GitHub repository.</span>`;
-                emptyBox.style.display = 'block';
-                vid.style.display = 'none';
+              try {
+                const res = await fetch(info.url);
+                if (!res.ok) {
+                  if (res.status === 404) throw new Error("404");
+                  throw new Error("HTTP " + res.status);
+                }
+                const blob = await res.blob();
+                const mp4Blob = new Blob([blob], { type: 'video/mp4' });
+                if (vid._blobUrl) {
+                  try { URL.revokeObjectURL(vid._blobUrl); } catch (_) {}
+                }
+                vid._blobUrl = URL.createObjectURL(mp4Blob);
+                vid.src = vid._blobUrl;
+                vid.style.display = 'block';
+                if (emptyBox) emptyBox.style.display = 'none';
+                if (status) {
+                  status.innerHTML = `<span style="color:#10b981;">✓ Playing GitHub video: <code>${esc(fn)}</code></span>`;
+                }
+                vid.play().catch(() => {});
+                return;
+              } catch (fetchErr) {
+                if (fetchErr.message === "404") {
+                  if (status) status.innerHTML = `<span style="color:#ef4444;">⚠️ <code>${esc(fn)}</code> not found on GitHub (404).</span>`;
+                  if (emptyBox) {
+                    emptyBox.innerHTML = `⚠️ <b>${esc(fn)} not found on GitHub (404)</b><br><span style="font-size:11px; color:#94a3b8; display:block; margin-top:4px;">Upload this video directly using the Video File section above, or commit it to your GitHub repository.</span>`;
+                    emptyBox.style.display = 'block';
+                    vid.style.display = 'none';
+                  }
+                  return;
+                }
               }
-            } else {
-              if (status) status.innerHTML = `<span style="color:#ef4444;">⚠️ Video could not be loaded from URL (404 / network error).</span>`;
+            }
+            if (status) status.innerHTML = `<span style="color:#ef4444;">⚠️ Cannot stream video directly from GitHub raw. Use 'Choose File' above to upload directly to storage.</span>`;
+            if (emptyBox) {
+              emptyBox.innerHTML = `⚠️ <b>Cannot stream ${esc(fn)} directly</b><br><span style="font-size:11px; color:#94a3b8; display:block; margin-top:4px;">GitHub blocks raw streaming for large video files. Please upload it directly using the 'Video File' section above.</span>`;
+              emptyBox.style.display = 'block';
+              vid.style.display = 'none';
             }
           };
           vid.onloadeddata = () => {

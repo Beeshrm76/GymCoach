@@ -366,8 +366,16 @@ window.SyncEngine = (() => {
     supabase = window.supabaseClient;
     interceptStorage();
 
-    // Listen to Supabase auth events
+    // Check existing session immediately
     if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          setupRealtime(session.user.id);
+          syncNow();
+        }
+      }).catch(err => console.warn("[SyncEngine] getSession init err:", err));
+
+      // Listen to Supabase auth events
       supabase.auth.onAuthStateChange((event, session) => {
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") {
           if (session?.user) {
@@ -401,9 +409,16 @@ window.SyncEngine = (() => {
     setTimeout(syncNow, 600);
   }
 
+  // Intercept storage immediately upon script evaluation
+  interceptStorage();
+
   return { init, syncNow, flushSync, queueSync };
 })();
 
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    SyncEngine.init();
+  });
+} else {
   SyncEngine.init();
-});
+}
