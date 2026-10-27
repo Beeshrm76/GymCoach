@@ -131,15 +131,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           const roleClass = roleUpper === 'SUPER_ADMIN' ? 'role-super_admin' : (roleUpper === 'ADMIN' ? 'role-admin' : 'role-user');
           const cleanUser = (u.username || '').replace(/'/g, "\\'");
           const cleanEmail = (u.email || '').replace(/'/g, "\\'");
-          const isOtherSuper = roleUpper === 'SUPER_ADMIN' && u.id !== currentUser.id;
-
-          const changeRoleBtn = isOtherSuper
-            ? `<button class="btn small-btn" disabled title="Super Admin accounts are protected. Cannot change another Super Admin's role." style="opacity:0.5;cursor:not-allowed;">Protected</button>`
-            : `<button class="btn small-btn primary" onclick="changeRolePrompt('${u.id}', '${roleUpper}', '${cleanUser}', '${cleanEmail}')">Change Role</button>`;
 
           const actionsHtml = isSuperAdmin ? `
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-              ${changeRoleBtn}
+              <button class="btn small-btn primary" onclick="changeRolePrompt('${u.id}', '${roleUpper}', '${cleanUser}', '${cleanEmail}')">Change Role</button>
               <button class="btn small-btn" onclick="viewUserWorkouts('${u.id}', '${cleanUser}')">View Data</button>
             </div>
           ` : `
@@ -174,12 +169,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       throw new Error("Invalid role: " + newRole);
     }
 
-    // Guard: Do not allow one Super Admin to modify another Super Admin's role
-    const targetUser = cachedProfiles.find(u => u.id === userId);
-    if (targetUser && (targetUser.role || '').toUpperCase() === 'SUPER_ADMIN' && userId !== currentUser.id) {
-      throw new Error("Access Denied: One Super Administrator cannot modify another Super Administrator's role.");
-    }
-
     // 1. Try secure RPC set_user_role first (bypasses client RLS via SECURITY DEFINER)
     try {
       const { data, error: rpcErr } = await supabase.rpc('set_user_role', {
@@ -212,20 +201,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   function populateUserSelectDropdown() {
     const sel = document.getElementById('assignRoleUserSelect');
     if (!sel) return;
-    const selectable = cachedProfiles.filter(u => !( (u.role || '').toUpperCase() === 'SUPER_ADMIN' && u.id !== currentUser.id ));
     sel.innerHTML = '<option value="">— Select a user —</option>' + 
-      selectable.map(u => `<option value="${u.id}">${esc(u.username || 'User')} (${esc(u.email || 'no email')}) [${esc(u.role || 'USER')}]</option>`).join('');
+      cachedProfiles.map(u => `<option value="${u.id}">${esc(u.username || 'User')} (${esc(u.email || 'no email')}) [${esc(u.role || 'USER')}]</option>`).join('');
   }
 
   window.changeRolePrompt = (userId, currentRole = 'USER', username = '', email = '') => {
-    // Guard: Prevent modifying another superadmin
-    const targetUser = cachedProfiles.find(u => u.id === userId);
-    const isTargetSuper = (currentRole === 'SUPER_ADMIN') || ((targetUser?.role || '').toUpperCase() === 'SUPER_ADMIN');
-    if (isTargetSuper && userId !== currentUser.id) {
-      toast("Super Admin accounts are protected. You cannot change another Super Admin's role.", "error");
-      return;
-    }
-
     const modal = document.getElementById('assignRoleModal');
     if (!modal) return;
 
@@ -284,12 +264,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!userId) {
       toast("Please select a user first.", "error");
-      return;
-    }
-
-    const targetUser = cachedProfiles.find(u => u.id === userId);
-    if (targetUser && (targetUser.role || '').toUpperCase() === 'SUPER_ADMIN' && userId !== currentUser.id) {
-      toast("Super Admin accounts are protected. You cannot change another Super Admin's role.", "error");
       return;
     }
 
@@ -1040,6 +1014,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // ── Upload media to Supabase storage helper ──
+  async function uploadMediaToSupabase(slug, kind, file) {
+    if (!window.supabase?.storage) return null;
+    const folder = kind === 'video' ? 'exercise-videos' : (kind === 'gif' ? 'exercise-gifs' : 'exercise-icons');
+    const ext = file.name.split('.').pop().toLowerCase() || (kind === 'video' ? 'mp4' : (kind === 'gif' ? 'gif' : 'jpg'));
+    const filePath = `${folder}/${slug}.${ext}`;
+    try {
+      const { data, error } = await supabase.storage.from('app-media').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+      if (error) {
+        console.warn("Supabase storage upload error:", error);
+      } else {
+        const { data: publicData } = supabase.storage.from('app-media').getPublicUrl(filePath);
+        return publicData?.publicUrl || null;
+      }
+    } catch (err) {
+      console.warn("Supabase storage upload error:", err);
+    }
+    return null;
+  }
+
   // Image upload
   document.getElementById("adminMediaImageInput")?.addEventListener("change", async e => {
     const file = e.target.files?.[0];
@@ -1051,7 +1048,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       await MediaStore.saveMediaBySlug(selectedMediaSlug, "image", file);
-      toast("Image uploaded successfully!");
+      const sbUrl = await uploadMediaToSupabase(selectedMediaSlug, "image", file);
+      toast(sbUrl ? "Image uploaded to Supabase Storage & local cache!" : "Image uploaded successfully!");
       await refreshMediaPreviews();
       loadMediaList();
     } catch (err) {
@@ -1070,7 +1068,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       await MediaStore.saveMediaBySlug(selectedMediaSlug, "video", file);
-      toast("Video uploaded successfully!");
+      const sbUrl = await uploadMediaToSupabase(selectedMediaSlug, "video", file);
+      toast(sbUrl ? "Video uploaded to Supabase Storage & local cache!" : "Video uploaded successfully!");
       await refreshMediaPreviews();
       loadMediaList();
     } catch (err) {
@@ -1089,7 +1088,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       await MediaStore.saveMediaBySlug(selectedMediaSlug, "gif", file);
-      toast("GIF uploaded successfully!");
+      const sbUrl = await uploadMediaToSupabase(selectedMediaSlug, "gif", file);
+      toast(sbUrl ? "GIF uploaded to Supabase Storage & local cache!" : "GIF uploaded successfully!");
       await refreshMediaPreviews();
       loadMediaList();
     } catch (err) {

@@ -26,8 +26,6 @@
 
   <link rel="stylesheet" href="assets/app.css?v=18.19">
   <link rel="stylesheet" href="assets/custom.css?v=18.19">
-  <link rel="stylesheet" href="assets/native.css?v=1.0">
-  <script src="js/native-bridge.js"></script>
   <script src="js/branding.js"></script>
   <script src="js/security.js?v=18.23"></script>
 </head>
@@ -239,11 +237,9 @@
                   <div class="pc-head"><b>Previous</b><small id="previousProfileDate">-</small></div>
                   <div class="form-grid compact" id="previousProfileValues">
                     <label>Weight (kg)<input disabled placeholder="—"></label>
-                    <label>Body Fat (%)<input disabled placeholder="—"></label>
                     <label>Waist (cm)<input disabled placeholder="—"></label>
                     <label>Chest (cm)<input disabled placeholder="—"></label>
-                    <label>Biceps (cm)<input disabled placeholder="—"></label>
-                    <label>Forearm (cm)<input disabled placeholder="—"></label>
+                    <label>Arm (cm)<input disabled placeholder="—"></label>
                   </div>
                   <button class="btn full" style="visibility: hidden; pointer-events: none;">Placeholder</button>
                 </section>
@@ -251,17 +247,13 @@
                   <div class="pc-head"><b>Current</b><small id="profileStamp">Not recorded yet</small></div>
                   <div class="form-grid compact">
                     <label>Weight (kg)<input id="pWeight" inputmode="decimal" placeholder="—"></label>
-                    <label>Body Fat (%)<input id="pBodyFat" inputmode="decimal" placeholder="—"></label>
                     <label>Waist (cm)<input id="pWaist" inputmode="decimal" placeholder="—"></label>
                     <label>Chest (cm)<input id="pChest" inputmode="decimal" placeholder="—"></label>
-                    <label>Biceps (cm)<input id="pBiceps" inputmode="decimal" placeholder="—"></label>
-                    <label>Forearm (cm)<input id="pForearm" inputmode="decimal" placeholder="—"></label>
-                    <input type="hidden" id="pArm">
+                    <label>Arm (cm)<input id="pArm" inputmode="decimal" placeholder="—"></label>
                   </div>
                   <button class="btn primary full" data-action="save-profile">Save current</button>
                 </section>
               </div>
-              <div id="homePredictionQuickCard" class="home-prediction-quick-card" style="margin-top:12px;"></div>
               <div class="panel">
                 <h2>Workout Intensity</h2>
                 <div id="projectIntensityProgress"></div>
@@ -377,8 +369,7 @@
                 <p class="muted small" id="homeInstallState">—</p>
               </div>
               <div class="panel-head-actions">
-                <a href="downloads/GymCoach.apk" download="GymCoach.apk" class="btn" id="homeDownloadApkBtn" title="Download Android APK directly">📥 Download APK</a>
-                <button class="btn primary" data-action="install-app">Install App</button>
+                <button class="btn primary" data-action="install-app">Install</button>
                 <button class="btn" data-action="show-install-help">How to install</button>
               </div>
             </div>
@@ -953,57 +944,12 @@
             </div>
           </div>
 
-          <!-- 7-Date Body Composition & Metric Predictor Panel -->
-          <div class="panel stats-chart-card" id="bodyPredictionPanel">
-            <div class="panel-head stats-chart-head">
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <h2>7-Date Body Metric Predictor</h2>
-                  <span class="prediction-eval-badge" id="predictionEvalBadge">Evaluating 7 Logged Dates</span>
-                </div>
-                <p class="muted">Forecasts body weight, body fat %, chest, waist, biceps, and forearm size evaluated across 7 logged dates results.</p>
-              </div>
-              <div class="stats-prediction-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <button class="btn small-btn" id="btnPredictionDemoData" title="Load sample 7-date progression to preview AI evaluation">Load 7-Date Sample</button>
-                <div class="prediction-metric-tabs" id="predictionMetricTabs">
-                  <button class="range-btn active" data-pred-metric="all">Overview</button>
-                  <button class="range-btn" data-pred-metric="weight">Weight</button>
-                  <button class="range-btn" data-pred-metric="bodyFat">Body Fat</button>
-                  <button class="range-btn" data-pred-metric="waist">Waist</button>
-                  <button class="range-btn" data-pred-metric="chest">Chest</button>
-                  <button class="range-btn" data-pred-metric="biceps">Biceps</button>
-                  <button class="range-btn" data-pred-metric="forearm">Forearm</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Evaluated Dates Timeline Strip -->
-            <div id="predictionTimelineStrip" class="prediction-timeline-strip">
-              <!-- Rendered by js/stats.js: Pills showing the evaluated dates -->
-            </div>
-
-            <!-- 5 Metric Cards Grid -->
-            <div id="predictionCardsGrid" class="prediction-cards-grid">
-              <!-- Rendered by js/stats.js -->
-            </div>
-
-            <!-- Predictive Trajectory Chart -->
-            <div class="stats-dts-chart-wrap" id="predictionChartContainer" style="min-height: 220px; margin-top: 16px;">
-              <!-- Rendered by js/stats.js -->
-            </div>
-
-            <!-- AI Composition Trajectory Insight -->
-            <div id="predictionInsightBox" class="prediction-insight-box">
-              <!-- Rendered by js/stats.js -->
-            </div>
-          </div>
-
-          <!-- Exercise-Specific Trend Section -->
+          <!-- Non-Editable Exercise-Specific Trend Section -->
           <div class="panel stats-exercise-section">
             <div class="panel-head stats-exercise-head">
               <div>
                 <h2>Exercise Performance Trends</h2>
-                <p class="muted">Analytical progression charts for individual movements.</p>
+                <p class="muted">Non-editable analytical progression charts for individual movements.</p>
               </div>
               <div class="stats-exercise-picker-wrap">
                 <label for="statsExercisePicker" class="muted small">Select Exercise:</label>
@@ -1014,7 +960,7 @@
             </div>
 
             <div id="exerciseTrendsContainer">
-              <!-- Rendered by js/stats.js (4 trend charts) -->
+              <!-- Rendered by js/stats.js (4 non-editable trend charts) -->
             </div>
           </div>
 
@@ -1043,17 +989,14 @@
           <div class="detail-preview-header">
             <div class="detail-preview-badge-row">
               <span class="preview-title-text">🎬 Demo Preview</span>
-              <span class="preview-badge" id="detailPreviewBadge">GitHub Video</span>
+              <span class="preview-badge" id="detailPreviewBadge">Video</span>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <button type="button" class="btn small-btn" id="btnToggleDetailAutoplay" title="Toggle Video Autoplay" style="padding:2px 8px; font-size:11px;">▶️ Autoplay: ON</button>
-              <button type="button" class="btn small-btn" id="btnRefreshDetailPreview" title="Refresh Live Preview" style="padding:2px 8px; font-size:11px;">👁️ Refresh</button>
-            </div>
+            <button type="button" class="btn small-btn" id="btnRefreshDetailPreview" title="Refresh Live Preview" style="padding:2px 8px; font-size:11px;">👁️ Refresh</button>
           </div>
 
           <div class="media-frame" id="detailMediaFrame">
             <iframe id="detailVideoFrame" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen hidden></iframe>
-            <video id="detailVideo" controls autoplay loop muted playsinline preload="metadata" hidden></video>
+            <video id="detailVideo" controls muted playsinline preload="metadata" hidden></video>
             <img id="detailImage" alt="Exercise Demo Preview" hidden>
             <div class="media-fallback" id="detailMediaFallback">
               <span style="font-size:32px; opacity:0.6;">🎬</span>
@@ -1070,11 +1013,11 @@
               <span class="muted small" style="font-size:10px;">Select &amp; save to apply</span>
             </div>
 
-            <!-- List Selector for GIF, YouTube, GitHub -->
+            <!-- List Selector for Video, YouTube, GIF -->
             <div class="media-type-list" role="tablist">
               <button type="button" class="media-type-btn active" id="btnMediaChoiceGithub" data-media-type="github">
-                <span class="type-icon">🐙</span>
-                <span class="type-name">GitHub</span>
+                <span class="type-icon">🎥</span>
+                <span class="type-name">Video</span>
               </button>
               <button type="button" class="media-type-btn" id="btnMediaChoiceYoutube" data-media-type="youtube">
                 <span class="type-icon">🎬</span>
@@ -1086,10 +1029,16 @@
               </button>
             </div>
 
-            <!-- Panel: GitHub Video -->
+            <!-- Panel: Video (YouTube or other links) -->
             <div class="media-type-panel" id="panelMediaGithub">
-              <label for="detailGithubUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">GitHub Video URL (raw streaming):</label>
-              <input type="url" id="detailGithubUrl" class="setting-input compact" placeholder="https://raw.githubusercontent.com/.../videos/exercise.mp4">
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
+                <label class="btn small-btn file-btn" style="margin:0; font-size:11px; padding:4px 10px; cursor:pointer;" title="Upload video file to local storage">
+                  📁 Upload video file<input id="detailVideoUpload" type="file" accept="video/*" hidden>
+                </label>
+                <span id="detailVideoUploadStatus" class="muted small" style="font-size:10px;"></span>
+              </div>
+              <label for="detailGithubUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">YouTube or other links:</label>
+              <input type="url" id="detailGithubUrl" class="setting-input compact" placeholder="https://www.youtube.com/... or direct video link">
             </div>
 
             <!-- Panel: YouTube Video -->
@@ -1107,7 +1056,7 @@
                 </label>
                 <span id="detailGifUploadStatus" class="muted small" style="font-size:10px;"></span>
               </div>
-              <input type="url" id="detailGifUrl" class="setting-input compact" placeholder="https://.../demo.gif or GitHub GIF URL">
+              <input type="url" id="detailGifUrl" class="setting-input compact" placeholder="https://.../demo.gif or GIF URL">
             </div>
 
             <!-- Clear Media Action -->
@@ -1118,7 +1067,6 @@
 
           <!-- Hidden legacy upload inputs to preserve any external file handlers -->
           <input id="detailImageUpload" type="file" accept="image/*" hidden>
-          <input id="detailVideoUpload" type="file" accept="video/*" hidden>
 
           <div class="timer-options">
             <label>Countdown (sec)<input id="timerCountdown" type="number" min="0" step="1" value="30"></label>
@@ -1206,13 +1154,23 @@
                 </div>
               </label>
               <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1" autocomplete="off"></label>
-              <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells" autocomplete="off"></label>
+              <label>Equipment
+                <select id="detailEquipment">
+                  <option value="Dumbbell">Dumbbell</option>
+                  <option value="Barbell">Barbell</option>
+                  <option value="Cable">Cable</option>
+                  <option value="Machine">Machine</option>
+                  <option value="Others">Others (Specify)</option>
+                </select>
+                <input id="detailEquipmentOther" placeholder="Specify equipment..." autocomplete="off" style="display:none; margin-top:6px;">
+              </label>
               <!-- Synced background inputs to preserve backward compatibility & tests -->
               <input type="hidden" id="detailImagePath">
               <input type="hidden" id="detailVideoPath">
               <input type="hidden" id="detailGifPath">
               <label>Pulley system
                 <select id="detailPulleySystem">
+                  <option value="none">None</option>
                   <option value="single">Single pulley</option>
                   <option value="double">Double pulley</option>
                   <option value="four">Four pulley</option>
@@ -1759,7 +1717,7 @@
     <div class="modal-backdrop" data-close-install></div>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="installModalTitle">
       <div class="modal-header">
-        <div><b id="installModalTitle">Install GymCoach Mobile</b><span>Standalone APK &amp; Home Screen App for Android &amp; iOS</span>
+        <div><b id="installModalTitle">Install GymCoach</b><span>Runs offline, opens full-screen, no app store.</span>
         </div>
         <button class="icon-btn" data-close-install aria-label="Close">×</button>
       </div>
@@ -1767,59 +1725,41 @@
       <div class="modal-body single">
         <p class="muted small" id="installModalState">—</p>
 
-        <!-- Direct APK Download -->
-        <section class="install-steps">
-          <div style="background:var(--surface-subtle, rgba(255,255,255,0.04));border:1px solid var(--line, rgba(255,255,255,0.08));border-radius:8px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-            <div>
-              <b style="font-size:14px;display:block;margin-bottom:2px;">🤖 Android Native App (.APK)</b>
-              <span class="muted small">Direct standalone APK install. Works completely offline without Google Play Store.</span>
-            </div>
-            <a href="downloads/GymCoach.apk" download="GymCoach.apk" class="btn primary" id="modalDownloadApk" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">
-              <span>📥</span> Download .APK
-            </a>
-          </div>
-        </section>
-
-        <!-- PWA / Web App Section -->
-        <section class="install-steps">
-          <h3>📱 Web App (No file download needed)</h3>
-          <p class="muted small">Add directly to your home screen from your browser. Fullscreen, offline cache, 100% of features.</p>
-        </section>
-
         <section class="install-steps" id="installStepsIos" hidden>
-          <h3>iPhone &amp; iPad (Safari)</h3>
+          <h3>iPhone &amp; iPad</h3>
           <ol class="install-list">
             <li>Open this page in <b>Safari</b> (Chrome on iOS cannot add to the Home Screen).</li>
             <li>Tap the <b>Share</b> button — the square with the arrow pointing up.</li>
             <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
-            <li>Tap <b>Add</b>. GymCoach appears as its own app icon and opens without Safari's toolbars.</li>
+            <li>Tap <b>Add</b>. GymCoach appears as its own icon and opens without Safari's toolbars.</li>
           </ol>
           <p class="muted small">Your projects, logs and images stay on the device. Deleting the icon deletes the stored
             data, so export a backup or the ZIP bundle first.</p>
         </section>
 
         <section class="install-steps" id="installStepsOther" hidden>
-          <h3>Android &amp; Desktop (Chrome, Edge)</h3>
+          <h3>Android, Windows &amp; macOS</h3>
           <ol class="install-list">
-            <li>Tap <b>Add to Home Screen</b> below if offered — that is the one-step route.</li>
+            <li>Tap <b>Install</b> above if the button is offered — that is the one-step route.</li>
             <li>Otherwise open the browser menu (<b>⋮</b> in Chrome, <b>…</b> in Edge).</li>
             <li>Choose <b>Install app</b>, <b>Add to Home screen</b> or <b>Apps → Install this site as an app</b>.</li>
             <li>Confirm. It then launches from your home screen or Start menu like any other app.</li>
           </ol>
-          <p class="muted small">Installing needs the page served over https:// or from localhost.</p>
+          <p class="muted small">Installing needs the page served over https:// or from localhost. Opening index.html
+            directly from a folder still works, it just cannot register the offline cache.</p>
         </section>
 
         <section class="install-steps">
-          <h3>All features identical</h3>
-          <p class="muted small">Installed as an APK or added to your Home Screen, every single feature runs locally: timers, custom tracking columns, AI workouts, ML forecast, and export tools.</p>
+          <h3>Works either way</h3>
+          <p class="muted small">Installed or not, every feature runs locally: the set timer, the ML forecast on Home
+            and the whole CSV pipeline need no network at all.</p>
         </section>
       </div>
 
       <div class="modal-footer">
-        <a href="downloads/GymCoach.apk" download="GymCoach.apk" class="btn" style="text-decoration:none;">📥 Download APK</a>
         <div class="spacer"></div>
         <button class="btn" data-close-install>Close</button>
-        <button class="btn primary" data-action="install-app">Add to Home Screen</button>
+        <button class="btn primary" data-action="install-app">Try install now</button>
       </div>
     </div>
   </div>
@@ -1932,6 +1872,7 @@
   <script src="js/auth.js?v=18.28"></script>
   <script src="js/sync.js?v=18.16"></script>
   <script src="js/mediaStore.js?v=18.16"></script>
+  <script src="js/mediaCache.js?v=18.28"></script>
   <script src="js/store.js?v=18.16"></script>
   <script src="js/exerciseMetadata.js?v=18.20"></script>
   <script src="js/dts.js?v=18.20"></script>

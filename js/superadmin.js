@@ -106,6 +106,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!['USER', 'ADMIN', 'SUPER_ADMIN'].includes(roleUpper)) {
       throw new Error("Invalid role: " + newRole);
     }
+    const targetUser = cachedUsers.find(x => x.id === userId);
+    if (targetUser?.role === 'SUPER_ADMIN' && roleUpper !== 'SUPER_ADMIN') {
+      throw new Error("Superadmin accounts are protected and cannot have their role changed.");
+    }
 
     // 1. Try RPC set_user_role first (bypasses client RLS via SECURITY DEFINER)
     try {
@@ -168,11 +172,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <td>${esc(a.status || 'ACTIVE')}</td>
             <td>
               <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-                ${!isSelf ? `
-                  <button class="btn small-btn primary" onclick="changeRolePrompt('${a.id}', '${a.role}', '${esc(a.username)}', '${esc(a.email)}')">Change Role</button>
-                  ${!isSuper ? `<button class="btn small-btn danger" onclick="demoteAdmin('${a.id}', '${esc(a.username)}')">Demote to User</button>` : ''}
-                  <button class="btn small-btn" onclick="suspendUser('${a.id}')">${a.status === 'SUSPENDED' ? 'Activate' : 'Suspend'}</button>
-                ` : `<small class="muted" style="font-weight:600;">(Current Account)</small>`}
+                ${isSelf ? `<small class="muted" style="font-weight:600;">(Current Account)</small>` :
+                  (isSuper ? `<span class="role-badge" style="background:rgba(255,215,0,0.15); color:#ffd700; border:1px solid rgba(255,215,0,0.3); font-size:11px;">🔒 Super Admin Protected</span>` : `
+                    <button class="btn small-btn primary" onclick="changeRolePrompt('${a.id}', '${a.role}', '${esc(a.username)}', '${esc(a.email)}')">Change Role</button>
+                    <button class="btn small-btn danger" onclick="demoteAdmin('${a.id}', '${esc(a.username)}')">Demote to User</button>
+                    <button class="btn small-btn" onclick="suspendUser('${a.id}')">${a.status === 'SUSPENDED' ? 'Activate' : 'Suspend'}</button>
+                  `)
+                }
               </div>
             </td>
           </tr>`;
@@ -208,6 +214,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.suspendUser = async (id) => {
     const u = cachedUsers.find(x => x.id === id);
+    if (u?.role === 'SUPER_ADMIN') {
+      toast("Superadmin accounts are protected and cannot be suspended.", "error");
+      return;
+    }
     const newStatus = u?.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
     if (!confirm(`${newStatus === 'SUSPENDED' ? 'Suspend' : 'Activate'} user @${u?.username || id}?`)) return;
     const { error } = await supabase.from('profiles').update({ status: newStatus }).eq('id', id);
@@ -219,6 +229,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
 
   window.demoteAdmin = async (id, username) => {
+    const u = cachedUsers.find(x => x.id === id);
+    if (u?.role === 'SUPER_ADMIN') {
+      toast("Superadmin accounts are protected and cannot be demoted.", "error");
+      return;
+    }
     if (!confirm(`Demote @${username} from Admin back to standard User?`)) return;
     try {
       await setUserRole(id, 'USER');
@@ -231,6 +246,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   window.changeRolePrompt = (userId, currentRole = 'USER', username = '', email = '') => {
     const u = cachedUsers.find(x => x.id === userId) || {};
+    if (u?.role === 'SUPER_ADMIN') {
+      toast("Superadmin accounts are protected and cannot be modified.", "error");
+      return;
+    }
     const un = username || u.username || 'User';
     const em = email || u.email || '';
 
@@ -459,18 +478,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if ($('statExercises')) $('statExercises').textContent = defaultExercises.length;
   }
 
-  // ── GitHub Media & Path Helpers ──
-  const GITHUB_REPO_OWNER = "Beeshrm76";
-  const GITHUB_REPO_NAME = "GymCoach";
-  const GITHUB_REPO_BRANCH = "main";
-  const GITHUB_MEDIA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}`;
-
-  function getGitHubMediaBase() {
-    try {
-      const custom = localStorage.getItem("gym_github_media_base");
-      if (custom && custom.trim()) return custom.trim().replace(/\/$/, "");
-    } catch (_) {}
-    return GITHUB_MEDIA_BASE;
+  // ── Supabase Storage Media & Path Helpers ──
+  function getSupabaseMediaBase() {
+    return window.SUPABASE_STORAGE_URL || 'https://zxirntfsigasqcpkalic.supabase.co/storage/v1/object/public/app-media';
   }
 
   // ── Exercise name → default path helpers ──
@@ -481,20 +491,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       .replace(/^_|_$/g, "");
   }
 
-  function githubVideoUrlFromName(name) {
+  function supabaseVideoUrlFromName(name) {
     const slug = slugFromName(name);
-    return slug ? `${getGitHubMediaBase()}/videos/${slug}.mp4` : "";
+    return slug ? `${getSupabaseMediaBase()}/exercise-videos/${slug}.mp4` : "";
   }
 
-  function githubGifUrlFromName(name) {
+  function supabaseGifUrlFromName(name) {
     const slug = slugFromName(name);
-    return slug ? `${getGitHubMediaBase()}/gifs/${slug}.gif` : "";
+    return slug ? `${getSupabaseMediaBase()}/exercise-gifs/${slug}.gif` : "";
   }
 
-  function githubImageUrlFromName(name) {
+  function supabaseImageUrlFromName(name) {
     const slug = slugFromName(name);
-    return slug ? `${getGitHubMediaBase()}/images/${slug}.jpg` : "";
+    return slug ? `${getSupabaseMediaBase()}/exercise-icons/${slug}.jpg` : "";
   }
+
+  // Backwards-compatibility aliases
+  const githubVideoUrlFromName = supabaseVideoUrlFromName;
+  const githubGifUrlFromName = supabaseGifUrlFromName;
+  const githubImageUrlFromName = supabaseImageUrlFromName;
 
   function videoPathFromName(name) {
     const slug = slugFromName(name);
@@ -512,16 +527,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!p) return true;
     if (kind === "video") {
       if (/^videos\/[a-z0-9_]+(\.mp4)?$/i.test(p)) return true;
+      if (p.includes('/exercise-videos/')) return true;
       if (/^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^\/]+\/[^\/]+\/(?:blob\/|raw\/)?[^\/]+\/videos\/[a-z0-9_]+(?:\.mp4)?$/i.test(p)) return true;
       return false;
     }
     if (kind === "image") {
       if (/^images\/[a-z0-9_]+(\.(?:jpg|jpeg|png|webp))?$/i.test(p)) return true;
+      if (p.includes('/exercise-icons/')) return true;
       if (/^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^\/]+\/[^\/]+\/(?:blob\/|raw\/)?[^\/]+\/images\/[a-z0-9_]+(?:\.(?:jpg|jpeg|png|webp))?$/i.test(p)) return true;
       return false;
     }
     if (kind === "gif") {
       if (/^(?:gifs|images)\/[a-z0-9_]+(?:\.gif)?$/i.test(p)) return true;
+      if (p.includes('/exercise-gifs/')) return true;
       if (/^https?:\/\/(?:raw\.githubusercontent\.com|github\.com)\/[^\/]+\/[^\/]+\/(?:blob\/|raw\/)?[^\/]+\/gifs\/[a-z0-9_]+(?:\.gif)?$/i.test(p)) return true;
       return false;
     }
@@ -529,28 +547,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function updateExercisePathFieldsFromName(name) {
-    const ghVid = githubVideoUrlFromName(name);
-    const ghGif = githubGifUrlFromName(name);
+    const sbVid = supabaseVideoUrlFromName(name);
+    const sbGif = supabaseGifUrlFromName(name);
     const vPath = videoPathFromName(name), iPath = imagePathFromName(name);
 
     const vInd = $("exModalVideoPath"), iInd = $("exModalImagePath");
-    if (vInd && isAutoGeneratedPath(vInd.textContent, "video")) vInd.textContent = ghVid || vPath || "None";
+    if (vInd && isAutoGeneratedPath(vInd.textContent, "video")) vInd.textContent = sbVid || vPath || "None";
     if (iInd && isAutoGeneratedPath(iInd.textContent, "image")) iInd.textContent = iPath || "None";
 
     const vUrlInput = $('exModalVideoUrl');
     if (vUrlInput) {
-      vUrlInput.placeholder = ghVid || "https://raw.githubusercontent.com/.../videos/exercise.mp4 or YouTube link";
+      vUrlInput.placeholder = sbVid || "https://.../exercise-videos/exercise.mp4 or YouTube link";
       if (isAutoGeneratedPath(vUrlInput.value, "video")) {
-        vUrlInput.value = ghVid;
+        vUrlInput.value = sbVid;
         updateVideoPreview();
       }
     }
 
     const gUrlInput = $('exModalGifUrl');
     if (gUrlInput) {
-      gUrlInput.placeholder = ghGif || "Or external GIF URL: https://example.com/demo.gif";
+      gUrlInput.placeholder = sbGif || "Or external GIF URL: https://example.com/demo.gif";
       if (isAutoGeneratedPath(gUrlInput.value, "gif")) {
-        gUrlInput.value = ghGif;
+        gUrlInput.value = sbGif;
         if (superModalPreviewMode === 'gif') updateVideoPreview();
       }
     }
@@ -619,10 +637,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       const iconHtml = (ex.icon_url || ex.image_url)
         ? `<img src="${esc(ex.icon_url || ex.image_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">`
         : `<div style="font-size:32px; opacity:0.5; display:flex; align-items:center; justify-content:center; width:100%; height:100%;">🖼️</div>`;
-      const hasGhVideo = !ex.video_file_url && !ex.video_url && Boolean(githubVideoUrlFromName(ex.name));
+      const hasSbVideo = !ex.video_file_url && !ex.video_url && Boolean(supabaseVideoUrlFromName(ex.name));
       const videoParts = [
-        ex.video_file_url ? '✓ File' : '',
-        ex.video_url ? (ex.video_url.includes('raw.githubusercontent.com') ? '✓ GitHub' : '✓ URL') : (hasGhVideo ? '✓ GitHub' : '')
+        ex.video_file_url ? '✓ Storage' : '',
+        ex.video_url ? (ex.video_url.includes('supabase.co') ? '✓ Supabase' : '✓ URL') : (hasSbVideo ? '✓ Supabase' : '')
       ].filter(Boolean);
       const gifParts = [ex.gif_url ? '✓ GIF' : ''].filter(Boolean);
       const imageParts = [ex.icon_url ? '✓ File' : '', ex.image_url ? '✓ URL' : ''].filter(Boolean);
@@ -651,7 +669,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td onclick="openMediaPreview(${origIdx})" title="Click to preview media" style="cursor:pointer;">
             <div style="display:flex; flex-direction:column; gap:2px;">
               <span>${mediaStatus}</span>
-              ${(ex.video_file_url || ex.video_url || ex.gif_url || ex.icon_url || ex.image_url || hasGhVideo) ? '<small style="color:var(--accent, #00f2fe); font-size:11px;">👁️ Click to view</small>' : ''}
+              ${(ex.video_file_url || ex.video_url || ex.gif_url || ex.icon_url || ex.image_url || hasSbVideo) ? '<small style="color:var(--accent, #00f2fe); font-size:11px;">👁️ Click to view</small>' : ''}
             </div>
           </td>
           <td>
@@ -758,7 +776,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const editIdx = parseInt($('exerciseEditIndex')?.value ?? '-1', 10);
     const existing = editIdx >= 0 ? defaultExercises[editIdx] : null;
-    const hasExistingUpload = !window._removeExistingVideo && !!(existing?.video_file_url || existing?.video_path);
+    const hasExistingUpload = !window._removeExistingVideo && !!(existing?.video_file_url);
     const hasUploadedVideo = !!file || hasExistingUpload;
 
     // Show/hide overwrite control when uploaded video is present
@@ -825,7 +843,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (wrap) wrap.style.display = 'block';
       if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
       if (vid) {
-        vid.src = file ? URL.createObjectURL(file) : (existing?.video_file_url || esc(existing?.video_path));
+        vid.src = file ? URL.createObjectURL(file) : (existing?.video_file_url || '');
         vid.style.display = 'block';
       }
       $('btnRemoveVideo').style.display = 'block';
@@ -857,11 +875,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (wrap) wrap.style.display = 'block';
         if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
         if (vid) {
-          vid.src = info.url;
           vid.style.display = 'block';
           vid._attemptedBlob = false;
+          if (window.MediaCache?.getOrCache) {
+            window.MediaCache.getOrCache(info.url).then(cachedUrl => {
+              if (vid.src !== cachedUrl) vid.src = cachedUrl;
+            }).catch(() => {
+              vid.src = info.url;
+            });
+          } else {
+            vid.src = info.url;
+          }
           vid.onerror = async () => {
-            const isGitHub = info.url.includes('raw.githubusercontent.com') || info.url.includes('github.com');
             const fn = info.url.split('/').pop() || 'video.mp4';
 
             // Stage 1: Try local/web server video file first
@@ -881,48 +906,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               }
             } catch (_) {}
 
-            // Stage 2: If on GitHub, fetch and stream via video/mp4 Blob
-            if (isGitHub && !vid._attemptedBlob) {
-              vid._attemptedBlob = true;
-              if (status) {
-                status.innerHTML = `<span style="color:var(--accent, #00f2fe);">⏳ Buffering <code>${esc(fn)}</code> from GitHub...</span>`;
-              }
-              try {
-                const res = await fetch(info.url);
-                if (!res.ok) {
-                  if (res.status === 404) throw new Error("404");
-                  throw new Error("HTTP " + res.status);
-                }
-                const blob = await res.blob();
-                const mp4Blob = new Blob([blob], { type: 'video/mp4' });
-                if (vid._blobUrl) {
-                  try { URL.revokeObjectURL(vid._blobUrl); } catch (_) {}
-                }
-                vid._blobUrl = URL.createObjectURL(mp4Blob);
-                vid.onerror = null; // Prevent source-change abort from triggering error
-                vid.src = vid._blobUrl;
-                vid.style.display = 'block';
-                if (emptyBox) emptyBox.style.display = 'none';
-                if (status) {
-                  status.innerHTML = `<span style="color:#10b981;">✓ Playing GitHub video: <code>${esc(fn)}</code></span>`;
-                }
-                vid.play().catch(() => {});
-                return;
-              } catch (fetchErr) {
-                if (fetchErr.message === "404") {
-                  if (status) status.innerHTML = `<span style="color:#ef4444;">⚠️ <code>${esc(fn)}</code> not found on GitHub (404).</span>`;
-                  if (emptyBox) {
-                    emptyBox.innerHTML = `⚠️ <b>${esc(fn)} not found on GitHub (404)</b><br><span style="font-size:11px; color:#94a3b8; display:block; margin-top:4px;">Upload this video directly using the Video File section above, or commit it to your GitHub repository.</span>`;
-                    emptyBox.style.display = 'block';
-                    vid.style.display = 'none';
-                  }
-                  return;
-                }
-              }
-            }
-            if (status) status.innerHTML = `<span style="color:#ef4444;">⚠️ Cannot stream video directly from GitHub raw. Use 'Choose File' above to upload directly to storage.</span>`;
+            if (status) status.innerHTML = `<span style="color:#ef4444;">⚠️ Cannot load video: <code>${esc(fn)}</code>. Please check connection or upload directly to Supabase storage.</span>`;
             if (emptyBox) {
-              emptyBox.innerHTML = `⚠️ <b>Cannot stream ${esc(fn)} directly</b><br><span style="font-size:11px; color:#94a3b8; display:block; margin-top:4px;">GitHub blocks raw streaming for large video files. Please upload it directly using the 'Video File' section above.</span>`;
+              emptyBox.innerHTML = `⚠️ <b>Cannot play ${esc(fn)}</b><br><span style="font-size:11px; color:#94a3b8; display:block; margin-top:4px;">Please check video URL or upload directly using the 'Video File' section above.</span>`;
               emptyBox.style.display = 'block';
               vid.style.display = 'none';
             }
@@ -932,13 +918,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           };
         }
         if (status) {
-          const isGitHub = info.url.includes('raw.githubusercontent.com') || info.url.includes('github.com');
-          if (isGitHub) {
-            const fileName = info.url.split('/').pop() || 'video.mp4';
-            status.innerHTML = `<span style="color:var(--accent, #00f2fe);">✓ Extracted GitHub Video: <code>${esc(fileName)}</code> (Raw Stream)</span>`;
-          } else {
-            status.innerHTML = `<span style="color:#10b981;">✓ Direct video URL detected</span>`;
-          }
+          const isSupabase = info.url.includes('supabase.co');
+          const fileName = info.url.split('/').pop() || 'video.mp4';
+          status.innerHTML = isSupabase
+            ? `<span style="color:var(--accent, #00f2fe);">✓ Supabase Storage Video: <code>${esc(fileName)}</code></span>`
+            : `<span style="color:#10b981;">✓ Direct video URL detected</span>`;
         }
         return;
       } else {
@@ -951,10 +935,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // 3. Fallback: Saved existing video file if overwrite was toggled off but file exists
-    if (hasExistingUpload && !file) {
+    if (hasExistingUpload && !file && existing?.video_file_url) {
       if (wrap) wrap.style.display = 'block';
       if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
-      if (vid) { vid.src = existing.video_file_url || esc(existing.video_path); vid.style.display = 'block'; }
+      if (vid) { vid.src = existing.video_file_url; vid.style.display = 'block'; }
       $('btnRemoveVideo').style.display = 'block';
       return;
     }
@@ -1120,7 +1104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const vidContent = $('mediaPreviewVideoContent');
     const vidBadge = $('mediaPreviewVideoBadge');
     const vidSource = $('mediaPreviewVideoSource');
-    const vidUrl = ex.video_file_url || ex.video_url || githubVideoUrlFromName(ex.name) || '';
+    const vidUrl = ex.video_file_url || ex.video_url || supabaseVideoUrlFromName(ex.name) || '';
 
     if (vidUrl) {
       const info = extractVideoInfo(vidUrl);
@@ -1131,12 +1115,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         vidBadge.style.color = '#f87171';
         vidSource.innerHTML = `Source: <a href="${esc(info.url)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(info.url.length > 55 ? info.url.slice(0, 55) + '…' : info.url)}</a>`;
       } else {
-        vidContent.innerHTML = `<video src="${esc(vidUrl)}" controls muted autoplay playsinline style="width:100%;height:100%;object-fit:contain;"></video>`;
-        const isGh = vidUrl.includes('raw.githubusercontent.com') || vidUrl.includes('github.com');
-        vidBadge.textContent = isGh ? 'GitHub Video' : (ex.video_file_url ? 'Uploaded File' : 'Direct Video');
-        vidBadge.style.background = isGh ? 'rgba(0, 242, 254, 0.15)' : 'rgba(16, 185, 129, 0.15)';
-        vidBadge.style.color = isGh ? 'var(--accent, #00f2fe)' : '#10b981';
+        const isSb = vidUrl.includes('supabase.co');
+        vidBadge.textContent = isSb ? 'Supabase Storage' : (ex.video_file_url ? 'Uploaded File' : 'Direct Video');
+        vidBadge.style.background = isSb ? 'rgba(0, 242, 254, 0.15)' : 'rgba(16, 185, 129, 0.15)';
+        vidBadge.style.color = isSb ? 'var(--accent, #00f2fe)' : '#10b981';
         vidSource.innerHTML = `Source: <a href="${esc(vidUrl)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(vidUrl.length > 55 ? vidUrl.slice(0, 55) + '…' : vidUrl)}</a>`;
+
+        vidContent.innerHTML = `<video controls muted autoplay playsinline style="width:100%;height:100%;object-fit:contain;"></video>`;
+        const videoEl = vidContent.querySelector('video');
+        if (videoEl) {
+          if (window.MediaCache?.getOrCache) {
+            window.MediaCache.getOrCache(vidUrl).then(cachedUrl => {
+              videoEl.src = cachedUrl;
+            }).catch(() => {
+              videoEl.src = vidUrl;
+            });
+          } else {
+            videoEl.src = vidUrl;
+          }
+        }
       }
     } else {
       vidContent.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:24px;"><div style="font-size:36px; margin-bottom:6px; opacity:0.4;">🎬</div><div style="font-size:12px;">No video attached</div></div>`;
@@ -1150,12 +1147,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     const gifContent = $('mediaPreviewGifContent');
     const gifBadge = $('mediaPreviewGifBadge');
     const gifSource = $('mediaPreviewGifSource');
-    const gifUrl = ex.gif_url || githubGifUrlFromName(ex.name) || '';
+    const gifUrl = ex.gif_url || supabaseGifUrlFromName(ex.name) || '';
 
     if (gifUrl) {
-      gifContent.innerHTML = `<img src="${esc(gifUrl)}" alt="Looping GIF demo" style="max-width:100%; max-height:100%; object-fit:contain;">`;
-      const isGh = gifUrl.includes('raw.githubusercontent.com') || gifUrl.includes('github.com');
-      gifBadge.textContent = isGh ? 'GitHub GIF' : 'Looping GIF';
+      gifContent.innerHTML = `<img alt="Looping GIF demo" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+      const gifImgEl = gifContent.querySelector('img');
+      if (gifImgEl) {
+        if (window.MediaCache?.getOrCache) {
+          window.MediaCache.getOrCache(gifUrl).then(cachedUrl => {
+            gifImgEl.src = cachedUrl;
+          }).catch(() => {
+            gifImgEl.src = gifUrl;
+          });
+        } else {
+          gifImgEl.src = gifUrl;
+        }
+      }
+      const isSb = gifUrl.includes('supabase.co');
+      gifBadge.textContent = isSb ? 'Supabase GIF' : 'Looping GIF';
       gifBadge.style.background = 'rgba(0, 242, 254, 0.15)';
       gifBadge.style.color = 'var(--accent, #00f2fe)';
       gifSource.innerHTML = `Source: <a href="${esc(gifUrl)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(gifUrl.length > 55 ? gifUrl.slice(0, 55) + '…' : gifUrl)}</a>`;
@@ -1171,11 +1180,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     const imgContent = $('mediaPreviewImageContent');
     const imgBadge = $('mediaPreviewImageBadge');
     const imgSource = $('mediaPreviewImageSource');
-    const imgUrl = ex.icon_url || ex.image_url || githubImageUrlFromName(ex.name) || '';
+    const imgUrl = ex.icon_url || ex.image_url || supabaseImageUrlFromName(ex.name) || '';
 
     if (imgUrl) {
-      imgContent.innerHTML = `<img src="${esc(imgUrl)}" alt="Exercise image" style="max-width:100%; max-height:100%; object-fit:contain;">`;
-      imgBadge.textContent = ex.icon_url ? 'Icon Image' : (imgUrl.includes('raw.githubusercontent.com') ? 'GitHub Image' : 'Image URL');
+      imgContent.innerHTML = `<img alt="Exercise image" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+      const imgEl = imgContent.querySelector('img');
+      if (imgEl) {
+        if (window.MediaCache?.getOrCache) {
+          window.MediaCache.getOrCache(imgUrl).then(cachedUrl => {
+            imgEl.src = cachedUrl;
+          }).catch(() => {
+            imgEl.src = imgUrl;
+          });
+        } else {
+          imgEl.src = imgUrl;
+        }
+      }
+      imgBadge.textContent = ex.icon_url ? 'Icon Image' : (imgUrl.includes('supabase.co') ? 'Supabase Image' : 'Image URL');
       imgBadge.style.background = 'rgba(16, 185, 129, 0.15)';
       imgBadge.style.color = '#10b981';
       imgSource.innerHTML = `Source: <a href="${esc(imgUrl)}" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${esc(imgUrl.length > 55 ? imgUrl.slice(0, 55) + '…' : imgUrl)}</a>`;
@@ -1306,11 +1327,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         icon_url: ex.icon_url || '',
         image_url: ex.image_url || '',
         default_video_path: `videos/${slug}.mp4`,
-        default_github_video_url: githubVideoUrlFromName(ex.name),
+        default_supabase_video_url: supabaseVideoUrlFromName(ex.name),
         default_gif_path: `gifs/${slug}.gif`,
-        default_github_gif_url: githubGifUrlFromName(ex.name),
+        default_supabase_gif_url: supabaseGifUrlFromName(ex.name),
         default_image_path: `images/${slug}.jpg`,
-        default_github_image_url: githubImageUrlFromName(ex.name)
+        default_supabase_image_url: supabaseImageUrlFromName(ex.name),
+        default_github_video_url: supabaseVideoUrlFromName(ex.name),
+        default_github_gif_url: supabaseGifUrlFromName(ex.name),
+        default_github_image_url: supabaseImageUrlFromName(ex.name)
       };
     });
 

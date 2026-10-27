@@ -12,3 +12,8 @@ server/sessions/
 # Large binaries (exceeds GitHub 100MB limit)
 downloads/
 *.apk
+
+# Video files (hosted in Supabase Storage)
+*.mp4
+videos/*.mp4
+www/videos/*.mp4

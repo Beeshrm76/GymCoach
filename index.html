@@ -989,7 +989,7 @@
           <div class="detail-preview-header">
             <div class="detail-preview-badge-row">
               <span class="preview-title-text">🎬 Demo Preview</span>
-              <span class="preview-badge" id="detailPreviewBadge">GitHub Video</span>
+              <span class="preview-badge" id="detailPreviewBadge">Video</span>
             </div>
             <button type="button" class="btn small-btn" id="btnRefreshDetailPreview" title="Refresh Live Preview" style="padding:2px 8px; font-size:11px;">👁️ Refresh</button>
           </div>
@@ -1013,11 +1013,11 @@
               <span class="muted small" style="font-size:10px;">Select &amp; save to apply</span>
             </div>
 
-            <!-- List Selector for GIF, YouTube, GitHub -->
+            <!-- List Selector for Video, YouTube, GIF -->
             <div class="media-type-list" role="tablist">
               <button type="button" class="media-type-btn active" id="btnMediaChoiceGithub" data-media-type="github">
-                <span class="type-icon">🐙</span>
-                <span class="type-name">GitHub</span>
+                <span class="type-icon">🎥</span>
+                <span class="type-name">Video</span>
               </button>
               <button type="button" class="media-type-btn" id="btnMediaChoiceYoutube" data-media-type="youtube">
                 <span class="type-icon">🎬</span>
@@ -1029,10 +1029,16 @@
               </button>
             </div>
 
-            <!-- Panel: GitHub Video -->
+            <!-- Panel: Video (YouTube or other links) -->
             <div class="media-type-panel" id="panelMediaGithub">
-              <label for="detailGithubUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">GitHub Video URL (raw streaming):</label>
-              <input type="url" id="detailGithubUrl" class="setting-input compact" placeholder="https://raw.githubusercontent.com/.../videos/exercise.mp4">
+              <div style="display:flex; gap:6px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
+                <label class="btn small-btn file-btn" style="margin:0; font-size:11px; padding:4px 10px; cursor:pointer;" title="Upload video file to local storage">
+                  📁 Upload video file<input id="detailVideoUpload" type="file" accept="video/*" hidden>
+                </label>
+                <span id="detailVideoUploadStatus" class="muted small" style="font-size:10px;"></span>
+              </div>
+              <label for="detailGithubUrl" style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block;">YouTube or other links:</label>
+              <input type="url" id="detailGithubUrl" class="setting-input compact" placeholder="https://www.youtube.com/... or direct video link">
             </div>
 
             <!-- Panel: YouTube Video -->
@@ -1050,7 +1056,7 @@
                 </label>
                 <span id="detailGifUploadStatus" class="muted small" style="font-size:10px;"></span>
               </div>
-              <input type="url" id="detailGifUrl" class="setting-input compact" placeholder="https://.../demo.gif or GitHub GIF URL">
+              <input type="url" id="detailGifUrl" class="setting-input compact" placeholder="https://.../demo.gif or GIF URL">
             </div>
 
             <!-- Clear Media Action -->
@@ -1061,7 +1067,6 @@
 
           <!-- Hidden legacy upload inputs to preserve any external file handlers -->
           <input id="detailImageUpload" type="file" accept="image/*" hidden>
-          <input id="detailVideoUpload" type="file" accept="video/*" hidden>
 
           <div class="timer-options">
             <label>Countdown (sec)<input id="timerCountdown" type="number" min="0" step="1" value="30"></label>
@@ -1149,13 +1154,23 @@
                 </div>
               </label>
               <label>Tempo<input id="detailTempo" placeholder="e.g. 3-1-1" autocomplete="off"></label>
-              <label>Equipment<input id="detailEquipment" placeholder="e.g. Dumbbells" autocomplete="off"></label>
+              <label>Equipment
+                <select id="detailEquipment">
+                  <option value="Dumbbell">Dumbbell</option>
+                  <option value="Barbell">Barbell</option>
+                  <option value="Cable">Cable</option>
+                  <option value="Machine">Machine</option>
+                  <option value="Others">Others (Specify)</option>
+                </select>
+                <input id="detailEquipmentOther" placeholder="Specify equipment..." autocomplete="off" style="display:none; margin-top:6px;">
+              </label>
               <!-- Synced background inputs to preserve backward compatibility & tests -->
               <input type="hidden" id="detailImagePath">
               <input type="hidden" id="detailVideoPath">
               <input type="hidden" id="detailGifPath">
               <label>Pulley system
                 <select id="detailPulleySystem">
+                  <option value="none">None</option>
                   <option value="single">Single pulley</option>
                   <option value="double">Double pulley</option>
                   <option value="four">Four pulley</option>
@@ -1857,6 +1872,7 @@
   <script src="js/auth.js?v=18.28"></script>
   <script src="js/sync.js?v=18.16"></script>
   <script src="js/mediaStore.js?v=18.16"></script>
+  <script src="js/mediaCache.js?v=18.28"></script>
   <script src="js/store.js?v=18.16"></script>
   <script src="js/exerciseMetadata.js?v=18.20"></script>
   <script src="js/dts.js?v=18.20"></script>

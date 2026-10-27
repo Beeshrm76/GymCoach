@@ -1014,6 +1014,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // ── Upload media to Supabase storage helper ──
+  async function uploadMediaToSupabase(slug, kind, file) {
+    if (!window.supabase?.storage) return null;
+    const folder = kind === 'video' ? 'exercise-videos' : (kind === 'gif' ? 'exercise-gifs' : 'exercise-icons');
+    const ext = file.name.split('.').pop().toLowerCase() || (kind === 'video' ? 'mp4' : (kind === 'gif' ? 'gif' : 'jpg'));
+    const filePath = `${folder}/${slug}.${ext}`;
+    try {
+      const { data, error } = await supabase.storage.from('app-media').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+      if (error) {
+        console.warn("Supabase storage upload error:", error);
+      } else {
+        const { data: publicData } = supabase.storage.from('app-media').getPublicUrl(filePath);
+        return publicData?.publicUrl || null;
+      }
+    } catch (err) {
+      console.warn("Supabase storage upload error:", err);
+    }
+    return null;
+  }
+
   // Image upload
   document.getElementById("adminMediaImageInput")?.addEventListener("change", async e => {
     const file = e.target.files?.[0];
@@ -1025,7 +1048,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       await MediaStore.saveMediaBySlug(selectedMediaSlug, "image", file);
-      toast("Image uploaded successfully!");
+      const sbUrl = await uploadMediaToSupabase(selectedMediaSlug, "image", file);
+      toast(sbUrl ? "Image uploaded to Supabase Storage & local cache!" : "Image uploaded successfully!");
       await refreshMediaPreviews();
       loadMediaList();
     } catch (err) {
@@ -1044,7 +1068,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       await MediaStore.saveMediaBySlug(selectedMediaSlug, "video", file);
-      toast("Video uploaded successfully!");
+      const sbUrl = await uploadMediaToSupabase(selectedMediaSlug, "video", file);
+      toast(sbUrl ? "Video uploaded to Supabase Storage & local cache!" : "Video uploaded successfully!");
       await refreshMediaPreviews();
       loadMediaList();
     } catch (err) {
@@ -1063,7 +1088,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     try {
       await MediaStore.saveMediaBySlug(selectedMediaSlug, "gif", file);
-      toast("GIF uploaded successfully!");
+      const sbUrl = await uploadMediaToSupabase(selectedMediaSlug, "gif", file);
+      toast(sbUrl ? "GIF uploaded to Supabase Storage & local cache!" : "GIF uploaded successfully!");
       await refreshMediaPreviews();
       loadMediaList();
     } catch (err) {

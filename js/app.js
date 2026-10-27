@@ -684,20 +684,6 @@
   }
 
   // Derives a slug from any name: "Shoulder Press Machine" → "shoulder_press_machine"
-  // GitHub Media Base & URL helpers
-  const GITHUB_REPO_OWNER = "Beeshrm76";
-  const GITHUB_REPO_NAME = "GymCoach";
-  const GITHUB_REPO_BRANCH = "main";
-  const GITHUB_MEDIA_BASE = `https://raw.githubusercontent.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/${GITHUB_REPO_BRANCH}`;
-
-  function getGitHubMediaBase() {
-    try {
-      const custom = localStorage.getItem("gym_github_media_base");
-      if (custom && custom.trim()) return custom.trim().replace(/\/$/, "");
-    } catch (_) {}
-    return GITHUB_MEDIA_BASE;
-  }
-
   function slugFromName(name) {
     if (!name) return "";
     return name.trim().toLowerCase()
@@ -705,20 +691,29 @@
       .replace(/^_|_$/g, "");         // trim leading/trailing _
   }
 
-  function githubVideoUrlFromName(name) {
-    const slug = slugFromName(name);
-    return slug ? `${getGitHubMediaBase()}/videos/${slug}.mp4` : "";
+  function getSupabaseMediaBase() {
+    return window.SUPABASE_STORAGE_URL || "https://zxirntfsigasqcpkalic.supabase.co/storage/v1/object/public/app-media";
   }
 
-  function githubGifUrlFromName(name) {
+  function supabaseVideoUrlFromName(name) {
     const slug = slugFromName(name);
-    return slug ? `${getGitHubMediaBase()}/gifs/${slug}.gif` : "";
+    return slug ? `${getSupabaseMediaBase()}/exercise-videos/${slug}.mp4` : "";
   }
 
-  function githubImageUrlFromName(name) {
+  function supabaseGifUrlFromName(name) {
     const slug = slugFromName(name);
-    return slug ? `${getGitHubMediaBase()}/images/${slug}.jpg` : "";
+    return slug ? `${getSupabaseMediaBase()}/exercise-gifs/${slug}.gif` : "";
   }
+
+  function supabaseImageUrlFromName(name) {
+    const slug = slugFromName(name);
+    return slug ? `${getSupabaseMediaBase()}/exercise-icons/${slug}.jpg` : "";
+  }
+
+  // Compatibility aliases
+  const githubVideoUrlFromName = supabaseVideoUrlFromName;
+  const githubGifUrlFromName = supabaseGifUrlFromName;
+  const githubImageUrlFromName = supabaseImageUrlFromName;
 
   // Derives a default video path from exercise name:
   //   "Seated Chest Press" → "videos/seated_chest_press.mp4"
@@ -807,8 +802,8 @@
     if (fall) fall.hidden = false;
 
     const currentName = $("detailName")?.value.trim() || exObj.name;
-    const defaultGhVid = githubVideoUrlFromName(currentName);
-    const defaultGhGif = githubGifUrlFromName(currentName);
+    const defaultVid = supabaseVideoUrlFromName(currentName);
+    const defaultGif = supabaseGifUrlFromName(currentName);
 
     if (detailActiveMediaType === "youtube") {
       if (badge) {
@@ -838,9 +833,11 @@
         badge.style.color = "#10b981";
         badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
       }
-      let gifUrl = ($("detailGifUrl")?.value || "").trim() || (exObj.gif ? await mediaSrc(exObj, "gif") : defaultGhGif);
-      gifUrl = convertGitHubUrlToRaw(gifUrl);
+      let gifUrl = ($("detailGifUrl")?.value || "").trim() || (exObj.gif ? await mediaSrc(exObj, "gif") : defaultGif);
       if (gifUrl && img) {
+        try {
+          if (window.MediaCache) gifUrl = await window.MediaCache.getOrCache(gifUrl);
+        } catch (_) {}
         img.src = gifUrl;
         img.hidden = false;
         if (fall) fall.hidden = true;
@@ -850,26 +847,50 @@
       return;
     }
 
-    // GitHub Video (Default)
+    // Video (Default)
     if (badge) {
-      badge.textContent = "🐙 GitHub Video";
+      badge.textContent = "🎬 Video";
       badge.style.background = "rgba(0, 242, 254, 0.15)";
       badge.style.color = "var(--accent, #00f2fe)";
       badge.style.borderColor = "rgba(0, 242, 254, 0.3)";
     }
-    let ghUrl = ($("detailGithubUrl")?.value || "").trim() || (exObj.video && !extractVideoInfo(exObj.video)?.type.match(/youtube|vimeo/) ? exObj.video : defaultGhVid);
-    ghUrl = convertGitHubUrlToRaw(ghUrl);
-    if (ghUrl && vid) {
-      vid.src = ghUrl;
+    let vUrl = ($("detailGithubUrl")?.value || "").trim() || (exObj.video ? exObj.video : defaultVid);
+    if (vUrl) {
+      const ytInfo = extractVideoInfo(vUrl);
+      if (ytInfo && (ytInfo.type === "youtube" || ytInfo.type === "vimeo") && frame) {
+        if (badge) {
+          badge.textContent = ytInfo.type === "youtube" ? "🎬 YouTube" : "🎬 Vimeo";
+          badge.style.background = "rgba(239, 68, 68, 0.15)";
+          badge.style.color = "#f87171";
+          badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+        }
+        frame.src = ytInfo.embedUrl;
+        frame.hidden = false;
+        if (fall) fall.hidden = true;
+        if (vid) { vid.hidden = true; vid.pause(); }
+        if (img) img.hidden = true;
+        return;
+      }
+    }
+    if (vUrl && vid) {
+      let playableUrl = vUrl;
+      try {
+        if (window.MediaCache) {
+          playableUrl = await window.MediaCache.getOrCache(vUrl);
+        }
+      } catch (_) {}
+
+      vid.onerror = null;
+      vid.src = playableUrl;
       vid.muted = true;
       vid.hidden = false;
+      vid.play().catch(() => {});
       vid.onerror = async () => {
-        const fn = ghUrl.split('/').pop() || 'video.mp4';
-
-        // Stage 1: Try local/web server path first
+        const fn = vUrl.split("/").pop() || "video.mp4";
+        // Stage 1: Try local path first
         try {
           const localUrl = `videos/${fn}`;
-          const check = await fetch(localUrl, { method: 'HEAD' });
+          const check = await fetch(localUrl, { method: "HEAD" });
           if (check.ok) {
             vid.onerror = null;
             vid.src = localUrl;
@@ -880,33 +901,16 @@
           }
         } catch (_) {}
 
-        // Stage 2: Fetch GitHub video as Blob
-        if (!vid._blobAttempted) {
-          vid._blobAttempted = true;
-          try {
-            const res = await fetch(ghUrl);
-            if (res.ok) {
-              const b = await res.blob();
-              const mp4 = new Blob([b], { type: 'video/mp4' });
-              vid.onerror = null;
-              vid.src = URL.createObjectURL(mp4);
-              vid.hidden = false;
-              if (fall) fall.hidden = true;
-              vid.play().catch(() => {});
-              return;
-            }
-          } catch (_) {}
-        }
         vid.hidden = true;
         if (fall) {
           fall.hidden = false;
-          if (fallbackText) fallbackText.innerHTML = `⚠️ <code>${esc(fn)}</code> not found on GitHub (404).<br><span style="font-size:10px;opacity:0.8;">Upload GIF/video or push it to repository.</span>`;
+          if (fallbackText) fallbackText.innerHTML = `⚠️ <code>${esc(fn)}</code> not found.<br><span style="font-size:10px;opacity:0.8;">Upload video file or check URL.</span>`;
         }
       };
       if (fall) fall.hidden = true;
       return;
     }
-    if (fallbackText) fallbackText.textContent = "No GitHub video URL available";
+    if (fallbackText) fallbackText.textContent = "No video URL available";
   }
 
   // Live-updates the video/image path fields and placeholders when the exercise
@@ -915,27 +919,27 @@
   function updatePathFieldsFromName(name) {
     const vInput = $("detailVideoPath"), iInput = $("detailImagePath"), gInput = $("detailGifPath");
     const ghInput = $("detailGithubUrl"), gifInput = $("detailGifUrl");
-    const ghVPath = githubVideoUrlFromName(name);
+    const vPath = supabaseVideoUrlFromName(name);
     const iPath = imagePathFromName(name);
-    const ghGPath = githubGifUrlFromName(name);
+    const gPath = supabaseGifUrlFromName(name);
 
     if (ghInput) {
-      ghInput.placeholder = ghVPath || "https://raw.githubusercontent.com/.../videos/exercise.mp4";
-      if (isAutoGeneratedPath(ghInput.value, "video")) ghInput.value = ghVPath;
+      ghInput.placeholder = vPath || "https://...supabase.co/.../video.mp4";
+      if (isAutoGeneratedPath(ghInput.value, "video")) ghInput.value = vPath;
     }
     if (gifInput) {
-      gifInput.placeholder = ghGPath || "https://.../demo.gif or GitHub GIF URL";
-      if (isAutoGeneratedPath(gifInput.value, "gif") && gifInput.value) gifInput.value = ghGPath;
+      gifInput.placeholder = gPath || "https://.../demo.gif or GIF URL";
+      if (isAutoGeneratedPath(gifInput.value, "gif") && gifInput.value) gifInput.value = gPath;
     }
 
     // Update placeholder always
-    if (vInput) vInput.placeholder = ghVPath || videoPathFromName(name) || "e.g. videos/bench_press.mp4";
+    if (vInput) vInput.placeholder = vPath || videoPathFromName(name) || "e.g. videos/bench_press.mp4";
     if (iInput) iInput.placeholder = iPath || "e.g. images/bench_press.jpg";
-    if (gInput) gInput.placeholder = ghGPath || "e.g. images/" + (slugFromName(name) || "exercise") + ".gif";
+    if (gInput) gInput.placeholder = gPath || "e.g. images/" + (slugFromName(name) || "exercise") + ".gif";
     // Update value only if it's auto-generated or empty
-    if (vInput && isAutoGeneratedPath(vInput.value, "video")) vInput.value = ghVPath;
+    if (vInput && isAutoGeneratedPath(vInput.value, "video")) vInput.value = vPath;
     if (iInput && isAutoGeneratedPath(iInput.value, "image")) iInput.value = iPath;
-    if (gInput && isAutoGeneratedPath(gInput.value, "gif") && gInput.value) gInput.value = ghGPath;
+    if (gInput && isAutoGeneratedPath(gInput.value, "gif") && gInput.value) gInput.value = gPath;
 
     // Refresh live preview if detail modal is open
     if ($("exerciseModal")?.classList.contains("open")) {
@@ -1064,25 +1068,32 @@
           if (sharedPath) return sharedPath;
         }
       }
-      // 4. Admin-set default media for this exercise name (uploaded in the Super
-      // Admin exercise library and merged into window.EXERCISE_DB at startup).
-      // This is what lets an admin set a default image/video once and have it
-      // show up for every user who adds a matching exercise, with no local
-      // upload required on their end.
+      // 4. Admin-set default media for this exercise name from window.EXERCISE_DB
       if (nameSlug && Array.isArray(window.EXERCISE_DB)) {
         const dbEntry = window.EXERCISE_DB.find(e => slugFromName(e.name) === nameSlug);
-        if (kind === "gif" && dbEntry?.gif_url) return dbEntry.gif_url;
+        if (kind === "gif" && dbEntry?.gif_url) {
+          return window.MediaCache ? await window.MediaCache.getOrCache(dbEntry.gif_url) : dbEntry.gif_url;
+        }
         // Uploaded files take priority over URL links
         const adminUrl = kind === "video"
           ? (dbEntry?.video_file_url || dbEntry?.video_url)
           : (dbEntry?.icon_url || dbEntry?.image_url);
-        if (adminUrl) return adminUrl;
+        if (adminUrl) {
+          return window.MediaCache ? await window.MediaCache.getOrCache(adminUrl) : adminUrl;
+        }
       }
     } catch { /* IndexedDB unavailable (private mode) - fall back to the static path */ }
-    if (kind === "gif") return normalizeImagePath(ex.gif) || githubGifUrlFromName(ex.name) || null;
-    if (kind === "video") return normalizeVideoPath(ex.video) || githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name) || null;
-    if (kind === "image") return normalizeImagePath(ex.image) || githubImageUrlFromName(ex.name) || imagePathFromName(ex.name) || null;
-    return null;
+    let rawUrl = null;
+    if (kind === "gif") rawUrl = normalizeImagePath(ex.gif) || supabaseGifUrlFromName(ex.name) || null;
+    if (kind === "video") rawUrl = normalizeVideoPath(ex.video) || supabaseVideoUrlFromName(ex.name) || videoPathFromName(ex.name) || null;
+    if (kind === "image") rawUrl = normalizeImagePath(ex.image) || supabaseImageUrlFromName(ex.name) || imagePathFromName(ex.name) || null;
+
+    if (rawUrl && window.MediaCache) {
+      try {
+        return await window.MediaCache.getOrCache(rawUrl);
+      } catch (_) {}
+    }
+    return rawUrl;
   }
 
   function toggleComplete(exId) {
@@ -1161,14 +1172,30 @@
     $("detailRepsMin").value = repsMin;
     $("detailRepsMax").value = repsMax;
     $("detailTempo").value = ex.details.tempo || "";
-    $("detailEquipment").value = ex.details.equipment || "";
+    const eqVal = (ex.details.equipment || "").trim();
+    const standardEquipments = ["Dumbbell", "Barbell", "Cable", "Machine"];
+    const matchedEq = standardEquipments.find(e => e.toLowerCase() === eqVal.toLowerCase() || (e.toLowerCase() + "s") === eqVal.toLowerCase());
+    const selEq = $("detailEquipment");
+    const otherEq = $("detailEquipmentOther");
+    if (selEq) {
+      if (matchedEq) {
+        selEq.value = matchedEq;
+        if (otherEq) { otherEq.style.display = "none"; otherEq.value = ""; }
+      } else if (eqVal) {
+        selEq.value = "Others";
+        if (otherEq) { otherEq.style.display = "block"; otherEq.value = eqVal; }
+      } else {
+        selEq.value = "Dumbbell";
+        if (otherEq) { otherEq.style.display = "none"; otherEq.value = ""; }
+      }
+    }
     $("detailNotes").value = ex.details.notes || "";
     $("detailCues").value = (ex.details.cues || []).join("\n");
     // Auto-fill image/video paths from exercise name if they're empty
     const currentImage = normalizeImagePath(ex.image);
     const currentVideo = normalizeVideoPath(ex.video);
-    const defaultVideo = githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name);
-    const defaultGif = githubGifUrlFromName(ex.name);
+    const defaultVideo = supabaseVideoUrlFromName(ex.name) || videoPathFromName(ex.name);
+    const defaultGif = supabaseGifUrlFromName(ex.name);
     const currentGif = ex.gif ? normalizeImagePath(ex.gif) : "";
 
     // Determine initial chosen media type
@@ -1186,9 +1213,15 @@
     }
 
     if ($("detailGithubUrl")) {
-      const isGh = ex.video && (ex.video.includes("raw.githubusercontent.com") || ex.video.startsWith("videos/"));
-      $("detailGithubUrl").value = isGh ? ex.video : (chosenType === "github" && ex.video ? ex.video : defaultVideo);
-      $("detailGithubUrl").placeholder = defaultVideo || "https://raw.githubusercontent.com/.../videos/exercise.mp4";
+      const isGh = ex.video && (ex.video.includes("raw.githubusercontent.com") || ex.video.includes("github.com") || ex.video.startsWith("videos/"));
+      // Clear out raw github URLs so they don't appear in the input field!
+      const userVal = isGh ? "" : (ex.video || "");
+      $("detailGithubUrl").value = userVal;
+      $("detailGithubUrl").placeholder = "https://www.youtube.com/... or direct video link";
+    }
+    if ($("detailVideoUploadStatus")) {
+      const isLocal = ex.video && !ex.video.startsWith("http");
+      $("detailVideoUploadStatus").textContent = isLocal ? `✓ Saved locally: ${ex.video.split('/').pop()}` : "";
     }
 
     if ($("detailYoutubeUrl")) {
@@ -1265,7 +1298,7 @@
         badge.style.color = "#10b981";
         badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
       } else {
-        badge.textContent = "🐙 GitHub Video";
+        badge.textContent = "🎬 Storage Video";
         badge.style.background = "rgba(0, 242, 254, 0.15)";
         badge.style.color = "var(--accent, #00f2fe)";
         badge.style.borderColor = "rgba(0, 242, 254, 0.3)";
@@ -1341,7 +1374,7 @@
             if (fall) {
               fall.hidden = false;
               const t = $("detailFallbackText");
-              if (t) t.textContent = `"${fn}" not found on GitHub (404).`;
+              if (t) t.textContent = `"${fn}" not found (404).`;
             }
           };
           if (fall) fall.hidden = true;
@@ -1622,8 +1655,17 @@
     ex.intensityBand = $("detailIntensityBand").value;
     ex.pulleySystem = Store.pulleyKey($("detailPulleySystem").value);
     ex.reps = repsRangeValue();
-    ex.details.tempo = $("detailTempo").value.trim();
-    ex.details.equipment = $("detailEquipment").value.trim();
+    const selEq = $("detailEquipment");
+    const otherEq = $("detailEquipmentOther");
+    let finalEq = "Dumbbell";
+    if (selEq) {
+      if (selEq.value === "Others") {
+        finalEq = (otherEq?.value || "").trim() || "Others";
+      } else {
+        finalEq = selEq.value;
+      }
+    }
+    ex.details.equipment = finalEq;
     ex.details.notes = $("detailNotes").value.trim();
     ex.details.cues = $("detailCues").value.split("\n").map(s => s.trim()).filter(Boolean);
 
@@ -1633,18 +1675,18 @@
     const ghVal = $("detailGithubUrl") ? $("detailGithubUrl").value.trim() : "";
     const ytVal = $("detailYoutubeUrl") ? $("detailYoutubeUrl").value.trim() : "";
     const gifVal = $("detailGifUrl") ? $("detailGifUrl").value.trim() : "";
-    const defaultGhVid = githubVideoUrlFromName(ex.name) || videoPathFromName(ex.name);
-    const defaultGhGif = githubGifUrlFromName(ex.name) || "";
+    const defaultSbVid = supabaseVideoUrlFromName(ex.name) || videoPathFromName(ex.name);
+    const defaultSbGif = supabaseGifUrlFromName(ex.name) || "";
 
     if (ex.mediaType === "youtube") {
       ex.video = normalizeVideoPath(ytVal);
       if ($("detailVideoPath")) $("detailVideoPath").value = ex.video;
     } else if (ex.mediaType === "gif") {
-      const chosenGif = gifVal || defaultGhGif;
+      const chosenGif = gifVal || defaultSbGif;
       ex.gif = normalizeImagePath(chosenGif);
       if ($("detailGifPath")) $("detailGifPath").value = ex.gif;
     } else { // "github"
-      const chosenVid = ghVal || defaultGhVid;
+      const chosenVid = ghVal || defaultSbVid;
       ex.video = normalizeVideoPath(chosenVid);
       if ($("detailVideoPath")) $("detailVideoPath").value = ex.video;
     }
@@ -1661,7 +1703,7 @@
     renderToday();
     window.Manage?.render();
     renderDetailMedia(ex);
-    const mediaLabel = ex.mediaType === "youtube" ? "YouTube" : (ex.mediaType === "gif" ? "Looping GIF" : "GitHub Video");
+    const mediaLabel = ex.mediaType === "youtube" ? "YouTube" : (ex.mediaType === "gif" ? "Looping GIF" : "Storage Video");
     UI.toast(`Saved! Using ${mediaLabel} for demo`);
   }
 
@@ -1818,6 +1860,7 @@
         if (kind === "video") {
           ex.video = autoPath;
           if ($("detailGithubUrl")) $("detailGithubUrl").value = autoPath;
+          if ($("detailVideoUploadStatus")) $("detailVideoUploadStatus").textContent = `✓ Saved ${autoFileName} locally`;
           ex.mediaType = "github";
           selectDetailMediaType("github", ex, true);
         } else if (kind === "gif") {
@@ -1866,6 +1909,7 @@
     if ($("detailYoutubeUrl")) $("detailYoutubeUrl").value = "";
     if ($("detailGifUrl")) $("detailGifUrl").value = "";
     if ($("detailGifUploadStatus")) $("detailGifUploadStatus").textContent = "";
+    if ($("detailVideoUploadStatus")) $("detailVideoUploadStatus").textContent = "";
     save();
     await renderDetailMedia(ex);
     previewActiveMedia(ex);
@@ -3309,6 +3353,17 @@
       convertExercisePulley(ex, e.target.value);
       $("detailWeight").value = numericWeightText(ex.weight);
       renderSetTable(); save({ silent: true }); renderToday();
+    });
+    $("detailEquipment")?.addEventListener("change", e => {
+      const otherInput = $("detailEquipmentOther");
+      if (otherInput) {
+        if (e.target.value === "Others") {
+          otherInput.style.display = "block";
+          otherInput.focus();
+        } else {
+          otherInput.style.display = "none";
+        }
+      }
     });
 
     wireUpload("detailImageUpload", "image");

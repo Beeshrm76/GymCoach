@@ -35,7 +35,7 @@ window.Store = (() => {
 
   const WEIGHT_UNITS = { kg: "kg", lb: "lb" };
   const KG_PER_LB = 0.45359237;
-  const PULLEY_RATIOS = { single: 1, double: 2, four: 4 };
+  const PULLEY_RATIOS = { none: 1, single: 1, double: 2, four: 4 };
 
   function parseWeightNumber(value) {
     if (value === null || value === undefined) return null;
@@ -57,6 +57,7 @@ window.Store = (() => {
   }
   function pulleyKey(value) {
     const v = String(value || "").toLowerCase();
+    if (v === "none" || v === "no") return "none";
     if (v === "double" || v === "2" || v.includes("double")) return "double";
     if (v === "four" || v === "4" || v.includes("four")) return "four";
     return "single";

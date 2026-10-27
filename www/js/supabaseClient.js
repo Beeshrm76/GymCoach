@@ -38,3 +38,6 @@ if (sb && typeof sb.createClient === 'function') {
   console.error("Supabase SDK not loaded on window.supabase");
 }
 
+window.SUPABASE_URL = SUPABASE_URL;
+window.SUPABASE_STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public/app-media`;
+

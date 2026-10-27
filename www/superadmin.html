@@ -575,10 +575,10 @@
 
       <div class="form-group">
         <label style="display:flex; justify-content:space-between; align-items:center;">
-          <span>Video URL (GitHub stream, YouTube, or direct video link)</span>
-          <span class="badge" style="font-size:11px; background:rgba(0, 242, 254, 0.15); color:var(--accent, #00f2fe); padding:2px 8px; border-radius:6px;">GitHub / YouTube</span>
+          <span>Video URL (Supabase Storage, YouTube, or direct video link)</span>
+          <span class="badge" style="font-size:11px; background:rgba(0, 242, 254, 0.15); color:var(--accent, #00f2fe); padding:2px 8px; border-radius:6px;">Supabase / YouTube</span>
         </label>
-        <input type="url" id="exModalVideoUrl" class="setting-input" placeholder="https://raw.githubusercontent.com/Beeshrm76/GymCoach/main/videos/exercise.mp4 or YouTube link">
+        <input type="url" id="exModalVideoUrl" class="setting-input" placeholder="https://zxirntfsigasqcpkalic.supabase.co/storage/v1/object/public/app-media/exercise-videos/exercise.mp4 or YouTube link">
         <div id="exModalVideoUrlStatus" class="small" style="margin-top:4px; font-weight:500;"></div>
       </div>
 
@@ -596,7 +596,7 @@
         <div id="exModalGifFileStatus" class="muted small" style="margin-top:4px;"></div>
         
         <div style="margin-top:8px;">
-          <input type="url" id="exModalGifUrl" class="setting-input" placeholder="https://raw.githubusercontent.com/Beeshrm76/GymCoach/main/gifs/exercise.gif or external GIF URL">
+          <input type="url" id="exModalGifUrl" class="setting-input" placeholder="https://zxirntfsigasqcpkalic.supabase.co/storage/v1/object/public/app-media/exercise-gifs/exercise.gif or GIF URL">
         </div>
         
         <div id="exModalGifPreviewWrap" style="margin-top:10px; display:none; text-align:center; background:#080c12; border-radius:10px; padding:10px; border:1px solid var(--glass-border);">
@@ -956,6 +956,7 @@
   <script src="js/vendor/supabase.js?v=18.28"></script>
   <script src="js/supabaseClient.js?v=18.28"></script>
   <script src="js/auth.js?v=18.28"></script>
+  <script src="js/mediaCache.js?v=18.28"></script>
   <script src="data/exercises.js"></script>
   <script src="js/exerciseMetadata.js"></script>
   <script src="js/dts.js"></script>
